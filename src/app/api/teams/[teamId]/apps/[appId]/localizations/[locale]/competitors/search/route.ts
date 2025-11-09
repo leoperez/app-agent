@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LocaleCode } from '@/lib/utils/locale';
-import { searchApps } from '@/lib/app-store/search-apps';
-import { getLocaleString } from '@/lib/app-store/country-mapper';
-import { getCountryCode } from '@/lib/app-store/country-mapper';
+import { searchApps as searchAppStoreApps } from '@/lib/app-store/search-apps';
+import { getLocaleString as getAppStoreLocaleString } from '@/lib/app-store/country-mapper';
+import { getCountryCode as getAppStoreCountryCode } from '@/lib/app-store/country-mapper';
+import { searchApps as searchGooglePlayApps } from '@/lib/google-play/search-apps';
 
 export const maxDuration = 30;
 
@@ -20,15 +21,27 @@ export async function POST(
       );
     }
 
-    // This is only for App Store
-    const results = await searchApps({
-      country: getCountryCode(params.locale as LocaleCode),
-      language: getLocaleString(params.locale as LocaleCode),
-      term,
-      num: 10,
-    });
+    let apps;
 
-    const apps = results.apps;
+    if (store === 'GOOGLEPLAY') {
+      // Search on Google Play Store
+      const results = await searchGooglePlayApps({
+        term,
+        num: 10,
+        lang: params.locale.split('-')[0],
+        country: params.locale.split('-')[1]?.toLowerCase() || 'us',
+      });
+      apps = results.apps;
+    } else {
+      // Search on App Store
+      const results = await searchAppStoreApps({
+        country: getAppStoreCountryCode(params.locale as LocaleCode),
+        language: getAppStoreLocaleString(params.locale as LocaleCode),
+        term,
+        num: 10,
+      });
+      apps = results.apps;
+    }
 
     return NextResponse.json(apps);
   } catch (error) {
