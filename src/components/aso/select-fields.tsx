@@ -11,12 +11,7 @@ interface SelectFieldsProps {
   store: Store;
   currentValues: AsoContent;
   onGenerate: (
-    selectedFields: {
-      title: boolean;
-      subtitle: boolean;
-      description: boolean;
-      keywords: boolean;
-    },
+    selectedFields: Record<string, boolean>,
     outline: string
   ) => Promise<any>;
 }

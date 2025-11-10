@@ -14,6 +14,9 @@ export enum AsoTarget {
   subtitle = 'subtitle',
   description = 'description',
   keywords = 'keywords',
+  // Google Play specific targets
+  shortDescription = 'shortDescription',
+  fullDescription = 'fullDescription',
 }
 
 export type AsoContent = {
@@ -21,6 +24,9 @@ export type AsoContent = {
   subtitle: string;
   description: string;
   keywords: string;
+  // Google Play specific fields
+  shortDescription?: string;
+  fullDescription?: string;
 };
 
 export type CompetitorKeyword = {

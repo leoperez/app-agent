@@ -67,7 +67,7 @@ export async function POST(
       throw new InvalidParamsError('Missing required properties');
     }
 
-    // Add new locale to App Store Connect
+    // Generate optimized ASO content
     const result = await optimizeContents(
       locale,
       data.title,
@@ -76,7 +76,7 @@ export async function POST(
       data.subtitle,
       data.keywords,
       data.description,
-      app.shortDescription || undefined,
+      data.shortDescription,
       data.descriptionOutline,
       data.previousResult,
       data.userFeedback,

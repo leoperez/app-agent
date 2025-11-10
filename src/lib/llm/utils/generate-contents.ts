@@ -36,9 +36,24 @@ const ContentsResponseSchemaForAppStore = z.object({
 });
 
 const ContentsResponseSchemaForGooglePlay = z.object({
-  title: z.string().optional(),
-  subtitle: z.string().optional(),
-  description: z.string().optional(),
+  title: z
+    .string()
+    .describe(
+      'The title of the app. Max length is 30 characters for Google Play. Keep the original app title as is and append keywords as a tag line if possible. Put as many characters as possible up to the limit.'
+    )
+    .optional(),
+  subtitle: z
+    .string()
+    .describe(
+      'The short description of the app for Google Play (short_description field). Max length is 80 characters. Put as many characters as possible up to the limit. This is a brief summary that appears in search results.'
+    )
+    .optional(),
+  description: z
+    .string()
+    .describe(
+      'The full description of the app for Google Play (full_description field). Max length is 4000 characters. Incorporate the target keywords into the description naturally as frequent as possible to increase the keyword density. Aim to use the target keywords 6 times or more in the description for each keyword. Especially, the first 3 target keywords must be used as frequently as possible (at least 6 times). Use up the max length of the description field. The longer the better up to the limit.'
+    )
+    .optional(),
 });
 
 export async function generateContents(
