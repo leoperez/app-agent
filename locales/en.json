@@ -219,6 +219,8 @@
         "upload-key": "Upload Key",
         "google-play-version-info": "For Google Play apps, versions are created when you upload an APK or App Bundle to the Google Play Console.",
         "google-play-version-info-detail": "To update your app metadata, use the Pull button to sync the latest version from Google Play Console, then edit and Push your changes.",
+        "google-play-advanced-note-title": "Note for Google Play:",
+        "google-play-advanced-note-description": "Privacy Policy and other app-level settings must be configured in the Google Play Console under \"App content\" → \"Privacy policy\". These settings cannot be managed via API.",
         "uploading": "Uploading...",
         "no-localizations-found": "No Localizations Found",
         "localizations-not-configured": "There are no localizations configured for this app yet. Add your first localization to get started.",

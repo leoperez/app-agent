@@ -290,6 +290,7 @@ export default function AppLocalizations({
                       }
                     : undefined
                 }
+                store={appInfo?.currentApp?.store}
               />
             </div>
           );
