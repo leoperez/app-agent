@@ -169,9 +169,10 @@ export default function Home() {
       [locale]: {
         ...prev[locale],
         draft: {
-          ...((prev[locale]?.draft || {}) as AppLocalization),
+          // Start from the existing draft, or fall back to public version, or create new with locale
+          ...(prev[locale]?.draft || prev[locale]?.public || { locale }),
           ...updatedData,
-        },
+        } as AppLocalization,
       },
     }));
     setHasChanges(true);
@@ -180,8 +181,15 @@ export default function Home() {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      const drafts = Object.values(workingLocalizations)
-        .map((loc) => loc.draft)
+      const drafts = Object.entries(workingLocalizations)
+        .map(([locale, loc]) => {
+          if (!loc.draft) return null;
+          // Ensure the draft has the locale field from the key
+          return {
+            ...loc.draft,
+            locale: loc.draft.locale || locale,
+          };
+        })
         .filter((draft): draft is AppLocalization => !!draft);
 
       await stageVersion(
