@@ -10,6 +10,12 @@ import { Platform } from '@/types/aso';
 import { LocaleCode } from './locale';
 
 export function publicVersion(state: string | AppStoreState) {
+  // Google Play states
+  if (state === 'completed' || state === 'inProgress') {
+    return true;
+  }
+
+  // App Store Connect states
   if (
     typeof state === 'string' &&
     !Object.values(AppStoreState).includes(state as AppStoreState)
@@ -23,6 +29,12 @@ export function publicVersion(state: string | AppStoreState) {
 }
 
 export function draftVersion(state: string | AppStoreState) {
+  // Google Play states
+  if (state === 'draft') {
+    return true;
+  }
+
+  // App Store Connect states
   if (
     typeof state === 'string' &&
     !Object.values(AppStoreState).includes(state as AppStoreState)
