@@ -191,6 +191,8 @@ export async function POST(
         const updateData = {
           title: localization.title,
           subtitle: localization.subtitle,
+          shortDescription: localization.shortDescription,
+          fullDescription: localization.fullDescription,
           privacyPolicyUrl: localization.privacyPolicyUrl,
           privacyChoicesUrl: localization.privacyChoicesUrl,
           privacyPolicyText: localization.privacyPolicyText,
