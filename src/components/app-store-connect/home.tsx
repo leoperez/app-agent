@@ -417,7 +417,9 @@ export default function Home() {
                     {t('push')}
                   </Button>
                   <Tooltip id="push-tooltip" place="top">
-                    {t('push-changes-to-app-store-connect')}
+                    {currentApp?.store === 'GOOGLEPLAY'
+                      ? t('push-changes-to-google-play')
+                      : t('push-changes-to-app-store-connect')}
                   </Tooltip>
                 </div>
 
@@ -525,10 +527,14 @@ export default function Home() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t('push-changes-to-app-store-connect-title')}
+              {currentApp?.store === 'GOOGLEPLAY'
+                ? t('push-changes-to-google-play-title')
+                : t('push-changes-to-app-store-connect-title')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('push-changes-to-app-store-connect-description')}
+              {currentApp?.store === 'GOOGLEPLAY'
+                ? t('push-changes-to-google-play-description')
+                : t('push-changes-to-app-store-connect-description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

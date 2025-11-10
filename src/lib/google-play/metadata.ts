@@ -294,6 +294,82 @@ export async function fetchAppDetails(
 }
 
 /**
+ * Update multiple listings in a single edit session
+ * @param serviceAccountKey - Service account credentials
+ * @param packageName - App package name
+ * @param listings - Array of listings to update
+ * @returns true if successful
+ */
+export async function updateMultipleListings(
+  serviceAccountKey: string,
+  packageName: string,
+  listings: Array<{
+    language: string;
+    title?: string;
+    shortDescription?: string;
+    fullDescription?: string;
+    video?: string;
+  }>
+): Promise<boolean> {
+  try {
+    const client = await getGooglePlayClient(serviceAccountKey);
+
+    // Create a single edit for all updates
+    const edit = await client.edits.insert({
+      packageName,
+    });
+
+    if (!edit.data.id) {
+      throw new Error('Failed to create edit session');
+    }
+
+    const editId = edit.data.id;
+
+    try {
+      // Update all listings in parallel within the same edit
+      await Promise.all(
+        listings.map((listing) =>
+          client.edits.listings.update({
+            packageName,
+            editId,
+            language: listing.language,
+            requestBody: {
+              title: listing.title,
+              shortDescription: listing.shortDescription,
+              fullDescription: listing.fullDescription,
+              video: listing.video,
+            },
+          })
+        )
+      );
+
+      // Commit the edit once after all updates
+      await client.edits.commit({
+        packageName,
+        editId,
+      });
+
+      return true;
+    } catch (error) {
+      // Delete edit on error (rollback all changes)
+      try {
+        await client.edits.delete({
+          packageName,
+          editId,
+        });
+      } catch (deleteError) {
+        // Ignore delete errors if edit was already deleted
+        console.error('Error deleting edit:', deleteError);
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error updating multiple listings:', error);
+    throw new Error('Failed to update app listings');
+  }
+}
+
+/**
  * Comprehensive metadata fetch - gets all data in one operation
  * Similar to App Store Connect's fetchAppMetadata
  * @param serviceAccountKey - Service account credentials

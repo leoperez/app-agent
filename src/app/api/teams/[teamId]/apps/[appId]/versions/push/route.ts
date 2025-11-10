@@ -10,7 +10,10 @@ import {
   updateLocalization as updateAppStoreLocalization,
   upsertLocalizationInfo,
 } from '@/lib/app-store-connect/metadata';
-import { updateListing as updateGooglePlayListing } from '@/lib/google-play/metadata';
+import {
+  updateListing as updateGooglePlayListing,
+  updateMultipleListings as updateGooglePlayMultipleListings,
+} from '@/lib/google-play/metadata';
 import { getGooglePlayKeyFromDB } from '@/lib/google-play/key';
 import { hasPublicVersion } from '@/lib/utils/versions';
 import { Store } from '@prisma/client';
@@ -65,29 +68,26 @@ export async function POST(
         );
       }
 
-      // Push each localization to Google Play Console
-      const updatePromises = localizations.map(async (localization) => {
-        if (!localization.locale) {
-          return;
-        }
+      // Prepare all listings for a single edit session
+      const listingsToUpdate = localizations
+        .filter((loc) => loc.locale) // Only include localizations with a locale
+        .map((localization) => ({
+          language: localization.locale!,
+          title: localization.title || undefined,
+          shortDescription: localization.shortDescription || undefined,
+          fullDescription:
+            localization.fullDescription ||
+            localization.description ||
+            undefined,
+          video: localization.videoUrl || undefined,
+        }));
 
-        return updateGooglePlayListing(
-          serviceAccountKey,
-          app.storeAppId,
-          localization.locale,
-          {
-            title: localization.title || undefined,
-            shortDescription: localization.shortDescription || undefined,
-            fullDescription:
-              localization.fullDescription ||
-              localization.description ||
-              undefined,
-            video: localization.videoUrl || undefined,
-          }
-        );
-      });
-
-      await Promise.all(updatePromises);
+      // Update all listings in a single edit session
+      await updateGooglePlayMultipleListings(
+        serviceAccountKey,
+        app.storeAppId,
+        listingsToUpdate
+      );
     } else {
       // App Store Connect flow (default)
       const updatePromises = localizations.map(async (localization) => {
