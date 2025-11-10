@@ -262,33 +262,38 @@ export default function AppLocalizations({
           </Alert>
         )}
 
-        {Object.entries(localizations).map(
-          ([locale, data]) =>
-            data.draft && (
-              <div key={locale} className="space-y-2">
-                <AppLocalizationView
-                  localization={data.draft}
-                  originalData={data.public}
-                  onUpdate={(updatedData) =>
-                    updateLocalLocalizations(locale, updatedData)
-                  }
-                  mode={currentStep.mode!}
-                  defaultExpanded={
-                    // currentStep.mode !== LocalizationEditMode.IMPROVE_ASO ||
-                    expandedLocale === locale
-                  }
-                  onASOClick={
-                    currentStep.mode === LocalizationEditMode.IMPROVE_ASO
-                      ? () => {
-                          setSelectedLocaleForASO(locale as LocaleCode);
-                          setShowASOModal(true);
-                        }
-                      : undefined
-                  }
-                />
-              </div>
-            )
-        )}
+        {Object.entries(localizations).map(([locale, data]) => {
+          // For Google Play, we might only have public version (no draft)
+          // For App Store, we prefer draft over public
+          const localization = data.draft || data.public;
+
+          if (!localization) return null;
+
+          return (
+            <div key={locale} className="space-y-2">
+              <AppLocalizationView
+                localization={localization}
+                originalData={data.public}
+                onUpdate={(updatedData) =>
+                  updateLocalLocalizations(locale, updatedData)
+                }
+                mode={currentStep.mode!}
+                defaultExpanded={
+                  // currentStep.mode !== LocalizationEditMode.IMPROVE_ASO ||
+                  expandedLocale === locale
+                }
+                onASOClick={
+                  currentStep.mode === LocalizationEditMode.IMPROVE_ASO
+                    ? () => {
+                        setSelectedLocaleForASO(locale as LocaleCode);
+                        setShowASOModal(true);
+                      }
+                    : undefined
+                }
+              />
+            </div>
+          );
+        })}
 
         <Dialog open={isLocaleDialogOpen} onOpenChange={setIsLocaleDialogOpen}>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
