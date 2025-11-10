@@ -320,6 +320,42 @@ export async function getLatestVersionCode(
  * @param sourceLanguage - Language code to copy data from
  * @returns true if successful
  */
+/**
+ * Convert App Store Connect locale codes to Google Play locale codes
+ * Google Play requires full locale codes with region (e.g., it-IT instead of just it)
+ */
+function convertToGooglePlayLocale(locale: string): string {
+  const localeMap: Record<string, string> = {
+    // Languages that need region codes
+    it: 'it-IT',
+    ca: 'ca-ES',
+    hr: 'hr-HR',
+    cs: 'cs-CZ',
+    da: 'da-DK',
+    fi: 'fi-FI',
+    el: 'el-GR',
+    he: 'iw-IL', // Google Play uses 'iw' instead of 'he' for Hebrew
+    hi: 'hi-IN',
+    hu: 'hu-HU',
+    id: 'id-ID',
+    ja: 'ja-JP',
+    ko: 'ko-KR',
+    ms: 'ms-MY',
+    no: 'no-NO',
+    pl: 'pl-PL',
+    ro: 'ro-RO',
+    ru: 'ru-RU',
+    sk: 'sk-SK',
+    sv: 'sv-SE',
+    th: 'th-TH',
+    tr: 'tr-TR',
+    uk: 'uk-UA',
+    vi: 'vi-VN',
+  };
+
+  return localeMap[locale] || locale;
+}
+
 export async function addNewLocale(
   teamId: string,
   appId: string,
@@ -329,6 +365,14 @@ export async function addNewLocale(
   sourceLanguage: string = 'en-US'
 ): Promise<boolean> {
   try {
+    // Convert locale codes to Google Play format
+    const googlePlayLanguage = convertToGooglePlayLocale(language);
+    const googlePlaySourceLanguage = convertToGooglePlayLocale(sourceLanguage);
+
+    console.log(
+      `Adding new locale: ${language} -> ${googlePlayLanguage}, source: ${sourceLanguage} -> ${googlePlaySourceLanguage}`
+    );
+
     const client = await getGooglePlayClient(serviceAccountKey);
 
     const edit = await client.edits.insert({
@@ -343,17 +387,21 @@ export async function addNewLocale(
 
     try {
       // Get source listing
+      console.log(
+        `Getting source listing for language: ${googlePlaySourceLanguage}`
+      );
       const sourceListing = await client.edits.listings.get({
         packageName,
         editId,
-        language: sourceLanguage,
+        language: googlePlaySourceLanguage,
       });
 
       // Create new listing with copied data
+      console.log(`Creating new listing for language: ${googlePlayLanguage}`);
       await client.edits.listings.update({
         packageName,
         editId,
-        language,
+        language: googlePlayLanguage,
         requestBody: {
           title: sourceListing.data.title || 'App Title',
           shortDescription:
@@ -389,6 +437,9 @@ export async function addNewLocale(
     }
   } catch (error) {
     console.error('Error adding new locale:', error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to add new locale: ${error.message}`);
+    }
     throw new Error('Failed to add new locale');
   }
 }

@@ -217,6 +217,8 @@
         "drop-the-file-here": "ここにファイルをドロップ",
         "drag-and-drop-your-p8-file-here": ".p8ファイルをここにドラッグ＆ドロップしてください",
         "upload-key": "キーをアップロードする",
+        "google-play-version-info": "Google Playアプリの場合、バージョンはGoogle Play ConsoleでAPKまたはApp Bundleをアップロードすることで作成されます。",
+        "google-play-version-info-detail": "アプリのメタデータを更新するには、Pullボタンを使用してGoogle Play Consoleから最新バージョンを同期し、編集してからPushしてください。",
         "uploading": "アップロード中...",
         "no-localizations-found": "アプリ情報が見つかりませんでした",
         "localizations-not-configured": "このアプリにはまだアプリ情報が設定されていません。最初のアプリ情報を追加して始めてください。",

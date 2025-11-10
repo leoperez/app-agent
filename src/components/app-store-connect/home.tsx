@@ -144,11 +144,21 @@ export default function Home() {
   }, [versionStatus?.upToDate, localizations]);
 
   const needCreateNewVersion = useMemo(() => {
+    // For Google Play, versions are created by uploading APK/Bundle to the console
+    // So we don't show the "Create New Version" UI for Google Play apps
+    if (currentApp?.store === 'GOOGLEPLAY') {
+      return false;
+    }
+
     return (
       versionStatus?.upToDate &&
       publicVersion(versionStatus?.localVersion?.state || '')
     );
-  }, [versionStatus?.upToDate, versionStatus?.localVersion?.state]);
+  }, [
+    versionStatus?.upToDate,
+    versionStatus?.localVersion?.state,
+    currentApp?.store,
+  ]);
 
   const handleUpdateLocalizations = (
     locale: string,
@@ -430,6 +440,39 @@ export default function Home() {
 
       {versionStatus?.upToDate && (
         <>
+          {/* Google Play Info Banner */}
+          {currentApp?.store === 'GOOGLEPLAY' &&
+            versionStatus?.upToDate &&
+            publicVersion(versionStatus?.localVersion?.state || '') && (
+              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg
+                      className="w-5 h-5 text-blue-600 dark:text-blue-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                      {t('google-play-version-info')}
+                    </p>
+                    <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                      {t('google-play-version-info-detail')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
           {needCreateNewVersion ? (
             <CreateNewVersion
               createNewVersion={handleCreateNewVersion}

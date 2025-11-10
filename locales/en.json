@@ -217,6 +217,8 @@
         "drop-the-file-here": "Drop the file here",
         "drag-and-drop-your-p8-file-here": "Drag and drop your .p8 file here",
         "upload-key": "Upload Key",
+        "google-play-version-info": "For Google Play apps, versions are created when you upload an APK or App Bundle to the Google Play Console.",
+        "google-play-version-info-detail": "To update your app metadata, use the Pull button to sync the latest version from Google Play Console, then edit and Push your changes.",
         "uploading": "Uploading...",
         "no-localizations-found": "No Localizations Found",
         "localizations-not-configured": "There are no localizations configured for this app yet. Add your first localization to get started.",
