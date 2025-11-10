@@ -45,7 +45,7 @@ export default function GenerateContentsView({
     title: true,
     subtitle: true,
     description: true,
-    keywords: store === 'APPSTORE',
+    keywords: store === Store.APPSTORE,
   });
 
   useEffect(() => {

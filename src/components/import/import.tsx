@@ -74,7 +74,7 @@ export default function ImportApps() {
 
   const importedStores = useMemo(() => {
     if (!appInfo?.apps?.length) return [];
-    return ['APPSTORE', 'GOOGLEPLAY'].filter((store) =>
+    return [Store.APPSTORE, Store.GOOGLEPLAY].filter((store) =>
       appInfo.apps.some((app) => app.store === store)
     );
   }, [appInfo?.apps]);
@@ -133,7 +133,7 @@ export default function ImportApps() {
         console.error('No team found');
         return;
       }
-      if (selectedStore === 'APPSTORE') {
+      if (selectedStore === Store.APPSTORE) {
         await importAppsFromAppStoreConnect(
           teamInfo.currentTeam.id,
           selectedApps
@@ -151,7 +151,7 @@ export default function ImportApps() {
 
       if (importedStores.length === 1 && selectedStore) {
         const allStores = new Set([...importedStores, selectedStore]);
-        if (allStores.has('APPSTORE') && allStores.has('GOOGLEPLAY')) {
+        if (allStores.has(Store.APPSTORE) && allStores.has(Store.GOOGLEPLAY)) {
           router.push('/dashboard');
         }
       }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Store } from '@prisma/client';
 import { LocaleCode } from '@/lib/utils/locale';
 import { searchApps as searchAppStoreApps } from '@/lib/app-store/search-apps';
 import { getLocaleString as getAppStoreLocaleString } from '@/lib/app-store/country-mapper';
@@ -12,7 +13,11 @@ export async function POST(
   { params }: { params: { teamId: string; appId: string; locale: string } }
 ) {
   try {
-    const { term, store = 'APPSTORE', platform = 'IOS' } = await request.json();
+    const {
+      term,
+      store = Store.APPSTORE,
+      platform = 'IOS',
+    } = await request.json();
 
     if (!term) {
       return NextResponse.json(
@@ -23,7 +28,7 @@ export async function POST(
 
     let apps;
 
-    if (store === 'GOOGLEPLAY') {
+    if (store === Store.GOOGLEPLAY) {
       // Search on Google Play Store
       const results = await searchGooglePlayApps({
         term,

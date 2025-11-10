@@ -52,7 +52,7 @@ export async function generateContents(
     prev: string;
     feedback: string;
   },
-  store: Store = 'APPSTORE'
+  store: Store = Store.APPSTORE
 ): Promise<
   typeof store extends 'APPSTORE'
     ? z.infer<typeof ContentsResponseSchemaForAppStore>
@@ -75,7 +75,7 @@ export async function generateContents(
       content: systemPrompt
         .render({
           locale: getLocaleName(locale),
-          appStore: store === 'APPSTORE',
+          appStore: store === Store.APPSTORE,
           forTitle,
           forSubtitle,
           forDescription,
@@ -113,7 +113,7 @@ export async function generateContents(
     model: 'gpt-4.1',
     messages,
     response_format:
-      store === 'APPSTORE'
+      store === Store.APPSTORE
         ? zodResponseFormat(ContentsResponseSchemaForAppStore, 'contents')
         : zodResponseFormat(ContentsResponseSchemaForGooglePlay, 'contents'),
   });

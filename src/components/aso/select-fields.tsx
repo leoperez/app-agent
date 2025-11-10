@@ -59,7 +59,7 @@ export default function SelectFields({
     >
       <div className="space-y-3">
         {Object.entries(selectedFields)
-          .filter(([field]) => field !== 'keywords' || store === 'APPSTORE')
+          .filter(([field]) => field !== 'keywords' || store === Store.APPSTORE)
           .map(([field, checked]) => (
             <motion.div
               key={field}
