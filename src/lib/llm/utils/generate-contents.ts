@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { ChatCompletionMessageParam } from 'openai/resources/index.mjs';
 import { LlmRefusalError } from '@/types/errors';
 import { getLocaleName, LocaleCode } from '@/lib/utils/locale';
+import { LLM_MODEL } from '@/lib/config';
 
 // TODO: check the max length of keywords. This is also mentioned in the prompt.
 const ContentsResponseSchemaForAppStore = z.object({
@@ -186,7 +187,7 @@ export async function generateDescription(
   console.log(JSON.stringify(messages, null, 2));
 
   const response = await openai.chat.completions.create({
-    model: shouldUseO1Series ? 'o1-mini' : 'gpt-4o',
+    model: LLM_MODEL,
     messages,
   });
 
