@@ -165,6 +165,18 @@ export default function AppLocalizations({
     (locale: string) => {
       const localization =
         localizations[locale]?.draft || localizations[locale]?.public;
+
+      // Return fields based on store type
+      if (appInfo?.currentApp?.store === 'GOOGLEPLAY') {
+        return {
+          title: localization?.title || '',
+          shortDescription: localization?.shortDescription || '',
+          fullDescription:
+            localization?.fullDescription || localization?.description || '',
+        };
+      }
+
+      // App Store fields
       return {
         title: localization?.title || '',
         subtitle: localization?.subtitle || '',
@@ -172,7 +184,7 @@ export default function AppLocalizations({
         keywords: localization?.keywords || '',
       };
     },
-    [localizations]
+    [localizations, appInfo?.currentApp?.store]
   );
 
   const handleASOUpdate = (locale: string, updatedMetadata: AsoContent) => {

@@ -305,6 +305,8 @@
     "subtitle-label": "サブタイトル",
     "keywords-label": "キーワード",
     "description-label": "概要",
+    "shortDescription-label": "簡単な説明",
+    "fullDescription-label": "詳細な説明",
     "failed-to-suggest-keywords": "キーワード選定に失敗しました。再試行してください。",
     "failed-to-optimize-contents": "コンテンツの最適化に失敗しました。再試行してください。",
     "failed-to-regenerate-contents": "コンテンツの再生成に失敗しました。再試行してください。",
