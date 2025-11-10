@@ -5,7 +5,7 @@ import {
   handleAppError,
   InvalidParamsError,
 } from '@/types/errors';
-import { LocaleCode } from '@/lib/utils/locale';
+import { googlePlayToAppStore } from '@/lib/utils/locale';
 import { draftVersion, publicVersion } from '@/lib/utils/versions';
 import { Store } from '@/types/aso';
 import { selectAndScoreKeywords } from '@/lib/aso/keyword-hunt/select-and-score-keywords';
@@ -84,13 +84,17 @@ export async function POST(
             },
           };
 
+          // Convert Google Play locale to App Store locale for keyword research
+          const appStoreLocale = googlePlayToAppStore(locale);
+
           const result = await selectAndScoreKeywords(
             appId,
-            locale as LocaleCode,
+            appStoreLocale,
             data.shortDescription,
             data.store,
             data.platform,
-            writer
+            writer,
+            locale // Pass original locale for DB lookup
           );
           controller.close();
         } catch (err) {

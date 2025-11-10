@@ -1,4 +1,4 @@
-import { LocaleCode } from '@/lib/utils/locale';
+import { AppStoreLocaleCode } from '@/lib/utils/locale';
 import { extractKeywordsFromTitleAndDescription } from '@/lib/llm/utils/extract-keywords';
 import { getAppLocalization } from './utils';
 import {
@@ -20,17 +20,22 @@ import { scoreKeyword } from '../score';
 
 export async function selectAndScoreKeywords(
   appId: string,
-  locale: LocaleCode,
+  locale: AppStoreLocaleCode,
   shortDescription: string,
   store: Store,
   platform: Platform,
-  writer?: { write: (data: any) => void }
+  writer?: { write: (data: any) => void },
+  originalLocale?: string // Add optional parameter for original locale from DB
 ): Promise<AsoKeyword[]> {
   const MAX_COMPETITORS = 20;
   let TOTAL_STEPS = 5;
   let currentStep = 0;
 
-  const appLocalization = await getAppLocalization(appId, locale);
+  // Use originalLocale for DB lookup, locale for App Store API calls
+  const appLocalization = await getAppLocalization(
+    appId,
+    originalLocale || locale
+  );
   const title = appLocalization.title || appLocalization.app?.title || '';
 
   currentStep++;

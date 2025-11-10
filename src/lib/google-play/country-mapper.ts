@@ -1,11 +1,11 @@
-import { LocaleCode } from '@/lib/utils/locale';
+import { GooglePlayLocaleCode } from '@/lib/utils/locale';
 
 /**
  * Maps locale codes to Google Play country codes
  * @param locale The locale code
  * @returns The country code for Google Play API
  */
-export function getCountryCode(locale: LocaleCode): string {
+export function getCountryCode(locale: GooglePlayLocaleCode | string): string {
   // Extract country code from locale (e.g., 'en-US' -> 'us')
   const parts = locale.split('-');
   if (parts.length > 1) {
@@ -20,7 +20,7 @@ export function getCountryCode(locale: LocaleCode): string {
  * @param locale The locale code
  * @returns The language code for Google Play API
  */
-export function getLanguageCode(locale: LocaleCode): string {
+export function getLanguageCode(locale: GooglePlayLocaleCode | string): string {
   // Extract language code from locale (e.g., 'en-US' -> 'en')
   const parts = locale.split('-');
   return parts[0].toLowerCase();
@@ -31,6 +31,6 @@ export function getLanguageCode(locale: LocaleCode): string {
  * @param locale The locale code
  * @returns The locale string (e.g., 'en-US')
  */
-export function getLocaleString(locale: LocaleCode): string {
-  return locale;
+export function getLocaleString(locale: GooglePlayLocaleCode | string): string {
+  return locale.toString();
 }

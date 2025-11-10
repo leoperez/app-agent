@@ -6,7 +6,7 @@ import {
   handleAppError,
   InvalidParamsError,
 } from '@/types/errors';
-import { LocaleCode } from '@/lib/utils/locale';
+import { googlePlayToAppStore } from '@/lib/utils/locale';
 import { searchApps } from '@/lib/app-store/search-apps';
 import { findCompetitors } from '@/lib/aso/keyword-hunt/find-competitors';
 import { draftVersion, publicVersion } from '@/lib/utils/versions';
@@ -92,11 +92,15 @@ export async function POST(
             },
           };
 
+          // Convert Google Play locale to App Store locale for competitor research
+          const appStoreLocale = googlePlayToAppStore(locale);
+
           const result = await findCompetitors(
             appId,
-            locale as LocaleCode,
+            appStoreLocale,
             data.shortDescription,
-            writer
+            writer,
+            locale // Pass original locale for DB lookup
           );
           controller.close();
         } catch (err) {

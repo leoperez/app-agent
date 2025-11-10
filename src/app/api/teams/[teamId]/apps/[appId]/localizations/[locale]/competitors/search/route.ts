@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Store } from '@prisma/client';
-import { LocaleCode } from '@/lib/utils/locale';
+import { googlePlayToAppStore } from '@/lib/utils/locale';
 import { searchApps as searchAppStoreApps } from '@/lib/app-store/search-apps';
 import { getLocaleString as getAppStoreLocaleString } from '@/lib/app-store/country-mapper';
 import { getCountryCode as getAppStoreCountryCode } from '@/lib/app-store/country-mapper';
@@ -39,9 +39,11 @@ export async function POST(
       apps = results.apps;
     } else {
       // Search on App Store
+      // Convert Google Play locale to App Store locale if needed
+      const appStoreLocale = googlePlayToAppStore(params.locale);
       const results = await searchAppStoreApps({
-        country: getAppStoreCountryCode(params.locale as LocaleCode),
-        language: getAppStoreLocaleString(params.locale as LocaleCode),
+        country: getAppStoreCountryCode(appStoreLocale),
+        language: getAppStoreLocaleString(appStoreLocale),
         term,
         num: 10,
       });
