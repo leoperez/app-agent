@@ -5,7 +5,7 @@ import { AppLocalization } from '@/types/aso';
 
 export async function getAppLocalization(
   appId: string,
-  locale: LocaleCode
+  locale: LocaleCode | string
 ): Promise<AppLocalization> {
   // First try to get the app to determine the store type
   const app = await prisma.app.findUnique({

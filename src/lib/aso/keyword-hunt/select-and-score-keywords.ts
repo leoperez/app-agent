@@ -46,10 +46,10 @@ export async function selectAndScoreKeywords(
     totalSteps: TOTAL_STEPS,
   });
   // Note: Limit to certain number of competitors to avoid rate limiting
-  const competitors = (await getTrackedCompetitors(appId, locale)).slice(
-    0,
-    MAX_COMPETITORS
-  );
+  // Use originalLocale for DB lookup
+  const competitors = (
+    await getTrackedCompetitors(appId, originalLocale || locale)
+  ).slice(0, MAX_COMPETITORS);
 
   // Process competitors in batches of 10 concurrent requests
   const batchSize = 10;
@@ -243,9 +243,10 @@ export async function selectAndScoreKeywords(
   const finalKeywords = keywordScores.sort(
     (a, b) => (b.overall || 0) - (a.overall || 0)
   );
+  // Use originalLocale for saving to DB
   const savedKeywordScores = await saveAsoKeywords(
     appId,
-    locale,
+    originalLocale || locale,
     finalKeywords,
     store,
     platform
@@ -270,7 +271,7 @@ export async function selectAndScoreKeywords(
 
 async function saveAsoKeywords(
   appId: string,
-  locale: LocaleCode,
+  locale: LocaleCode | string,
   keywords: KeywordScore[],
   store: Store,
   platform: Platform
