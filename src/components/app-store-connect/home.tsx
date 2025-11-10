@@ -135,7 +135,7 @@ export default function Home() {
       [
         AppStoreState.PREPARE_FOR_SUBMISSION,
         AppStoreState.READY_FOR_REVIEW,
-      ].includes(versionStatus?.localVersion.state as AppStoreState) &&
+      ].includes(versionStatus?.localVersion?.state as AppStoreState) &&
       localizations &&
       Object.keys(localizations).length > 0 &&
       Object.values(localizations).every((loc) => loc.draft?.whatsNew)
@@ -146,9 +146,9 @@ export default function Home() {
   const needCreateNewVersion = useMemo(() => {
     return (
       versionStatus?.upToDate &&
-      publicVersion(versionStatus?.localVersion.state || '')
+      publicVersion(versionStatus?.localVersion?.state || '')
     );
-  }, [versionStatus?.upToDate, versionStatus?.localVersion.state]);
+  }, [versionStatus?.upToDate, versionStatus?.localVersion?.state]);
 
   const handleUpdateLocalizations = (
     locale: string,
@@ -222,7 +222,7 @@ export default function Home() {
     setShowPushDialog(false);
     setIsPushing(true);
     try {
-      const versionId = versionStatus?.localVersion.id;
+      const versionId = versionStatus?.localVersion?.id;
       await pushVersion(
         teamInfo?.currentTeam?.id || '',
         currentApp?.id || '',
@@ -338,8 +338,8 @@ export default function Home() {
           />
         ) : (
           <VersionLabel
-            version={versionStatus?.localVersion.version || ''}
-            state={versionStatus?.localVersion.state || ''}
+            version={versionStatus?.localVersion?.version || ''}
+            state={versionStatus?.localVersion?.state || ''}
           />
         )}
 
@@ -433,7 +433,7 @@ export default function Home() {
           {needCreateNewVersion ? (
             <CreateNewVersion
               createNewVersion={handleCreateNewVersion}
-              currentVersion={versionStatus?.localVersion.version || ''}
+              currentVersion={versionStatus?.localVersion?.version || ''}
             />
           ) : Object.keys(localizations || {}).length === 0 ? (
             <NoLocalizations />
@@ -494,7 +494,7 @@ export default function Home() {
         onOpenChange={setShowSubmitDialog}
         teamId={teamInfo?.currentTeam?.id || ''}
         appId={currentApp?.id || ''}
-        versionId={versionStatus?.localVersion.id || ''}
+        versionId={versionStatus?.localVersion?.id || ''}
       />
     </div>
   );
