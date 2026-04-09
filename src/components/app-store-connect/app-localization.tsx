@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MdExpandMore, MdSettings, MdAdd, MdAutoFixHigh } from 'react-icons/md';
 import { getLocaleName, LocaleCode } from '@/lib/utils/locale';
 import LocalizationField from '@/components/common/localization-field';
-import { FIELD_LIMITS } from '@/types/app-store';
+import { FIELD_LIMITS, GOOGLE_PLAY_FIELD_LIMITS } from '@/types/app-store';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 
@@ -79,7 +79,7 @@ export default function AppLocalizationView({
             label={t('title')}
             value={localization.title}
             onChange={(value) => handleChange('title', value)}
-            characterLimit={50}
+            characterLimit={GOOGLE_PLAY_FIELD_LIMITS.title}
             hasChanged={hasFieldChanged('title')}
             originalValue={originalData?.title}
           />
@@ -88,7 +88,7 @@ export default function AppLocalizationView({
             value={localization.shortDescription}
             onChange={(value) => handleChange('shortDescription', value)}
             multiline
-            characterLimit={80}
+            characterLimit={GOOGLE_PLAY_FIELD_LIMITS.shortDescription}
             hasChanged={hasFieldChanged('shortDescription')}
             originalValue={originalData?.shortDescription}
           />
@@ -97,7 +97,7 @@ export default function AppLocalizationView({
             value={localization.fullDescription || localization.description}
             onChange={(value) => handleChange('fullDescription', value)}
             multiline
-            characterLimit={4000}
+            characterLimit={GOOGLE_PLAY_FIELD_LIMITS.fullDescription}
             hasChanged={hasFieldChanged('fullDescription')}
             originalValue={
               originalData?.fullDescription || originalData?.description

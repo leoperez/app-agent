@@ -42,6 +42,12 @@ export const FIELD_LIMITS = {
   keywords: 100,
 } as const;
 
+export const GOOGLE_PLAY_FIELD_LIMITS = {
+  title: 30,
+  shortDescription: 80,
+  fullDescription: 4000,
+} as const;
+
 export type AppStoreLinks = {
   links: {
     self: string;

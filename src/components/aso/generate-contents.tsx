@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import CharacterCount from '@/components/common/character-count';
 import ASOModalSkeleton from '../skeleton/aso-modal';
-import { FIELD_LIMITS } from '@/types/app-store';
+import { FIELD_LIMITS, GOOGLE_PLAY_FIELD_LIMITS } from '@/types/app-store';
 import { useState, useEffect } from 'react';
 import { AsoContent, Store } from '@/types/aso';
 import { useTranslations } from 'next-intl';
@@ -94,8 +94,8 @@ export default function GenerateContentsView({
 
             // Determine field limits
             const getFieldLimit = (fieldName: string) => {
-              if (fieldName === 'shortDescription') return 80;
-              if (fieldName === 'fullDescription') return 4000;
+              if (fieldName === 'shortDescription') return GOOGLE_PLAY_FIELD_LIMITS.shortDescription;
+              if (fieldName === 'fullDescription') return GOOGLE_PLAY_FIELD_LIMITS.fullDescription;
               return FIELD_LIMITS[fieldName as keyof typeof FIELD_LIMITS];
             };
 

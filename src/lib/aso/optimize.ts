@@ -2,7 +2,7 @@ import {
   generateContents,
   generateDescription,
 } from '@/lib/llm/utils/generate-contents';
-import { FIELD_LIMITS } from '@/types/app-store';
+import { FIELD_LIMITS, GOOGLE_PLAY_FIELD_LIMITS } from '@/types/app-store';
 import { AsoContent, AsoKeyword, AsoTarget, Store } from '@/types/aso';
 import {
   AsoDescriptionError,
@@ -287,18 +287,18 @@ export async function optimizeContents(
 
         // Validate title (30 chars for Google Play)
         if (needsTitle && generated.title) {
-          if (generated.title.length > 30) {
+          if (generated.title.length > GOOGLE_PLAY_FIELD_LIMITS.title) {
             errors.push(
-              `Title is too long (${generated.title.length}/30 chars). Make it shorter to fit within the limit.`
+              `Title is too long (${generated.title.length}/${GOOGLE_PLAY_FIELD_LIMITS.title} chars). Make it shorter to fit within the limit.`
             );
           }
         }
 
         // Validate shortDescription (80 chars for Google Play)
         if (needsShortDesc && generated.subtitle) {
-          if (generated.subtitle.length > 80) {
+          if (generated.subtitle.length > GOOGLE_PLAY_FIELD_LIMITS.shortDescription) {
             errors.push(
-              `Short description is too long (${generated.subtitle.length}/80 chars). Make it shorter to fit within the limit.`
+              `Short description is too long (${generated.subtitle.length}/${GOOGLE_PLAY_FIELD_LIMITS.shortDescription} chars). Make it shorter to fit within the limit.`
             );
           }
         }
@@ -668,7 +668,7 @@ function validateContent(
   if (result.subtitle) {
     // Check if this is for Google Play shortDescription (80 chars) or App Store subtitle (30 chars)
     const isGooglePlayShortDesc = targets.includes(AsoTarget.shortDescription);
-    const maxLength = isGooglePlayShortDesc ? 80 : FIELD_LIMITS.subtitle;
+    const maxLength = isGooglePlayShortDesc ? GOOGLE_PLAY_FIELD_LIMITS.shortDescription : FIELD_LIMITS.subtitle;
     const minLength = maxLength * 0.6;
     const fieldName = isGooglePlayShortDesc ? 'Short description' : 'Subtitle';
 
