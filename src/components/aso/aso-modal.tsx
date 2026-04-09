@@ -56,6 +56,7 @@ export function ASOModal({
   const t = useTranslations('aso');
   const analytics = useAnalytics();
   const asoKeywords = useGetAsoKeywords(appInfo?.currentApp?.id || '', locale);
+  const { refresh: refreshKeywords } = asoKeywords;
   const asoCompetitors = useGetCompetitors(
     appInfo?.currentApp?.id || '',
     locale
@@ -415,6 +416,7 @@ export function ASOModal({
   const handleSaveContent = (values: AsoContent) => {
     setGeneratedContent(values);
     onSave(values);
+    refreshKeywords();
     onClose();
   };
 
