@@ -182,7 +182,7 @@ export default function AppLocalizationView({
       exit={{ height: 0, opacity: 0 }}
       className="space-y-4 pt-4"
     >
-      <h4 className="text-sm font-medium text-gray-500">
+      <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">
         {t('advanced-settings')}
       </h4>
 
@@ -241,13 +241,13 @@ export default function AppLocalizationView({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+      className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
     >
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
       >
-        <h3 className="text-lg font-medium text-gray-900">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
           {getLocaleName(localization.locale as LocaleCode)}
         </h3>
         <div className="flex items-center space-x-3">
@@ -287,7 +287,7 @@ export default function AppLocalizationView({
             animate={{ rotate: isExpanded ? 180 : 0 }}
             transition={{ duration: 0.2 }}
           >
-            <MdExpandMore className="w-6 h-6 text-gray-400" />
+            <MdExpandMore className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </motion.div>
         </div>
       </button>
@@ -300,7 +300,7 @@ export default function AppLocalizationView({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="p-6 border-t border-gray-100 space-y-4">
+            <div className="p-6 border-t border-gray-100 dark:border-gray-700 space-y-4">
               {mode === LocalizationEditMode.QUICK_RELEASE
                 ? renderQuickReleaseMode()
                 : renderASOMode()}
@@ -308,7 +308,7 @@ export default function AppLocalizationView({
               <div className="flex justify-end">
                 <button
                   onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="flex items-center space-x-1 text-sm text-gray-500 hover:text-gray-700"
+                  className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                 >
                   <MdSettings
                     className={`w-4 h-4 ${showAdvanced ? 'text-blue-500' : ''}`}

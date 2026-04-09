@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AppAnalyticsRow } from '@/lib/swr/app';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
@@ -31,33 +31,48 @@ function formatNumber(n: number) {
   return String(n);
 }
 
+function useDarkMode() {
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    setIsDark(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isDark;
+}
+
 function LineChart({
   data,
   metric,
   color,
+  isDark,
 }: {
   data: AppAnalyticsRow[];
   metric: Metric;
   color: string;
+  isDark: boolean;
 }) {
   const W = 600;
   const H = 140;
   const PAD = { top: 8, right: 8, bottom: 24, left: 40 };
 
+  const labelColor = isDark ? '#6b7280' : '#9ca3af';
+  const gridColor = isDark ? '#374151' : '#f3f4f6';
+
   const values = data.map((d) => d[metric]);
   const maxVal = Math.max(...values, 1);
-  const minVal = 0;
 
   const toX = (i: number) =>
     PAD.left + (i / Math.max(data.length - 1, 1)) * (W - PAD.left - PAD.right);
   const toY = (v: number) =>
-    PAD.top + ((maxVal - v) / (maxVal - minVal)) * (H - PAD.top - PAD.bottom);
+    PAD.top + ((maxVal - v) / maxVal) * (H - PAD.top - PAD.bottom);
 
   const points = data
     .map((d, i) => `${toX(i).toFixed(1)},${toY(d[metric]).toFixed(1)}`)
     .join(' ');
 
-  // Area fill path
   const areaPath =
     data.length > 1
       ? `M${toX(0)},${H - PAD.bottom} ` +
@@ -67,13 +82,11 @@ function LineChart({
         ` L${toX(data.length - 1)},${H - PAD.bottom} Z`
       : '';
 
-  // Y axis labels
-  const yLabels = [maxVal, maxVal / 2, 0].map((v, i) => ({
+  const yLabels = [maxVal, maxVal / 2, 0].map((v) => ({
     y: toY(v),
     label: formatNumber(Math.round(v)),
   }));
 
-  // X axis labels (first, middle, last)
   const xLabelIndices =
     data.length > 2
       ? [0, Math.floor(data.length / 2), data.length - 1]
@@ -86,7 +99,6 @@ function LineChart({
       style={{ height: H }}
       preserveAspectRatio="none"
     >
-      {/* Y axis labels */}
       {yLabels.map(({ y, label }) => (
         <text
           key={label}
@@ -94,13 +106,12 @@ function LineChart({
           y={y + 4}
           textAnchor="end"
           fontSize={9}
-          fill="#9ca3af"
+          fill={labelColor}
         >
           {label}
         </text>
       ))}
 
-      {/* Grid lines */}
       {yLabels.map(({ y, label }) => (
         <line
           key={`grid-${label}`}
@@ -108,12 +119,11 @@ function LineChart({
           y1={y}
           x2={W - PAD.right}
           y2={y}
-          stroke="#f3f4f6"
+          stroke={gridColor}
           strokeWidth={1}
         />
       ))}
 
-      {/* X axis labels */}
       {data.length > 0 &&
         xLabelIndices.map((idx) => (
           <text
@@ -122,16 +132,14 @@ function LineChart({
             y={H - 4}
             textAnchor="middle"
             fontSize={8}
-            fill="#9ca3af"
+            fill={labelColor}
           >
             {data[idx].date.slice(5)}
           </text>
         ))}
 
-      {/* Area */}
       {areaPath && <path d={areaPath} fill={color} fillOpacity={0.08} />}
 
-      {/* Line */}
       {data.length > 1 && (
         <polyline
           points={points}
@@ -143,7 +151,6 @@ function LineChart({
         />
       )}
 
-      {/* Last point dot */}
       {data.length > 0 && (
         <circle
           cx={toX(data.length - 1)}
@@ -158,15 +165,15 @@ function LineChart({
 
 export default function AnalyticsChart({ data, loading }: AnalyticsChartProps) {
   const [activeMetric, setActiveMetric] = useState<Metric>('impressions');
+  const isDark = useDarkMode();
 
   const metric = METRICS.find((m) => m.key === activeMetric)!;
-
   const total = data.reduce((sum, d) => sum + d[activeMetric], 0);
   const latest = data.length > 0 ? data[data.length - 1][activeMetric] : 0;
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
         <Skeleton height={20} width={160} className="mb-4" />
         <Skeleton height={140} />
       </div>
@@ -175,9 +182,11 @@ export default function AnalyticsChart({ data, loading }: AnalyticsChartProps) {
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <h3 className="text-base font-medium text-gray-900 mb-1">Analytics</h3>
-        <p className="text-sm text-gray-500">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+        <h3 className="text-base font-medium text-gray-900 dark:text-gray-100 mb-1">
+          Analytics
+        </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           No analytics data yet. Data is collected daily from App Store Connect.
         </p>
       </div>
@@ -185,23 +194,26 @@ export default function AnalyticsChart({ data, loading }: AnalyticsChartProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-base font-medium text-gray-900">Analytics</h3>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <h3 className="text-base font-medium text-gray-900 dark:text-gray-100">
+            Analytics
+          </h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
             Last {data.length} days
           </p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-semibold text-gray-900">
+          <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
             {formatNumber(total)}
           </p>
-          <p className="text-xs text-gray-400">{metric.label} (total)</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            {metric.label} (total)
+          </p>
         </div>
       </div>
 
-      {/* Metric tabs */}
       <div className="flex flex-wrap gap-1.5 mb-4">
         {METRICS.map((m) => (
           <button
@@ -210,7 +222,7 @@ export default function AnalyticsChart({ data, loading }: AnalyticsChartProps) {
             className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
               activeMetric === m.key
                 ? 'text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
             style={
               activeMetric === m.key ? { backgroundColor: m.color } : undefined
@@ -221,15 +233,18 @@ export default function AnalyticsChart({ data, loading }: AnalyticsChartProps) {
         ))}
       </div>
 
-      {/* Chart */}
       <div className="overflow-hidden">
-        <LineChart data={data} metric={activeMetric} color={metric.color} />
+        <LineChart
+          data={data}
+          metric={activeMetric}
+          color={metric.color}
+          isDark={isDark}
+        />
       </div>
 
-      {/* Latest day */}
-      <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between text-xs text-gray-500">
+      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between text-xs text-gray-500 dark:text-gray-400">
         <span>Latest: {data[data.length - 1]?.date}</span>
-        <span className="font-medium text-gray-700">
+        <span className="font-medium text-gray-700 dark:text-gray-200">
           {formatNumber(latest)}
         </span>
       </div>
