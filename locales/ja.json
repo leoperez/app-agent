@@ -56,6 +56,14 @@
     "aso-focus-description": "日本やアメリカのみでASOを徹底的にハックしたい。すでにASOをハックしていてさらにASOをハックしたい。"
   },
   "emails": {
+    "invitation": {
+      "subject": "{teamName}チームへの招待",
+      "title": "チームへの招待が届いています",
+      "intro": "{inviter}さんが{teamName}チームにあなたを招待しました。",
+      "description": "下のボタンをクリックして招待を承認してください。",
+      "cta": "招待を承認する",
+      "link-note": "または以下のURLをブラウザに貼り付けてください："
+    },
     "competitor-changes": {
       "title": "競合アプリの変更を検出しました",
       "intro": "トラッキング中の競合アプリに以下の変更が検出されました：",

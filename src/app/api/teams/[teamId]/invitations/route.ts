@@ -7,6 +7,8 @@ import {
 } from '@/types/errors';
 import prisma from '@/lib/prisma';
 import { randomBytes } from 'crypto';
+import { sendInvitationEmail } from '@/lib/emails/send-invitation';
+import { NEXT_PUBLIC_BASE_URL } from '@/lib/config';
 
 function requireAdmin(team: any, currentUserId: string) {
   const isAdmin = team.users.some(
@@ -54,8 +56,21 @@ export async function POST(
       create: { email, teamId, token, expires },
     });
 
-    const baseUrl = request.headers.get('origin') || '';
-    const inviteUrl = `${baseUrl}/invite/${token}`;
+    const inviteUrl = `${NEXT_PUBLIC_BASE_URL}/invite/${token}`;
+
+    // Get inviter name from team users
+    const inviter = team.users.find((u: any) => u.userId === currentUserId);
+    const inviterName = inviter?.user?.name ?? null;
+
+    // Send invitation email (fire & forget — don't fail if email fails)
+    sendInvitationEmail({
+      to: email,
+      inviteUrl,
+      teamName: (team as any).name ?? teamId,
+      inviterName,
+    }).catch((err) =>
+      console.error(`Failed to send invitation email to ${email}:`, err)
+    );
 
     return NextResponse.json({ inviteUrl, token, expires });
   } catch (error) {

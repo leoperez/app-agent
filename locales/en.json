@@ -56,6 +56,14 @@
     "aso-focus-description": "You need a tool that excels at ASO for English markets alone. AppAgent is built for global reach, not market-specific optimization."
   },
   "emails": {
+    "invitation": {
+      "subject": "You've been invited to join {teamName}",
+      "title": "You have a team invitation",
+      "intro": "{inviter} has invited you to join the {teamName} team.",
+      "description": "Click the button below to accept the invitation and get started.",
+      "cta": "Accept Invitation",
+      "link-note": "Or copy and paste this URL into your browser:"
+    },
     "competitor-changes": {
       "title": "Competitor updates detected",
       "intro": "We detected the following changes in your tracked competitors:",
