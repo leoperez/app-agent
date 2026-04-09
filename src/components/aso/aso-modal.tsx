@@ -549,6 +549,7 @@ export function ASOModal({
                 <div className="flex-1 overflow-auto">
                   <KeywordChips
                     keywords={keywords}
+                    locale={locale}
                     onAdd={handleKeywordAdd}
                     onDelete={handleKeywordDelete}
                     isLoading={isLoading}

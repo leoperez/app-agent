@@ -45,6 +45,20 @@ export function useGetAsoKeywords(appId: string, locale: LocaleCode) {
   };
 }
 
+export function useGetKeywordRankings(appId: string, locale: LocaleCode) {
+  const teamInfo = useTeam();
+  const { data, error, isLoading } = useSWR<
+    Record<string, { date: string; position: number | null }[]>
+  >(
+    teamInfo?.currentTeam?.id && appId && locale
+      ? `/api/teams/${teamInfo.currentTeam.id}/apps/${appId}/localizations/${locale}/keyword/rankings`
+      : null,
+    fetcher
+  );
+
+  return { rankings: data, loading: isLoading, error };
+}
+
 export function useGetCompetitors(appId: string, locale: LocaleCode) {
   const teamInfo = useTeam();
   const [isRefreshing, setIsRefreshing] = useState(false);

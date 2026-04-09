@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/cron/keyword-rankings",
+      "schedule": "0 6 * * *"
+    }
+  ],
   "functions": {
     "src/app/api/teams/[teamId]/app-store-connect/import/route.ts": {
       "memory": 2048

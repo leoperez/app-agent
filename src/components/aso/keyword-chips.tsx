@@ -10,16 +10,24 @@ import { useTranslations } from 'next-intl';
 
 import { AsoKeyword } from '@/types/aso';
 import { getChipColor } from './colors';
+import KeywordSparkline from './keyword-sparkline';
+import { LocaleCode } from '@/lib/utils/locale';
+import { useGetKeywordRankings } from '@/lib/swr/aso';
+import { useApp } from '@/context/app';
 
 interface KeywordChipsProps {
   keywords: AsoKeyword[];
+  locale?: LocaleCode;
   readonly?: boolean;
   onAdd: (keyword: string) => Promise<void>;
   onDelete: (keywordId: string) => Promise<void>;
   isLoading?: boolean;
 }
 
-function renderTooltipContent(keyword: AsoKeyword) {
+function renderTooltipContent(
+  keyword: AsoKeyword,
+  history?: { date: string; position: number | null }[]
+) {
   const fields = [
     { label: 'Score', value: keyword.overall },
     { label: 'Difficulty', value: keyword.difficultyScore || null },
@@ -34,21 +42,30 @@ function renderTooltipContent(keyword: AsoKeyword) {
   ];
 
   return (
-    <div className="p-2 space-y-1 text-sm">
-      {fields
-        .filter((field) => field.value != null)
-        .map(({ label, value }) => (
-          <div key={label} className="flex justify-between gap-4">
-            <span className="text-muted-foreground">{label}:</span>
-            <span className="font-medium">{value}</span>
-          </div>
-        ))}
+    <div className="p-2 space-y-2 text-sm">
+      <div className="space-y-1">
+        {fields
+          .filter((field) => field.value != null)
+          .map(({ label, value }) => (
+            <div key={label} className="flex justify-between gap-4">
+              <span className="text-muted-foreground">{label}:</span>
+              <span className="font-medium">{value}</span>
+            </div>
+          ))}
+      </div>
+      {history && history.length >= 2 && (
+        <div className="pt-1 border-t border-white/20">
+          <p className="text-xs text-muted-foreground mb-1">30-day trend</p>
+          <KeywordSparkline data={history} />
+        </div>
+      )}
     </div>
   );
 }
 
 export default function KeywordChips({
   keywords,
+  locale,
   readonly = false,
   onAdd,
   onDelete,
@@ -57,6 +74,11 @@ export default function KeywordChips({
   const t = useTranslations('aso');
   const [loadingKeywords, setLoadingKeywords] = useState<Set<string>>(
     new Set()
+  );
+  const appInfo = useApp();
+  const { rankings } = useGetKeywordRankings(
+    appInfo?.currentApp?.id || '',
+    locale || ('' as LocaleCode)
   );
 
   const handleAddKeyword = async (value: string) => {
@@ -160,7 +182,10 @@ export default function KeywordChips({
                       className="z-50 max-w-md"
                       delayShow={200}
                     >
-                      {renderTooltipContent(keywordObj)}
+                      {renderTooltipContent(
+                        keywordObj,
+                        rankings?.[keywordObj.keyword]
+                      )}
                     </Tooltip>
                   )}
                 </React.Fragment>

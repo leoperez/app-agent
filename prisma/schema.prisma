@@ -188,10 +188,11 @@ model App {
   released         DateTime?
   shortDescription String?
 
-  versions        AppVersion[]
-  localizations   AppLocalization[]
-  asoKeywords     AsoKeyword[]
-  competitors     Competitor[]
+  versions           AppVersion[]
+  localizations      AppLocalization[]
+  asoKeywords        AsoKeyword[]
+  asoKeywordRankings AsoKeywordRanking[]
+  competitors        Competitor[]
 
   isStaged        Boolean   @default(false)
 
@@ -307,6 +308,22 @@ model AsoKeyword {
   @@index([locale])
   @@index([keyword])
   @@index([lastCheckedAt])
+}
+
+model AsoKeywordRanking {
+  id         String   @id @default(cuid())
+  appId      String
+  app        App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  store      Store
+  platform   Platform
+  locale     String
+  keyword    String
+  position   Int?     // null = not in top 100
+  recordedAt DateTime @default(now())
+
+  @@index([appId, locale, keyword, recordedAt])
+  @@index([appId])
+  @@index([recordedAt])
 }
 
 model Competitor {
