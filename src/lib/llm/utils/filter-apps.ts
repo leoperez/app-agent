@@ -1,22 +1,26 @@
 import { LLM_MODEL } from '@/lib/config';
-import { AppStoreApp } from '@/types/app-store';
 import { appFilteringSystemPrompt } from '@/lib/llm/prompts/keyword';
 import openai, { zodResponseFormat } from '@/lib/llm/openai';
 import { ChatCompletionMessageParam } from 'openai/resources/index.mjs';
 import { z } from 'zod';
 import { LlmRefusalError } from '@/types/errors';
+import { logLLMUsage } from '@/lib/llm/log-usage';
 
 const IndicesResponseSchema = z.object({
   reasoningSteps: z.array(z.string()),
   indices: z.array(z.number()),
 });
 
-// TODO: make it store agnostic
-export async function filterApps(
+interface FilterableApp {
+  title?: string | null;
+  description?: string | null;
+}
+
+export async function filterApps<T extends FilterableApp>(
   title: string,
   shortDescription: string,
-  apps: Partial<AppStoreApp>[]
-) {
+  apps: T[]
+): Promise<T[]> {
   const messages = [
     { role: 'system', content: appFilteringSystemPrompt.trim() },
     {
@@ -35,7 +39,8 @@ export async function filterApps(
     throw new LlmRefusalError('The model refused to generate indices.');
   }
 
+  logLLMUsage('filter-apps', LLM_MODEL, response.usage);
   const result = response.choices[0].message.parsed;
   const indices = result?.indices;
-  return indices?.map((i) => apps[i - 1]) || [];
+  return (indices?.map((i) => apps[i - 1]).filter(Boolean) as T[]) || [];
 }
