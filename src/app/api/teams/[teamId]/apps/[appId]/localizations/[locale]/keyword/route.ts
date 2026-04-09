@@ -75,6 +75,25 @@ export async function POST(
       throw new AppNotFoundError(`App ${appId} not found`);
     }
 
+    // App Store keyword field is limited to 100 characters (comma-separated)
+    if (app.store === 'APPSTORE') {
+      const existingKeywords = await prisma.asoKeyword.findMany({
+        where: { appId, locale },
+        select: { keyword: true },
+      });
+      const existing = existingKeywords.map((k) => k.keyword);
+      // Only count the term if it's not already in the list
+      const allKeywords = existing.includes(term)
+        ? existing
+        : [...existing, term];
+      const combined = allKeywords.join(',');
+      if (combined.length > 100) {
+        throw new InvalidParamsError(
+          `Adding "${term}" would exceed the 100-character App Store keyword limit (${combined.length} chars). Remove some keywords first.`
+        );
+      }
+    }
+
     // Convert Google Play locale to App Store locale for scoring
     const appStoreLocale = googlePlayToAppStore(locale);
 

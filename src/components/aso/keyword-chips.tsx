@@ -8,12 +8,14 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import { Tooltip } from 'react-tooltip';
 import { useTranslations } from 'next-intl';
 
-import { AsoKeyword } from '@/types/aso';
+import { AsoKeyword, Store } from '@/types/aso';
 import { getChipColor } from './colors';
 import KeywordSparkline from './keyword-sparkline';
 import { LocaleCode } from '@/lib/utils/locale';
 import { useGetKeywordRankings } from '@/lib/swr/aso';
 import { useApp } from '@/context/app';
+
+const APP_STORE_KEYWORD_LIMIT = 100;
 
 interface KeywordChipsProps {
   keywords: AsoKeyword[];
@@ -81,6 +83,10 @@ export default function KeywordChips({
     locale || ('' as LocaleCode)
   );
 
+  const isAppStore = appInfo?.currentApp?.store === Store.APPSTORE;
+  const keywordChars = keywords.map((k) => k.keyword).join(',').length;
+  const charsRemaining = APP_STORE_KEYWORD_LIMIT - keywordChars;
+
   const handleAddKeyword = async (value: string) => {
     if (!value.trim()) return;
 
@@ -100,10 +106,25 @@ export default function KeywordChips({
 
   return (
     <motion.div
-      className="space-y-6 max-h-[400px] overflow-y-auto"
+      className="space-y-4 max-h-[400px] overflow-y-auto"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
+      {isAppStore && (
+        <div className="flex items-center justify-end">
+          <span
+            className={`text-xs font-mono ${
+              charsRemaining < 0
+                ? 'text-red-500'
+                : charsRemaining <= 10
+                  ? 'text-amber-500'
+                  : 'text-muted-foreground'
+            }`}
+          >
+            {keywordChars}/{APP_STORE_KEYWORD_LIMIT} chars
+          </span>
+        </div>
+      )}
       <div className="flex flex-wrap gap-2">
         <AnimatePresence mode="popLayout">
           {isLoading ? (

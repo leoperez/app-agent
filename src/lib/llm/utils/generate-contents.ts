@@ -13,7 +13,6 @@ import { getLocaleName, LocaleCode } from '@/lib/utils/locale';
 import { LLM_MODEL } from '@/lib/config';
 import { logLLMUsage } from '@/lib/llm/log-usage';
 
-// TODO: check the max length of keywords. This is also mentioned in the prompt.
 const ContentsResponseSchemaForAppStore = z.object({
   title: z
     .string()
