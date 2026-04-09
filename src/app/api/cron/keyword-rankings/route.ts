@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { scoreKeyword } from '@/lib/aso/score';
+import { scoreKeywordGPlay } from '@/lib/google-play/score-keyword';
 import { googlePlayToAppStore } from '@/lib/utils/locale';
 import { Platform, Store } from '@/types/aso';
 import { validateCronSecret } from '@/lib/utils/cron-auth';
@@ -52,12 +53,18 @@ export async function GET(request: NextRequest) {
       await Promise.all(
         batch.map(async (kw) => {
           try {
-            const appStoreLocale = googlePlayToAppStore(kw.locale);
-            const score = await scoreKeyword(
-              appStoreLocale,
-              kw.keyword,
-              kw.app.storeAppId
-            );
+            const score =
+              kw.store === Store.GOOGLEPLAY
+                ? await scoreKeywordGPlay(
+                    kw.locale,
+                    kw.keyword,
+                    kw.app.storeAppId
+                  )
+                : await scoreKeyword(
+                    googlePlayToAppStore(kw.locale),
+                    kw.keyword,
+                    kw.app.storeAppId
+                  );
             const position = score.position === -1 ? null : score.position;
 
             snapshots.push({
