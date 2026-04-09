@@ -236,7 +236,7 @@ export default function KeyUpload({ onKeyUploaded, teamId }: KeyUploadProps) {
             <motion.div
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
-              {...(getRootProps() as React.HTMLAttributes<HTMLDivElement>)}
+              {...(({ onAnimationStart: _a, ...rest }) => rest)(getRootProps())}
               className={`border-2 border-dashed rounded-md p-6 text-center cursor-pointer
                 ${isDragActive ? 'border-primary bg-primary/5' : 'border-muted'}
                 ${p8Error ? 'border-destructive' : ''}
