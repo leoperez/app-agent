@@ -3,13 +3,13 @@ import {
   getCountryCode,
   getLocaleString,
 } from '@/lib/app-store/country-mapper';
-import { LocaleCode } from '@/lib/utils/locale';
+import { AppStoreLocaleCode } from '@/lib/utils/locale';
 import { AppStoreApp } from '@/types/app-store';
 import { tarseAppData } from '@/lib/aso/tarser';
 
 export async function getSimilarApps(
   appId: string,
-  locale: LocaleCode
+  locale: AppStoreLocaleCode
 ): Promise<Partial<AppStoreApp>[]> {
   return (
     await client.similarApps({
