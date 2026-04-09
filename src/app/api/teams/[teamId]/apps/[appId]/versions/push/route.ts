@@ -69,24 +69,37 @@ export async function POST(
       }
 
       // Prepare all listings for a single edit session
-      const listingsToUpdate = localizations
-        .filter((loc) => loc.locale) // Only include localizations with a locale
-        .map((localization) => ({
-          language: localization.locale!,
-          title: localization.title || undefined,
-          shortDescription: localization.shortDescription || undefined,
-          fullDescription:
-            localization.fullDescription ||
-            localization.description ||
-            undefined,
-          video: localization.videoUrl || undefined,
-        }));
+      const filteredLocalizations = localizations.filter((loc) => loc.locale);
+      const listingsToUpdate = filteredLocalizations.map((localization) => ({
+        language: localization.locale!,
+        title: localization.title || undefined,
+        shortDescription: localization.shortDescription || undefined,
+        fullDescription:
+          localization.fullDescription || localization.description || undefined,
+        video: localization.videoUrl || undefined,
+      }));
 
-      // Update all listings in a single edit session
+      // Build release notes config if any localization has whatsNew
+      const releaseNotes = filteredLocalizations
+        .filter((loc) => loc.whatsNew)
+        .map((loc) => ({ language: loc.locale!, text: loc.whatsNew! }));
+
+      const firstVersion = filteredLocalizations[0]?.appVersion;
+      const releaseNotesConfig =
+        releaseNotes.length > 0 && firstVersion
+          ? {
+              track: firstVersion.releaseType || 'production',
+              versionCode: parseInt(firstVersion.version || '0', 10),
+              notes: releaseNotes,
+            }
+          : undefined;
+
+      // Update all listings (and release notes if present) in a single edit session
       await updateGooglePlayMultipleListings(
         serviceAccountKey,
         app.storeAppId,
-        listingsToUpdate
+        listingsToUpdate,
+        releaseNotesConfig
       );
     } else {
       // App Store Connect flow (default)

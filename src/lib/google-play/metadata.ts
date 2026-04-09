@@ -294,10 +294,11 @@ export async function fetchAppDetails(
 }
 
 /**
- * Update multiple listings in a single edit session
+ * Update multiple listings in a single edit session, optionally including release notes.
  * @param serviceAccountKey - Service account credentials
  * @param packageName - App package name
  * @param listings - Array of listings to update
+ * @param releaseNotesConfig - Optional release notes to update in the same edit
  * @returns true if successful
  */
 export async function updateMultipleListings(
@@ -309,7 +310,12 @@ export async function updateMultipleListings(
     shortDescription?: string;
     fullDescription?: string;
     video?: string;
-  }>
+  }>,
+  releaseNotesConfig?: {
+    track: string;
+    versionCode: number;
+    notes: Array<{ language: string; text: string }>;
+  }
 ): Promise<boolean> {
   try {
     const client = await getGooglePlayClient(serviceAccountKey);
@@ -342,6 +348,56 @@ export async function updateMultipleListings(
           })
         )
       );
+
+      // If release notes provided, update the track release in the same edit
+      if (releaseNotesConfig && releaseNotesConfig.notes.length > 0) {
+        try {
+          const trackResponse = await client.edits.tracks.get({
+            packageName,
+            editId,
+            track: releaseNotesConfig.track,
+          });
+
+          if (trackResponse.data.releases) {
+            const versionCodeStr = releaseNotesConfig.versionCode.toString();
+            const updatedReleases = trackResponse.data.releases.map(
+              (release) => {
+                const hasVersion =
+                  release.versionCodes?.includes(versionCodeStr) ||
+                  release.versionCodes?.some(
+                    (vc) => vc?.toString() === versionCodeStr
+                  );
+                if (hasVersion) {
+                  return {
+                    ...release,
+                    releaseNotes: releaseNotesConfig.notes.map((note) => ({
+                      language: note.language,
+                      text: note.text,
+                    })),
+                  };
+                }
+                return release;
+              }
+            );
+
+            await client.edits.tracks.update({
+              packageName,
+              editId,
+              track: releaseNotesConfig.track,
+              requestBody: {
+                track: releaseNotesConfig.track,
+                releases: updatedReleases,
+              },
+            });
+          }
+        } catch (releaseNotesError) {
+          // Don't fail the entire push if release notes update fails
+          console.error(
+            'Failed to update release notes, continuing with listing update:',
+            releaseNotesError
+          );
+        }
+      }
 
       // Commit the edit once after all updates
       await client.edits.commit({
