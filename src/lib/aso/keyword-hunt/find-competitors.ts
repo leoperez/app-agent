@@ -266,7 +266,7 @@ export async function findCompetitors(
  * This is to avoid rate limiting and to make the process more efficient.
  */
 async function searchCompetitorsByKeywords(
-  locale: LocaleCode,
+  locale: AppStoreLocaleCode,
   keywords: string[]
 ): Promise<Partial<AppStoreApp>[]> {
   const BATCH_SIZE = 5;
@@ -339,7 +339,7 @@ function selectTopCompetitors(
 
 async function saveCompetitors(
   appId: string,
-  locale: LocaleCode,
+  locale: AppStoreLocaleCode,
   competitors: Partial<AppStoreApp>[],
   store: Store = 'APPSTORE'
 ) {
