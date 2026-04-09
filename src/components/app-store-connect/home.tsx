@@ -464,25 +464,27 @@ export default function Home() {
                   </Tooltip>
                 </div>
 
-                <div>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowSubmitDialog(true)}
-                    disabled={!canSubmit}
-                    className={`flex items-center ${
-                      !canSubmit
-                        ? 'text-gray-400'
-                        : 'text-green-500 hover:bg-green-50/80'
-                    }`}
-                    data-tooltip-id="submit-tooltip"
-                  >
-                    <MdOutlineRocketLaunch className="w-5 h-5" />
-                    {t('release')}
-                  </Button>
-                  <Tooltip id="submit-tooltip" place="top">
-                    {t('submit-for-review')}
-                  </Tooltip>
-                </div>
+                {currentApp?.store !== 'GOOGLEPLAY' && (
+                  <div>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowSubmitDialog(true)}
+                      disabled={!canSubmit}
+                      className={`flex items-center ${
+                        !canSubmit
+                          ? 'text-gray-400'
+                          : 'text-green-500 hover:bg-green-50/80'
+                      }`}
+                      data-tooltip-id="submit-tooltip"
+                    >
+                      <MdOutlineRocketLaunch className="w-5 h-5" />
+                      {t('release')}
+                    </Button>
+                    <Tooltip id="submit-tooltip" place="top">
+                      {t('submit-for-review')}
+                    </Tooltip>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -587,13 +589,15 @@ export default function Home() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <SubmitDialog
-        open={showSubmitDialog}
-        onOpenChange={setShowSubmitDialog}
-        teamId={teamInfo?.currentTeam?.id || ''}
-        appId={currentApp?.id || ''}
-        versionId={versionStatus?.localVersion?.id || ''}
-      />
+      {currentApp?.store !== 'GOOGLEPLAY' && (
+        <SubmitDialog
+          open={showSubmitDialog}
+          onOpenChange={setShowSubmitDialog}
+          teamId={teamInfo?.currentTeam?.id || ''}
+          appId={currentApp?.id || ''}
+          versionId={versionStatus?.localVersion?.id || ''}
+        />
+      )}
     </div>
   );
 }
