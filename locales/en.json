@@ -502,7 +502,10 @@
     "keyword-opportunities": "{count} keyword opportunities from competitors",
     "keyword-opportunities-description": "These keywords are used by your competitors but not yet tracked by you. Click to add.",
     "from-competitor": "From competitor",
-    "keyword-conversion-title": "Position & downloads for \"{keyword}\""
+    "keyword-conversion-title": "Position & downloads for \"{keyword}\"",
+    "cannibalization-title": "{count} keyword cannibalization issue{count, plural, one {} other {s}}",
+    "cannibalization-description": "These keywords appear in multiple locales. They may compete against each other — consider using unique keywords per locale.",
+    "cannibalization-locales": "locales"
   },
   "account": {
     "account-settings": "Account Settings",

@@ -35,6 +35,7 @@ import { useAnalytics } from '@/lib/analytics';
 import CompetitorResearchProgress from '@/components/aso/competitor-research-progress';
 import CompetitorList from '@/components/aso/competitor-list';
 import { AppStoreApp } from '@/types/app-store';
+import { KeywordCannibalization } from '@/components/aso/keyword-cannibalization';
 
 interface ASOModalProps {
   isOpen: boolean;
@@ -548,7 +549,8 @@ export function ASOModal({
 
             {step === 4 && (
               <div className="flex flex-col flex-1 min-h-0">
-                <div className="flex-1 overflow-auto">
+                <div className="flex-1 overflow-auto space-y-4">
+                  <KeywordCannibalization />
                   <KeywordChips
                     keywords={keywords}
                     locale={locale}

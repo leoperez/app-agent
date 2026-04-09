@@ -467,7 +467,10 @@
     "keyword-opportunities": "競合アプリの未追跡キーワード: {count}件",
     "keyword-opportunities-description": "競合アプリで使用されているが、まだ追跡していないキーワードです。クリックして追加できます。",
     "from-competitor": "競合アプリ",
-    "keyword-conversion-title": "「{keyword}」の順位とダウンロード数"
+    "keyword-conversion-title": "「{keyword}」の順位とダウンロード数",
+    "cannibalization-title": "{count}件のキーワード競合",
+    "cannibalization-description": "これらのキーワードは複数のロケールで使用されています。相互に競合する可能性があります。ロケールごとに異なるキーワードを使用することを検討してください。",
+    "cannibalization-locales": "ロケール"
   },
   "account": {
     "account-settings": "アカウント設定",

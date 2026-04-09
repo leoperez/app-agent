@@ -142,6 +142,24 @@ export function useGetKeywordOpportunities(appId: string, locale: LocaleCode) {
   return { opportunities: data ?? [], loading: isLoading, error, mutate };
 }
 
+export interface CannibalizationEntry {
+  keyword: string;
+  locales: string[];
+  positions: (number | null)[];
+  overallScores: (number | null)[];
+}
+
+export function useGetCannibalization(appId: string) {
+  const teamInfo = useTeam();
+  const { data, error, isLoading } = useSWR<CannibalizationEntry[]>(
+    teamInfo?.currentTeam?.id && appId
+      ? `/api/teams/${teamInfo.currentTeam.id}/apps/${appId}/keywords/cannibalization`
+      : null,
+    fetcher
+  );
+  return { cannibalized: data ?? [], loading: isLoading, error };
+}
+
 export function useGetWhatsNewHistory(
   appId: string,
   locale: string,
