@@ -290,6 +290,24 @@
         "cancel": "キャンセル",
         "submit-for-review": "レビューに提出",
         "submitting": "提出中..."
+      },
+      "variants": {
+        "title": "メタデータバリアント",
+        "description": "メタデータの名前付きスナップショットを保存してA/Bテストを行い、どのバージョンが最もパフォーマンスが高いか追跡します。",
+        "save-current": "現在の内容をバリアントとして保存",
+        "name-placeholder": "例: タイトル短縮テスト",
+        "save": "保存",
+        "saving": "保存中...",
+        "saved": "バリアントを保存しました",
+        "save-error": "バリアントの保存に失敗しました",
+        "cancel": "キャンセル",
+        "apply": "適用",
+        "applied": "エディタにバリアントを適用しました",
+        "deleted": "バリアントを削除しました",
+        "empty": "まだバリアントが保存されていません",
+        "applied-on": "適用日",
+        "field-title": "タイトル",
+        "field-keywords": "キーワード"
       }
     },
     "google-play": {

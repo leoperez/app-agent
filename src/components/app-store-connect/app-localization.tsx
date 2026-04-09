@@ -18,6 +18,7 @@ import { FIELD_LIMITS, GOOGLE_PLAY_FIELD_LIMITS } from '@/types/app-store';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { useGetWhatsNewHistory } from '@/lib/swr/aso';
+import { MetadataVariants } from './metadata-variants';
 
 interface AppLocalizationProps {
   // Current localization data in draft
@@ -404,6 +405,15 @@ export default function AppLocalizationView({
               {mode === LocalizationEditMode.QUICK_RELEASE
                 ? renderQuickReleaseMode()
                 : renderASOMode()}
+
+              {mode !== LocalizationEditMode.QUICK_RELEASE && (
+                <MetadataVariants
+                  appId={localization.appId}
+                  locale={localization.locale ?? ''}
+                  localization={localization}
+                  onApply={(fields) => onUpdate(fields)}
+                />
+              )}
 
               <div className="flex justify-end">
                 <button

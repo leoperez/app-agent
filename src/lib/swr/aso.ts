@@ -12,6 +12,7 @@ import {
 } from '@/types/aso';
 import type { KeywordOpportunity } from '@/app/api/teams/[teamId]/apps/[appId]/keywords/opportunities/route';
 import type { WhatsNewHistoryEntry } from '@/app/api/teams/[teamId]/apps/[appId]/localizations/[locale]/whats-new-history/route';
+import type { MetadataVariantResponse } from '@/app/api/teams/[teamId]/apps/[appId]/localizations/[locale]/variants/route';
 import { fetcher } from '../utils/fetcher';
 import { useState } from 'react';
 import useSWR from 'swr';
@@ -155,6 +156,64 @@ export function useGetWhatsNewHistory(
   );
 
   return { history: data ?? [], loading: isLoading, error };
+}
+
+export function useGetMetadataVariants(
+  appId: string,
+  locale: string,
+  enabled = true
+) {
+  const teamInfo = useTeam();
+  const { data, error, isLoading, mutate } = useSWR<MetadataVariantResponse[]>(
+    enabled && teamInfo?.currentTeam?.id && appId && locale
+      ? `/api/teams/${teamInfo.currentTeam.id}/apps/${appId}/localizations/${locale}/variants`
+      : null,
+    fetcher
+  );
+
+  const saveVariant = async (payload: {
+    name: string;
+    title?: string | null;
+    subtitle?: string | null;
+    keywords?: string | null;
+    description?: string | null;
+  }) => {
+    const res = await fetch(
+      `/api/teams/${teamInfo!.currentTeam!.id}/apps/${appId}/localizations/${locale}/variants`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }
+    );
+    if (!res.ok) throw new Error('Failed to save variant');
+    await mutate();
+  };
+
+  const deleteVariant = async (variantId: string) => {
+    await fetch(
+      `/api/teams/${teamInfo!.currentTeam!.id}/apps/${appId}/localizations/${locale}/variants/${variantId}`,
+      { method: 'DELETE' }
+    );
+    await mutate();
+  };
+
+  const markVariantActive = async (variantId: string) => {
+    await fetch(
+      `/api/teams/${teamInfo!.currentTeam!.id}/apps/${appId}/localizations/${locale}/variants/${variantId}`,
+      { method: 'PATCH' }
+    );
+    await mutate();
+  };
+
+  return {
+    variants: data ?? [],
+    loading: isLoading,
+    error,
+    saveVariant,
+    deleteVariant,
+    markVariantActive,
+  };
 }
 
 export async function researchCompetitors(

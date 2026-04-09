@@ -290,6 +290,24 @@
         "cancel": "Cancel",
         "submit-for-review": "Submit for Review",
         "submitting": "Submitting..."
+      },
+      "variants": {
+        "title": "Metadata Variants",
+        "description": "Save named snapshots of your metadata to A/B test different versions and track which performs best.",
+        "save-current": "Save current as variant",
+        "name-placeholder": "e.g. Short title test",
+        "save": "Save",
+        "saving": "Saving...",
+        "saved": "Variant saved",
+        "save-error": "Failed to save variant",
+        "cancel": "Cancel",
+        "apply": "Apply",
+        "applied": "Variant applied to editor",
+        "deleted": "Variant deleted",
+        "empty": "No variants saved yet",
+        "applied-on": "applied",
+        "field-title": "Title",
+        "field-keywords": "Keywords"
       }
     },
     "google-play": {

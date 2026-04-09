@@ -199,6 +199,7 @@ model App {
   competitors        Competitor[]
   analytics          AppAnalytics[]
   whatsNewHistory    WhatsNewHistory[]
+  metadataVariants   MetadataVariant[]
 
   isStaged        Boolean   @default(false)
 
@@ -301,6 +302,23 @@ model WhatsNewHistory {
   pushedAt  DateTime @default(now())
 
   @@index([appId, locale, pushedAt])
+}
+
+model MetadataVariant {
+  id          String    @id @default(cuid())
+  appId       String
+  app         App       @relation(fields: [appId], references: [id], onDelete: Cascade)
+  locale      String
+  name        String    // user-defined label e.g. "Short title test"
+  title       String?
+  subtitle    String?
+  keywords    String?
+  description String?   @db.Text
+  isActive    Boolean   @default(false) // currently live on the store
+  appliedAt   DateTime? // when this variant was last applied/pushed
+  createdAt   DateTime  @default(now())
+
+  @@index([appId, locale])
 }
 
 model AsoKeyword {
