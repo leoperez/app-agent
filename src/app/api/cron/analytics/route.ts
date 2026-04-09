@@ -8,6 +8,7 @@ import {
   readAnalyticsReport,
 } from '@/lib/app-store-connect/analytics';
 import prisma from '@/lib/prisma';
+import { generateJWT, isAppStoreConnectJWTExpired } from '@/lib/app-store-connect/auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +17,12 @@ export async function GET(request: NextRequest) {
       include: {
         team: {
           select: {
+            id: true,
             appStoreConnectJWT: true,
+            appStoreConnectJWTExpiresAt: true,
+            appStoreConnectIssuerId: true,
+            appStoreConnectKeyId: true,
+            appStoreConnectPrivateKey: true,
           },
         },
       },
@@ -30,8 +36,32 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
+      // Refresh JWT if expired
+      let jwt = app.team.appStoreConnectJWT;
+      if (isAppStoreConnectJWTExpired(jwt)) {
+        if (
+          !app.team.appStoreConnectIssuerId ||
+          !app.team.appStoreConnectKeyId ||
+          !app.team.appStoreConnectPrivateKey
+        ) {
+          console.log(`Team ${app.team.id} missing ASC credentials, skipping`);
+          continue;
+        }
+        jwt = await generateJWT(
+          app.team.appStoreConnectIssuerId,
+          app.team.appStoreConnectKeyId,
+          app.team.appStoreConnectPrivateKey
+        );
+        const expiresAt = new Date();
+        expiresAt.setMinutes(expiresAt.getMinutes() + 20);
+        await prisma.team.update({
+          where: { id: app.team.id },
+          data: { appStoreConnectJWT: jwt, appStoreConnectJWTExpiresAt: expiresAt },
+        });
+      }
+
       let reportRequests = await getAnalyticsReportRequests(
-        app.team.appStoreConnectJWT,
+        jwt,
         app.storeAppId
       );
       // console.log('reportRequests', JSON.stringify(reportRequests, null, 2));
@@ -39,10 +69,10 @@ export async function GET(request: NextRequest) {
         (report) => report.attributes.stoppedDueToInactivity === false
       );
       if (!reportRequests.length) {
-        await requestReport(app.team.appStoreConnectJWT, app.storeAppId);
+        await requestReport(jwt, app.storeAppId);
         console.log('requested report, and going to get the list again');
         reportRequests = await getAnalyticsReportRequests(
-          app.team.appStoreConnectJWT,
+          jwt,
           app.storeAppId
         );
       }
@@ -55,19 +85,19 @@ export async function GET(request: NextRequest) {
       const reportRequestId = reportRequests[0].id;
 
       // const analyticsReport = await getAnalyticsReport(
-      //   app.team.appStoreConnectJWT,
+      //   jwt,
       //   app.storeAppId,
       //   reportRequestId
       // );
       // console.log('analyticsReport', JSON.stringify(analyticsReport, null, 2));
       const analyticsReports = await getAnalyticsReports(
-        app.team.appStoreConnectJWT,
+        jwt,
         reportRequestId
       );
       console.log(`analytics reports: ${analyticsReports.length}`);
 
       const instances = await getAnalyticsReportInstances(
-        app.team.appStoreConnectJWT,
+        jwt,
         analyticsReports[0].id
       );
       console.log('instances', JSON.stringify(instances, null, 2));
@@ -93,7 +123,7 @@ export async function GET(request: NextRequest) {
       );
 
       const instanceData = await readAnalyticsReport(
-        app.team.appStoreConnectJWT,
+        jwt,
         engagementInstance.id
       );
       console.log('instanceData', JSON.stringify(instanceData, null, 2));

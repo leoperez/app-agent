@@ -1,6 +1,17 @@
 import { createPrivateKey } from 'crypto';
-import { jwtVerify, SignJWT } from 'jose';
+import { decodeJwt, SignJWT } from 'jose';
 import { AppStoreConnectAuthError } from '@/types/errors';
+
+export function isAppStoreConnectJWTExpired(token: string): boolean {
+  try {
+    const payload = decodeJwt(token);
+    if (!payload.exp) return true;
+    // exp is in seconds, Date.now() is in milliseconds
+    return Date.now() >= payload.exp * 1000;
+  } catch {
+    return true;
+  }
+}
 
 export async function generateJWT(
   issuerId: string,

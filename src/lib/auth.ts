@@ -16,7 +16,7 @@ import sendWelcomeEmail from '@/lib/emails/send-welcome';
 import { CreateUserEmailProps, Team, User } from '@/types/user';
 import prisma from '@/lib/prisma';
 import { AnalyticsEvent } from '@/types/analytics';
-import { generateJWT } from '@/lib/app-store-connect/auth';
+import { generateJWT, isAppStoreConnectJWTExpired } from '@/lib/app-store-connect/auth';
 import {
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
@@ -276,11 +276,6 @@ export async function validateTeamAccess(req: Request): Promise<{
   return { userId, teamId, session, team, appStoreConnectJWT };
 }
 
-export function isAppStoreConnectJWTExpired(token: string): boolean {
-  // TODO: implement JWT expiration check
-  return false;
-}
-
 export async function refreshAppStoreConnectJWT(teamId: string) {
   const team = await prisma.team.findUnique({
     where: { id: teamId },
@@ -298,8 +293,8 @@ export async function refreshAppStoreConnectJWT(teamId: string) {
   }
 
   const jwt = await generateJWT(
-    team.appStoreConnectKeyId,
     team.appStoreConnectIssuerId,
+    team.appStoreConnectKeyId,
     team.appStoreConnectPrivateKey
   );
 
