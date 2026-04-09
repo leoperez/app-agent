@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { LlmRefusalError } from '@/types/errors';
 import { getLocaleName, LocaleCode } from '@/lib/utils/locale';
 import { LLM_MODEL } from '@/lib/config';
+import { logLLMUsage } from '@/lib/llm/log-usage';
 
 const Step = z.object({
   explanation: z.string(),
@@ -36,6 +37,7 @@ export async function extractKeywords(...inputs: string[]) {
     throw new LlmRefusalError('The model refused to generate keywords.');
   }
 
+  logLLMUsage('extract-keywords', LLM_MODEL, response.usage);
   const keywords = response.choices[0].message.parsed;
 
   return keywords;
@@ -72,6 +74,7 @@ Locale: ${getLocaleName(locale)}`,
     throw new LlmRefusalError('The model refused to generate keywords.');
   }
 
+  logLLMUsage('extract-keywords-from-description', LLM_MODEL, response.usage);
   const keywords = response.choices[0].message.parsed;
 
   return keywords?.keywords || [];

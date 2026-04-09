@@ -11,6 +11,7 @@ import { ChatCompletionMessageParam } from 'openai/resources/index.mjs';
 import { LlmRefusalError } from '@/types/errors';
 import { getLocaleName, LocaleCode } from '@/lib/utils/locale';
 import { LLM_MODEL } from '@/lib/config';
+import { logLLMUsage } from '@/lib/llm/log-usage';
 
 // TODO: check the max length of keywords. This is also mentioned in the prompt.
 const ContentsResponseSchemaForAppStore = z.object({
@@ -138,6 +139,7 @@ export async function generateContents(
     throw new LlmRefusalError('The model refused to generate contents.');
   }
 
+  logLLMUsage('generate-contents', LLM_MODEL, response.usage);
   const result = response.choices[0].message.parsed;
   return result || {};
 }
@@ -206,7 +208,6 @@ export async function generateDescription(
     messages,
   });
 
-  console.log(response.choices[0].message.content);
-
+  logLLMUsage('generate-description', LLM_MODEL, response.usage);
   return response.choices[0].message.content || '';
 }

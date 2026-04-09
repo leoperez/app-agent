@@ -1,5 +1,6 @@
 import { LLM_MODEL } from '@/lib/config';
 import openai, { zodResponseFormat } from '@/lib/llm/openai';
+import { logLLMUsage } from '@/lib/llm/log-usage';
 import { z } from 'zod';
 import { keywordRerankingPrompt } from '@/lib/llm/prompts/keyword';
 import { LlmRefusalError } from '@/types/errors';
@@ -47,6 +48,7 @@ Here are keywords of competitor apps: ${formattedKeywords}`,
     throw new LlmRefusalError('The model refused to rerank keywords.');
   }
 
+  logLLMUsage('rerank-keywords', LLM_MODEL, response.usage);
   const result = response.choices[0].message.parsed;
   return result?.keywords || [];
 }

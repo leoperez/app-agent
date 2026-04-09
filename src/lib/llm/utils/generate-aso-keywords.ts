@@ -1,4 +1,5 @@
 import { LLM_MODEL } from '@/lib/config';
+import { logLLMUsage } from '@/lib/llm/log-usage';
 import { ChatCompletionMessageParam } from 'openai/resources/index.mjs';
 import { LocaleCode, getLocaleName } from '@/lib/utils/locale';
 import openai, { zodResponseFormat } from '@/lib/llm/openai';
@@ -41,5 +42,6 @@ Locale: ${getLocaleName(locale)}`,
     throw new LlmRefusalError(response.choices[0].message.refusal);
   }
 
+  logLLMUsage('generate-aso-keywords', LLM_MODEL, response.usage);
   return response.choices[0].message.parsed?.keywords ?? [];
 }
