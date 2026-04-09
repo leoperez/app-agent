@@ -271,7 +271,7 @@ export async function selectAndScoreKeywords(
 
 async function saveAsoKeywords(
   appId: string,
-  locale: LocaleCode | string,
+  locale: AppStoreLocaleCode | string,
   keywords: KeywordScore[],
   store: Store,
   platform: Platform
