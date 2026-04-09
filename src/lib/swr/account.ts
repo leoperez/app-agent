@@ -12,3 +12,21 @@ export async function setLocale(locale: string) {
   });
   return response.json();
 }
+
+export async function getNotificationPrefs(): Promise<{
+  notifyCompetitorChanges: boolean;
+}> {
+  const response = await fetch(`/api/account/notifications`);
+  return response.json();
+}
+
+export async function setNotificationPrefs(prefs: {
+  notifyCompetitorChanges: boolean;
+}) {
+  const response = await fetch(`/api/account/notifications`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(prefs),
+  });
+  return response.json();
+}

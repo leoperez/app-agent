@@ -482,7 +482,12 @@
     "teams": "Teams",
     "manage-teams": "Manage Teams",
     "select-team": "Select Team",
-    "delete-account-subscription-active": "To delete your account, you must first cancel your paid plan."
+    "delete-account-subscription-active": "To delete your account, you must first cancel your paid plan.",
+    "notifications": "Notifications",
+    "notifications-description": "Control which email notifications you receive",
+    "notify-competitor-changes": "Competitor change alerts",
+    "notify-competitor-changes-description": "Receive a daily digest when tracked competitors update their app title, subtitle, or description",
+    "notifications-saved": "Notification preferences saved"
   },
   "common": {
     "coming-soon": "Coming Soon",

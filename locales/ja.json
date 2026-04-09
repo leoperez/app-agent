@@ -447,7 +447,12 @@
     "teams": "チーム",
     "manage-teams": "チームを管理",
     "select-team": "チームを選択",
-    "delete-account-subscription-active": "アカウントを削除するには、まず有料プランをキャンセルする必要があります。"
+    "delete-account-subscription-active": "アカウントを削除するには、まず有料プランをキャンセルする必要があります。",
+    "notifications": "通知設定",
+    "notifications-description": "受け取るメール通知を管理します",
+    "notify-competitor-changes": "競合アプリ変更アラート",
+    "notify-competitor-changes-description": "追跡中の競合アプリのタイトル・サブタイトル・説明文が更新された際に日次ダイジェストメールを受け取ります",
+    "notifications-saved": "通知設定を保存しました"
   },
   "common": {
     "coming-soon": "開発中",

@@ -44,7 +44,15 @@ export async function GET(request: NextRequest) {
             team: {
               include: {
                 users: {
-                  include: { user: { select: { email: true, locale: true } } },
+                  include: {
+                    user: {
+                      select: {
+                        email: true,
+                        locale: true,
+                        notifyCompetitorChanges: true,
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -142,7 +150,9 @@ export async function GET(request: NextRequest) {
           if (!changesByTeam[teamId]) changesByTeam[teamId] = [];
           if (!teamUsers[teamId]) {
             teamUsers[teamId] = competitor.app.team.users
-              .filter((u) => u.user.email)
+              .filter(
+                (u) => u.user.email && u.user.notifyCompetitorChanges !== false
+              )
               .map((u) => ({
                 email: u.user.email as string,
                 locale: u.user.locale ?? 'en',
