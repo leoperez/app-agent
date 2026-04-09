@@ -310,6 +310,19 @@ model AsoKeyword {
   @@index([lastCheckedAt])
 }
 
+model CompetitorChange {
+  id             String     @id @default(cuid())
+  competitorId   String
+  competitor     Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  field          String     // "title" | "subtitle" | "description"
+  previousValue  String?    @db.Text
+  newValue       String?    @db.Text
+  detectedAt     DateTime   @default(now())
+
+  @@index([competitorId])
+  @@index([detectedAt])
+}
+
 model AsoKeywordRanking {
   id         String   @id @default(cuid())
   appId      String
@@ -340,6 +353,7 @@ model Competitor {
   reviews Int @default(0)
   order Int @default(0)
   store Store
+  changes CompetitorChange[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

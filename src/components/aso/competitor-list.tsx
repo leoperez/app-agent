@@ -7,12 +7,13 @@ import { FiX, FiPlus, FiSearch } from 'react-icons/fi';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Competitor } from '@/types/aso';
-import { searchCompetitors } from '@/lib/swr/aso';
+import { searchCompetitors, useGetCompetitorChanges } from '@/lib/swr/aso';
 import { useTeam } from '@/context/team';
 import { LocaleCode } from '@/lib/utils/locale';
 import { cn } from '@/lib/utils';
 import { AppStoreApp } from '@/types/app-store';
 import { toast } from 'react-hot-toast';
+import { useApp } from '@/context/app';
 
 interface CompetitorListProps {
   appId: string;
@@ -33,6 +34,11 @@ export default function CompetitorList({
 }: CompetitorListProps) {
   const t = useTranslations('aso');
   const teamInfo = useTeam();
+  const appInfo = useApp();
+  const { changedCompetitorIds } = useGetCompetitorChanges(
+    appInfo?.currentApp?.id || '',
+    locale
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Partial<AppStoreApp>[]>(
     []
@@ -246,9 +252,16 @@ export default function CompetitorList({
                       />
                     )}
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium truncate">
-                        {competitor.title}
-                      </h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium truncate">
+                          {competitor.title}
+                        </h4>
+                        {changedCompetitorIds.has(competitor.competitorId) && (
+                          <span className="shrink-0 text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded-full font-medium">
+                            Updated
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground truncate">
                         {t('reviews', {
                           reviews: competitor.reviews.toLocaleString(),

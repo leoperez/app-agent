@@ -45,6 +45,43 @@ export function useGetAsoKeywords(appId: string, locale: LocaleCode) {
   };
 }
 
+export function useGetCompetitorChanges(appId: string, locale: LocaleCode) {
+  const teamInfo = useTeam();
+  const { data, error, isLoading } = useSWR<
+    {
+      id: string;
+      competitorId: string;
+      field: string;
+      previousValue: string | null;
+      newValue: string | null;
+      detectedAt: string;
+      competitor: {
+        id: string;
+        title: string;
+        competitorId: string;
+        iconUrl: string | null;
+      };
+    }[]
+  >(
+    teamInfo?.currentTeam?.id && appId && locale
+      ? `/api/teams/${teamInfo.currentTeam.id}/apps/${appId}/localizations/${locale}/competitors/changes`
+      : null,
+    fetcher
+  );
+
+  // Map: competitorId -> hasRecentChange
+  const changedCompetitorIds = new Set(
+    (data ?? []).map((c) => c.competitor.competitorId)
+  );
+
+  return {
+    changes: data ?? [],
+    changedCompetitorIds,
+    loading: isLoading,
+    error,
+  };
+}
+
 export function useGetKeywordRankings(appId: string, locale: LocaleCode) {
   const teamInfo = useTeam();
   const { data, error, isLoading } = useSWR<
