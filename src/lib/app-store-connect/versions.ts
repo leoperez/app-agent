@@ -25,6 +25,20 @@ import { upsertAppStoreConnectApp } from '../utils/versions';
 import { LocaleCode } from '../utils/locale';
 import { AppVersion, Platform } from '@/types/aso';
 
+/**
+ * Maps a Prisma Platform enum value to the platform string used by the
+ * App Store Connect API (e.g. MACOS → MAC_OS, TVOS → TV_OS).
+ */
+export function toAscPlatform(platform: Platform | string): string {
+  const map: Record<string, string> = {
+    IOS: 'IOS',
+    MACOS: 'MAC_OS',
+    TVOS: 'TV_OS',
+    ANDROID: 'IOS', // fallback — shouldn't reach ASC for Android apps
+  };
+  return map[platform] ?? 'IOS';
+}
+
 export async function fetchAppStoreVersions(token: string, appId: string) {
   const response = await fetch(
     `https://api.appstoreconnect.apple.com/v1/apps/${appId}/appStoreVersions`,
@@ -67,7 +81,7 @@ export async function fetchAppStoreVersions(token: string, appId: string) {
 export async function checkIfVersionUpToDate(
   token: string,
   appId: string,
-  platform: Platform = 'IOS'
+  platform: string = 'IOS'
 ): Promise<{
   upToDate: boolean;
   localVersion?: {
@@ -135,18 +149,19 @@ export async function pullLatestVersionFromAppStoreConnect(
   teamId: string,
   primaryLocale?: LocaleCode
 ) {
+  const app = await prisma.app.findUnique({ where: { id: appId } });
+
   if (!primaryLocale) {
-    const app = await prisma.app.findUnique({
-      where: { id: appId },
-    });
     primaryLocale = (app?.primaryLocale as LocaleCode) || 'en-US';
   }
+
+  const ascPlatform = toAscPlatform(app?.platform ?? 'IOS');
 
   // NOTE: This uses async calls inside the transaction to fetch metadata and upsert versions and localizations
   // It may take a while to complete, so we increase the timeout to 20 seconds.
   await prisma.$transaction(
     async (prisma) => {
-      const metadata = await fetchAppMetadata(token, appId);
+      const metadata = await fetchAppMetadata(token, appId, ascPlatform);
 
       console.log(`Going to save localizations and versions for ${appId}`);
 

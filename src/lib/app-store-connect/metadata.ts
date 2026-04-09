@@ -163,13 +163,12 @@ export async function fetchAppStoreVersionLocalizations(
 export async function fetchAppMetadata(
   token: string,
   appId: string,
-  platform: Platform = 'IOS'
+  platform: string = 'IOS'
 ): Promise<{
   draftAppInfo: AppStoreConnectAppInfoData | null;
   draftAppInfoLocalizations: AppStoreConnectAppInfoLocalization[];
   publicAppInfo: AppStoreConnectAppInfoData | null;
   publicAppInfoLocalizations: AppStoreConnectAppInfoLocalization[];
-  // TODO: Add mac support
   publicLatestVersion: AppStoreConnectVersionData | null;
   publicLatestLocalizations: AppStoreConnectVersionLocalization[];
   draftVersion?: AppStoreConnectVersionData;
@@ -182,7 +181,6 @@ export async function fetchAppMetadata(
   const draftVersions = versions.filter((v) =>
     draftVersion(v.attributes.appStoreState)
   );
-  // TODO: Add mac support
   const draftLatestVersion = draftVersions.length
     ? draftVersions.filter((v) => v.attributes.platform === platform)[0]
     : null;

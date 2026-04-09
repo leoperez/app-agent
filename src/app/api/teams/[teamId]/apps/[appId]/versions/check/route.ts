@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
-import { checkIfVersionUpToDate as checkAppStoreVersion } from '@/lib/app-store-connect/versions';
+import {
+  checkIfVersionUpToDate as checkAppStoreVersion,
+  toAscPlatform,
+} from '@/lib/app-store-connect/versions';
 import { checkIfVersionUpToDate as checkGooglePlayVersion } from '@/lib/google-play/versions';
 import { validateTeamAccess } from '@/lib/auth';
 import { getGooglePlayKeyFromDB } from '@/lib/google-play/key';
@@ -32,7 +35,7 @@ export async function GET(
     // Get app from database to determine store
     const app = await prisma.app.findUnique({
       where: { id: appId },
-      select: { store: true, storeAppId: true },
+      select: { store: true, storeAppId: true, platform: true },
     });
 
     if (!app) {
@@ -57,8 +60,12 @@ export async function GET(
         app.storeAppId
       );
     } else {
-      // App Store Connect flow (default)
-      versionStatus = await checkAppStoreVersion(appStoreConnectJWT, appId);
+      // App Store Connect flow — pass the correct platform (IOS, MAC_OS, TV_OS)
+      versionStatus = await checkAppStoreVersion(
+        appStoreConnectJWT,
+        appId,
+        toAscPlatform(app.platform)
+      );
     }
 
     return NextResponse.json(versionStatus);
