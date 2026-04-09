@@ -162,30 +162,22 @@ export default function AppLocalizations({
   }, [localizations]);
 
   const getLocaleMetadata = useCallback(
-    (locale: string) => {
-      const localization =
-        localizations[locale]?.draft || localizations[locale]?.public;
+  (locale: string): AsoContent => {
+    const localization =
+      localizations[locale]?.draft || localizations[locale]?.public;
 
-      // Return fields based on store type
-      if (appInfo?.currentApp?.store === 'GOOGLEPLAY') {
-        return {
-          title: localization?.title || '',
-          shortDescription: localization?.shortDescription || '',
-          fullDescription:
-            localization?.fullDescription || localization?.description || '',
-        };
-      }
-
-      // App Store fields
-      return {
-        title: localization?.title || '',
-        subtitle: localization?.subtitle || '',
-        description: localization?.description || '',
-        keywords: localization?.keywords || '',
-      };
-    },
-    [localizations, appInfo?.currentApp?.store]
-  );
+    return {
+      title: localization?.title || '',
+      subtitle: localization?.subtitle || '',
+      description: localization?.description || '',
+      keywords: localization?.keywords || '',
+      shortDescription: localization?.shortDescription || '',
+      fullDescription:
+        localization?.fullDescription || localization?.description || '',
+    };
+  },
+  [localizations]
+);
 
   const handleASOUpdate = (locale: string, updatedMetadata: AsoContent) => {
     updateLocalLocalizations(locale, updatedMetadata);
