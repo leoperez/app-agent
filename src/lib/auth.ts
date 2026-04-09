@@ -111,8 +111,8 @@ export const authOptions: NextAuthOptions = {
     },
     session: async ({ session, token }) => {
       session.user = {
-        id: token.sub,
         ...(token.user as User),
+        id: token.sub,
       } as User;
       return session;
     },
