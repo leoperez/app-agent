@@ -10,6 +10,7 @@ import { findCompetitors } from '@/lib/aso/keyword-hunt/find-competitors';
 import { draftVersion, publicVersion } from '@/lib/utils/versions';
 import { Store } from '@/types/aso';
 import { createStreamingResponse } from '@/lib/utils/streaming';
+import { checkRateLimit } from '@/lib/utils/rate-limit';
 
 export const maxDuration = 300;
 
@@ -19,7 +20,9 @@ export async function POST(
   { params }: { params: { teamId: string; appId: string; locale: string } }
 ) {
   try {
-    const { teamId } = await validateTeamAccess(request);
+    const { teamId, userId } = await validateTeamAccess(request);
+    await checkRateLimit(`competitor-research:${userId}`, 3, '1 h');
+
     const { appId, locale } = params;
     const data = await request.json();
 

@@ -10,6 +10,7 @@ import {
   InvalidParamsError,
 } from '@/types/errors';
 import { NextResponse } from 'next/server';
+import { checkRateLimit } from '@/lib/utils/rate-limit';
 
 export const maxDuration = 300;
 
@@ -22,7 +23,9 @@ export async function POST(
   // It will leverage LLM to generate the title, subtitle, and description.
   // It will validate the length and format of the LLM output. If it fails, it will retry with the feedback message.
   try {
-    const { teamId } = await validateTeamAccess(request);
+    const { teamId, userId } = await validateTeamAccess(request);
+    await checkRateLimit(`optimization:${userId}`, 10, '1 m');
+
     const { appId, locale } = params;
     const data = await request.json();
 

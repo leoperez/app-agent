@@ -25,6 +25,7 @@ export enum AppErrorType {
   LLM_REFUSAL = 'LLM_REFUSAL',
   MISSING_REQUIRED_PROPERTIES = 'MISSING_REQUIRED_PROPERTIES',
   NO_PLAN_FOUND = 'NO_PLAN_FOUND',
+  RATE_LIMITED = 'RATE_LIMITED',
   UNKNOWN = 'UNKNOWN',
 }
 
@@ -46,6 +47,8 @@ export function handleAppError(error: Error) {
       return NextResponse.json(error, { status: 403 });
     case AppErrorType.APP_NOT_FOUND:
       return NextResponse.json(error, { status: 404 });
+    case AppErrorType.RATE_LIMITED:
+      return NextResponse.json(error, { status: 429 });
     case AppErrorType.APP_STORE_CONNECT_VERSION_CONFLICT:
       return NextResponse.json(error, { status: 409 });
     default:
@@ -240,6 +243,13 @@ export class NoPlanFoundError extends AppError {
   constructor(message: string) {
     super(message, AppErrorType.NO_PLAN_FOUND);
     Object.setPrototypeOf(this, NoPlanFoundError.prototype);
+  }
+}
+
+export class RateLimitError extends AppError {
+  constructor(message = 'Too many requests. Please try again later.') {
+    super(message, AppErrorType.RATE_LIMITED);
+    Object.setPrototypeOf(this, RateLimitError.prototype);
   }
 }
 

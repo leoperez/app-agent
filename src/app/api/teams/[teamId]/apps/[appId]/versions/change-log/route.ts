@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { generateLocalizations } from '@/lib/llm/utils/generate-localization';
 import { InvalidParamsError, handleAppError } from '@/types/errors';
+import { validateTeamAccess } from '@/lib/auth';
+import { checkRateLimit } from '@/lib/utils/rate-limit';
 import { AppLocalization, AsoKeyword, Platform, Store } from '@/types/aso';
 import prisma from '@/lib/prisma';
 import { LocaleCode } from '@/lib/utils/locale';
@@ -13,6 +15,9 @@ export async function POST(
   { params }: { params: { teamId: string; appId: string } }
 ) {
   try {
+    const { userId } = await validateTeamAccess(request);
+    await checkRateLimit(`change-log:${userId}`, 5, '1 m');
+
     const { whatsNew, localizations, version, platform, store } =
       (await request.json()) as {
         whatsNew: string;
