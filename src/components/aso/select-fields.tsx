@@ -25,18 +25,26 @@ export default function SelectFields({
   const isGooglePlay = store === Store.GOOGLEPLAY;
 
   // Define fields based on store type
-  const defaultFields = isGooglePlay
-    ? {
-        title: true,
-        shortDescription: true,
-        fullDescription: true,
-      }
-    : {
-        title: true,
-        subtitle: true,
-        description: true,
-        keywords: true,
-      };
+  const defaultFields: Record<string, boolean> = isGooglePlay
+  ? {
+      title: true,
+      subtitle: false,
+      description: false,
+      keywords: false,
+      shortDescription: true,
+      fullDescription: true,
+    }
+  : {
+      title: true,
+      subtitle: true,
+      description: true,
+      keywords: true,
+      shortDescription: false,
+      fullDescription: false,
+    };
+
+const [selectedFields, setSelectedFields] =
+  useState<Record<string, boolean>>(defaultFields);
 
   const [selectedFields, setSelectedFields] =
     useState<Record<string, boolean>>(defaultFields);
