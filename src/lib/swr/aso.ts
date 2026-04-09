@@ -10,6 +10,7 @@ import {
   AsoContent,
   Competitor,
 } from '@/types/aso';
+import type { KeywordOpportunity } from '@/app/api/teams/[teamId]/apps/[appId]/keywords/opportunities/route';
 import { fetcher } from '../utils/fetcher';
 import { useState } from 'react';
 import useSWR from 'swr';
@@ -125,6 +126,18 @@ export function useGetCompetitors(appId: string, locale: LocaleCode) {
     isRefreshing,
     refresh,
   };
+}
+
+export function useGetKeywordOpportunities(appId: string, locale: LocaleCode) {
+  const teamInfo = useTeam();
+  const { data, error, isLoading, mutate } = useSWR<KeywordOpportunity[]>(
+    teamInfo?.currentTeam?.id && appId && locale
+      ? `/api/teams/${teamInfo.currentTeam.id}/apps/${appId}/keywords/opportunities?locale=${locale}`
+      : null,
+    fetcher
+  );
+
+  return { opportunities: data ?? [], loading: isLoading, error, mutate };
 }
 
 export async function researchCompetitors(

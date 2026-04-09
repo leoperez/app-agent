@@ -1,6 +1,10 @@
 import React, { useRef, useState } from 'react';
 import { IoMdClose, IoMdAdd } from 'react-icons/io';
-import { MdOutlineFileUpload, MdOutlineFileDownload } from 'react-icons/md';
+import {
+  MdOutlineFileUpload,
+  MdOutlineFileDownload,
+  MdLightbulb,
+} from 'react-icons/md';
 import Skeleton from 'react-loading-skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -13,7 +17,10 @@ import { AsoKeyword, Store } from '@/types/aso';
 import { getChipColor } from './colors';
 import KeywordSparkline from './keyword-sparkline';
 import { LocaleCode } from '@/lib/utils/locale';
-import { useGetKeywordRankings } from '@/lib/swr/aso';
+import {
+  useGetKeywordRankings,
+  useGetKeywordOpportunities,
+} from '@/lib/swr/aso';
 import { useApp } from '@/context/app';
 import { useTeam } from '@/context/team';
 
@@ -88,6 +95,12 @@ export default function KeywordChips({
     appInfo?.currentApp?.id || '',
     locale || ('' as LocaleCode)
   );
+  const { opportunities, mutate: mutateOpportunities } =
+    useGetKeywordOpportunities(
+      appInfo?.currentApp?.id || '',
+      locale || ('' as LocaleCode)
+    );
+  const [showOpportunities, setShowOpportunities] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -375,6 +388,56 @@ export default function KeywordChips({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Keyword opportunities from competitors */}
+      {!readonly && opportunities.length > 0 && (
+        <div className="pt-2 border-t border-border">
+          <button
+            onClick={() => setShowOpportunities((v) => !v)}
+            className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium hover:underline"
+          >
+            <MdLightbulb className="h-3.5 w-3.5" />
+            {t('keyword-opportunities', { count: opportunities.length })}
+            <span className="text-muted-foreground ml-1">
+              {showOpportunities ? '▲' : '▼'}
+            </span>
+          </button>
+          <AnimatePresence>
+            {showOpportunities && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t('keyword-opportunities-description')}
+                </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {opportunities.map((opp) => (
+                    <motion.button
+                      key={opp.keyword}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0 }}
+                      onClick={async () => {
+                        await handleAddKeyword(opp.keyword);
+                        mutateOpportunities();
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+                      title={`${t('from-competitor')}: ${opp.competitorTitle}`}
+                    >
+                      <IoMdAdd className="h-3 w-3" />
+                      {opp.keyword}
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </motion.div>
   );
 }

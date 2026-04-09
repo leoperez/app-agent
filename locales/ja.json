@@ -430,7 +430,10 @@
     "brief-app-description-help": "より良いキーワード選定のために役立ちます。",
     "brief-app-description-help-2": "メインの機能やアプリのユニークな特徴を強調してください。",
     "research-competitors-button": "競合アプリを調査",
-    "researching-competitors-button": "競合アプリを調査中..."
+    "researching-competitors-button": "競合アプリを調査中...",
+    "keyword-opportunities": "競合アプリの未追跡キーワード: {count}件",
+    "keyword-opportunities-description": "競合アプリで使用されているが、まだ追跡していないキーワードです。クリックして追加できます。",
+    "from-competitor": "競合アプリ"
   },
   "account": {
     "account-settings": "アカウント設定",

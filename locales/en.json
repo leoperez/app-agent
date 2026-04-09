@@ -465,7 +465,10 @@
     "brief-app-description-help": "This will help us provide better keyword suggestions for your app.",
     "brief-app-description-help-2": "Highlight the app's features and benefits.",
     "researching-competitors-button": "Researching Competitors...",
-    "research-competitors-button": "Research Competitors"
+    "research-competitors-button": "Research Competitors",
+    "keyword-opportunities": "{count} keyword opportunities from competitors",
+    "keyword-opportunities-description": "These keywords are used by your competitors but not yet tracked by you. Click to add.",
+    "from-competitor": "From competitor"
   },
   "account": {
     "account-settings": "Account Settings",
