@@ -161,6 +161,7 @@
         "release-notes": "このバージョンの最新情報",
         "release-notes-placeholder": "このバージョンの最新情報の概要を入力してください。肉付けをして他の言語にも自動で翻訳します。",
         "apply-to-all-languages": "すべての言語に適用",
+        "copy-to-all-locales": "すべてにコピー（翻訳なし）",
         "add-new-locale": "新しい言語を追加",
         "add-new-locale-description": "このアクションを実行すると、現在の編集内容も同時に保存されます。",
         "locale": "言語",

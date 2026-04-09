@@ -161,6 +161,7 @@
         "release-notes": "Release Notes",
         "release-notes-placeholder": "Enter a rough draft of release notes in your primary language. We will refine it for each locale.",
         "apply-to-all-languages": "Apply to All Languages",
+        "copy-to-all-locales": "Copy to All (no translation)",
         "add-new-locale": "Add New Locale",
         "add-new-locale-description": "Adding a new locale will save all current changes in editing status. Select a locale to add to your app's information.",
         "locale": "Locale",

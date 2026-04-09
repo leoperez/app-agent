@@ -105,6 +105,14 @@ export default function AppLocalizations({
     setCurrentStepIndex(0);
   }, [appInfo?.currentApp?.id]);
 
+  const handleCopyToAllLocales = () => {
+    if (!globalWhatsNew.trim()) return;
+    Object.keys(localizations).forEach((locale) => {
+      updateLocalLocalizations(locale, { whatsNew: globalWhatsNew });
+    });
+    toast.success(t('copy-to-all-locales'));
+  };
+
   const handleApplyGlobalWhatsNew = async () => {
     try {
       setIsLocalizing(true);
@@ -162,22 +170,22 @@ export default function AppLocalizations({
   }, [localizations]);
 
   const getLocaleMetadata = useCallback(
-  (locale: string): AsoContent => {
-    const localization =
-      localizations[locale]?.draft || localizations[locale]?.public;
+    (locale: string): AsoContent => {
+      const localization =
+        localizations[locale]?.draft || localizations[locale]?.public;
 
-    return {
-      title: localization?.title || '',
-      subtitle: localization?.subtitle || '',
-      description: localization?.description || '',
-      keywords: localization?.keywords || '',
-      shortDescription: localization?.shortDescription || '',
-      fullDescription:
-        localization?.fullDescription || localization?.description || '',
-    };
-  },
-  [localizations]
-);
+      return {
+        title: localization?.title || '',
+        subtitle: localization?.subtitle || '',
+        description: localization?.description || '',
+        keywords: localization?.keywords || '',
+        shortDescription: localization?.shortDescription || '',
+        fullDescription:
+          localization?.fullDescription || localization?.description || '',
+      };
+    },
+    [localizations]
+  );
 
   const handleASOUpdate = (locale: string, updatedMetadata: AsoContent) => {
     updateLocalLocalizations(locale, updatedMetadata);
@@ -241,7 +249,14 @@ export default function AppLocalizations({
               rows={4}
               placeholder={t('release-notes-placeholder')}
             />
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={handleCopyToAllLocales}
+                disabled={!globalWhatsNew.trim()}
+              >
+                {t('copy-to-all-locales')}
+              </Button>
               <Button
                 onClick={handleApplyGlobalWhatsNew}
                 disabled={isLocalizing}
