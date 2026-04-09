@@ -69,7 +69,7 @@ export default function AppLocalizationView({
   // Compute completeness as a percentage of relevant filled fields
   const completenessScore = (() => {
     const fields = isGooglePlay
-      ? ['title', 'shortDescription', 'fullDescription']
+      ? ['title', 'shortDescription', 'fullDescription', 'keywords']
       : ['title', 'subtitle', 'description', 'keywords'];
     const filled = fields.filter(
       (f) => !!(localization as any)[f]?.trim()
@@ -200,6 +200,19 @@ export default function AppLocalizationView({
               originalData?.whatsNew || originalData?.recentChanges
             }
           />
+          {/* Target keywords — internal reference, not submitted to Google Play */}
+          <div className="space-y-1">
+            <LocalizationField
+              label={t('gplay-target-keywords')}
+              value={localization.keywords}
+              onChange={(value) => handleChange('keywords', value)}
+              hasChanged={hasFieldChanged('keywords')}
+              originalValue={originalData?.keywords}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t('gplay-target-keywords-note')}
+            </p>
+          </div>
         </>
       ) : (
         // App Store Connect: Show all fields

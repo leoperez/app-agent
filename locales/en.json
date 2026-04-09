@@ -273,7 +273,9 @@
         "add-more-locales-message": "Adding more language support can significantly increase your app's visibility and downloads in global markets. Consider adding more languages to maximize your app's exposure.",
         "whats-new-history": "What's New history",
         "whats-new-history-use": "Use this",
-        "completeness-score": "Metadata completeness"
+        "completeness-score": "Metadata completeness",
+        "gplay-target-keywords": "Target Keywords",
+        "gplay-target-keywords-note": "Internal reference only — not submitted to Google Play. Use these to guide your optimization of the title, short description, and full description."
       },
       "submit": {
         "title": "Release to App Store",
