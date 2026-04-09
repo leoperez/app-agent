@@ -400,6 +400,7 @@
     "bulk-import-placeholder": "Paste keywords separated by commas or newlines",
     "bulk-import-button": "Import All",
     "cancel": "Cancel",
+    "export-keywords": "Export CSV",
     "working-hard": "Working hard...",
     "completed": "Completed",
     "error-occurred-during-competitor-research": "Error occurred during competitor research",

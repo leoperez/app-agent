@@ -365,6 +365,7 @@
     "bulk-import-placeholder": "カンマまたは改行でキーワードを貼り付けてください",
     "bulk-import-button": "一括インポート",
     "cancel": "キャンセル",
+    "export-keywords": "CSVエクスポート",
     "working-hard": "処理中...",
     "completed": "完了",
     "error-occurred-during-competitor-research": "競合アプリの調査中にエラーが発生しました",

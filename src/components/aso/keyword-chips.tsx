@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { IoMdClose, IoMdAdd } from 'react-icons/io';
-import { MdOutlineFileUpload } from 'react-icons/md';
+import { MdOutlineFileUpload, MdOutlineFileDownload } from 'react-icons/md';
 import Skeleton from 'react-loading-skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import KeywordSparkline from './keyword-sparkline';
 import { LocaleCode } from '@/lib/utils/locale';
 import { useGetKeywordRankings } from '@/lib/swr/aso';
 import { useApp } from '@/context/app';
+import { useTeam } from '@/context/team';
 
 const APP_STORE_KEYWORD_LIMIT = 100;
 
@@ -82,6 +83,7 @@ export default function KeywordChips({
   const [bulkValue, setBulkValue] = useState('');
   const [isBulkImporting, setIsBulkImporting] = useState(false);
   const appInfo = useApp();
+  const teamInfo = useTeam();
   const { rankings } = useGetKeywordRankings(
     appInfo?.currentApp?.id || '',
     locale || ('' as LocaleCode)
@@ -134,8 +136,8 @@ export default function KeywordChips({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      {isAppStore && (
-        <div className="flex items-center justify-end">
+      <div className="flex items-center justify-between">
+        {isAppStore ? (
           <span
             className={`text-xs font-mono ${
               charsRemaining < 0
@@ -147,8 +149,29 @@ export default function KeywordChips({
           >
             {keywordChars}/{APP_STORE_KEYWORD_LIMIT} chars
           </span>
-        </div>
-      )}
+        ) : (
+          <span />
+        )}
+        {teamInfo?.currentTeam?.id &&
+          appInfo?.currentApp?.id &&
+          keywords.length > 0 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 px-2 text-xs text-muted-foreground"
+              title={t('export-keywords')}
+              onClick={() =>
+                window.open(
+                  `/api/teams/${teamInfo.currentTeam!.id}/apps/${appInfo.currentApp!.id}/keywords/export`,
+                  '_blank'
+                )
+              }
+            >
+              <MdOutlineFileDownload className="h-3.5 w-3.5 mr-1" />
+              {t('export-keywords')}
+            </Button>
+          )}
+      </div>
       <div className="flex flex-wrap gap-2">
         <AnimatePresence mode="popLayout">
           {isLoading ? (
