@@ -3,7 +3,14 @@
 import { AppLocalization, LocalizationEditMode, Store } from '@/types/aso';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MdExpandMore, MdSettings, MdAdd, MdAutoFixHigh } from 'react-icons/md';
+import {
+  MdExpandMore,
+  MdSettings,
+  MdAdd,
+  MdAutoFixHigh,
+  MdWarning,
+  MdCheckCircle,
+} from 'react-icons/md';
 import { getLocaleName, LocaleCode } from '@/lib/utils/locale';
 import LocalizationField from '@/components/common/localization-field';
 import { FIELD_LIMITS, GOOGLE_PLAY_FIELD_LIMITS } from '@/types/app-store';
@@ -245,11 +252,22 @@ export default function AppLocalizationView({
         </h3>
         <div className="flex items-center space-x-3">
           {mode === LocalizationEditMode.QUICK_RELEASE && (
-            <span className="text-sm text-gray-500">
-              {localization.whatsNew
-                ? `${localization.whatsNew.slice(0, 50)}${localization.whatsNew.length > 50 ? '...' : ''}`
-                : t('no-release-notes-yet')}
-            </span>
+            <>
+              {localization.whatsNew ? (
+                <span className="flex items-center gap-1 text-sm text-green-600">
+                  <MdCheckCircle className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline truncate max-w-[200px]">
+                    {localization.whatsNew.slice(0, 50)}
+                    {localization.whatsNew.length > 50 ? '…' : ''}
+                  </span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-sm text-amber-600 font-medium">
+                  <MdWarning className="w-4 h-4 flex-shrink-0" />
+                  {t('no-release-notes-yet')}
+                </span>
+              )}
+            </>
           )}
           {onASOClick && (
             <Button
