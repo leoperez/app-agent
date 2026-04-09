@@ -505,7 +505,14 @@
     "keyword-conversion-title": "Position & downloads for \"{keyword}\"",
     "cannibalization-title": "{count} keyword cannibalization issue{count, plural, one {} other {s}}",
     "cannibalization-description": "These keywords appear in multiple locales. They may compete against each other — consider using unique keywords per locale.",
-    "cannibalization-locales": "locales"
+    "cannibalization-locales": "locales",
+    "keyword-gap-title": "Competitor keyword gap",
+    "keyword-gap-description": "Keywords used by your competitors that you are not tracking yet. Add them to your keyword list to cover more search queries.",
+    "keyword-gap-col-keyword": "Keyword",
+    "keyword-gap-col-locale": "Locale",
+    "keyword-gap-col-competitors": "Competitors",
+    "keyword-gap-add": "Add keyword",
+    "keyword-gap-showing": "Showing {shown} of {total} keywords"
   },
   "account": {
     "account-settings": "Account Settings",

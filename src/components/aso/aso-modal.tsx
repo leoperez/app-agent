@@ -36,6 +36,7 @@ import CompetitorResearchProgress from '@/components/aso/competitor-research-pro
 import CompetitorList from '@/components/aso/competitor-list';
 import { AppStoreApp } from '@/types/app-store';
 import { KeywordCannibalization } from '@/components/aso/keyword-cannibalization';
+import { KeywordGap } from '@/components/aso/keyword-gap';
 
 interface ASOModalProps {
   isOpen: boolean;
@@ -414,6 +415,19 @@ export function ASOModal({
     }
   };
 
+  const handleKeywordGapAdd = async (keyword: string, gapLocale: string) => {
+    if (!teamInfo?.currentTeam?.id || !appInfo.currentApp?.id) return;
+    await addKeyword(
+      teamInfo.currentTeam.id,
+      appInfo.currentApp.id,
+      gapLocale as LocaleCode,
+      keyword
+    );
+    if (gapLocale === locale) {
+      await refreshKeywords();
+    }
+  };
+
   const handleSaveContent = (values: AsoContent) => {
     setGeneratedContent(values);
     onSave(values);
@@ -551,6 +565,7 @@ export function ASOModal({
               <div className="flex flex-col flex-1 min-h-0">
                 <div className="flex-1 overflow-auto space-y-4">
                   <KeywordCannibalization />
+                  <KeywordGap onAddKeyword={handleKeywordGapAdd} />
                   <KeywordChips
                     keywords={keywords}
                     locale={locale}

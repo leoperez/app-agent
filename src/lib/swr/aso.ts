@@ -160,6 +160,25 @@ export function useGetCannibalization(appId: string) {
   return { cannibalized: data ?? [], loading: isLoading, error };
 }
 
+export interface KeywordGapEntry {
+  keyword: string;
+  locale: string;
+  competitorTitle: string;
+  competitorId: string;
+  competitorCount: number;
+}
+
+export function useGetKeywordGap(appId: string) {
+  const teamInfo = useTeam();
+  const { data, error, isLoading } = useSWR<KeywordGapEntry[]>(
+    teamInfo?.currentTeam?.id && appId
+      ? `/api/teams/${teamInfo.currentTeam.id}/apps/${appId}/keywords/gap`
+      : null,
+    fetcher
+  );
+  return { gaps: data ?? [], loading: isLoading, error };
+}
+
 export function useGetWhatsNewHistory(
   appId: string,
   locale: string,

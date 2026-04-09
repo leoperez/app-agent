@@ -470,7 +470,14 @@
     "keyword-conversion-title": "「{keyword}」の順位とダウンロード数",
     "cannibalization-title": "{count}件のキーワード競合",
     "cannibalization-description": "これらのキーワードは複数のロケールで使用されています。相互に競合する可能性があります。ロケールごとに異なるキーワードを使用することを検討してください。",
-    "cannibalization-locales": "ロケール"
+    "cannibalization-locales": "ロケール",
+    "keyword-gap-title": "競合アプリのキーワードギャップ",
+    "keyword-gap-description": "競合アプリが使用しているキーワードのうち、まだ追跡していないものです。検索クエリのカバレッジを広げるためにキーワードリストに追加してください。",
+    "keyword-gap-col-keyword": "キーワード",
+    "keyword-gap-col-locale": "ロケール",
+    "keyword-gap-col-competitors": "競合数",
+    "keyword-gap-add": "キーワードを追加",
+    "keyword-gap-showing": "{total}件中{shown}件を表示"
   },
   "account": {
     "account-settings": "アカウント設定",
