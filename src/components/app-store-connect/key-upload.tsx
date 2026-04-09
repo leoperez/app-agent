@@ -233,11 +233,10 @@ export default function KeyUpload({ onKeyUploaded, teamId }: KeyUploadProps) {
             className="space-y-2"
           >
             <Label>{t('private-key-p8')}</Label>
-            {/* @ts-ignore */}
             <motion.div
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
-              {...getRootProps()}
+              {...(getRootProps() as React.HTMLAttributes<HTMLDivElement>)}
               className={`border-2 border-dashed rounded-md p-6 text-center cursor-pointer
                 ${isDragActive ? 'border-primary bg-primary/5' : 'border-muted'}
                 ${p8Error ? 'border-destructive' : ''}

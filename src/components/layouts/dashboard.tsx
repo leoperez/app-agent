@@ -60,8 +60,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // @ts-ignore
-      if (isDropdownOpen && !event.target?.closest('.relative')) {
+      if (isDropdownOpen && !(event.target as Element)?.closest('.relative')) {
         setIsDropdownOpen(false);
       }
     };

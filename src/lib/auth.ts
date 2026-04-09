@@ -110,11 +110,10 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     session: async ({ session, token }) => {
-      (session.user as User) = {
+      session.user = {
         id: token.sub,
-        // @ts-ignore
-        ...(token || session).user,
-      };
+        ...(token.user as User),
+      } as User;
       return session;
     },
   },
@@ -180,9 +179,7 @@ export async function validateTeamAccess(req: Request): Promise<{
     throw new NotPermittedError('No teamId or userId');
   }
 
-  // TODO: fix this
-  // @ts-ignore
-  const team: Team | null = await prisma.team.findUnique({
+  const team = (await prisma.team.findUnique({
     where: { id: teamId },
     select: {
       id: true,
@@ -211,7 +208,7 @@ export async function validateTeamAccess(req: Request): Promise<{
         },
       },
     },
-  });
+  })) as unknown as Team | null;
 
   if (!team) {
     console.log('Unauthorized - team not found');
