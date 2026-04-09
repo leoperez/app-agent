@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { validateTeamAccess } from '@/lib/auth';
 import {
@@ -7,10 +6,10 @@ import {
   InvalidParamsError,
 } from '@/types/errors';
 import { googlePlayToAppStore } from '@/lib/utils/locale';
-import { searchApps } from '@/lib/app-store/search-apps';
 import { findCompetitors } from '@/lib/aso/keyword-hunt/find-competitors';
 import { draftVersion, publicVersion } from '@/lib/utils/versions';
 import { Store } from '@/types/aso';
+import { createStreamingResponse } from '@/lib/utils/streaming';
 
 export const maxDuration = 300;
 
@@ -36,17 +35,9 @@ export async function POST(
 
     // Verify app belongs to team
     const app = await prisma.app.findFirst({
-      where: {
-        id: appId,
-        teamId: teamId,
-      },
+      where: { id: appId, teamId },
       include: {
-        versions: {
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 10, // Get more versions to find either draft or public
-        },
+        versions: { orderBy: { createdAt: 'desc' }, take: 10 },
       },
     });
 
@@ -54,12 +45,9 @@ export async function POST(
       throw new AppNotFoundError(`App ${appId} not found`);
     }
 
-    // For Google Play, we can use public versions
-    // For App Store, we prefer draft versions
     let appVersion = app.versions.find((v) => v.state && draftVersion(v.state));
 
     if (!appVersion && app.store === Store.GOOGLEPLAY) {
-      // If no draft, use public version for Google Play
       appVersion = app.versions.find((v) => v.state && publicVersion(v.state));
     }
 
@@ -71,50 +59,21 @@ export async function POST(
       );
     }
 
-    // Save shortDescription to database
     await prisma.app.update({
-      where: {
-        id: appId,
-      },
-      data: {
-        shortDescription: data.shortDescription,
-      },
+      where: { id: appId },
+      data: { shortDescription: data.shortDescription },
     });
 
-    const encoder = new TextEncoder();
+    const appStoreLocale = googlePlayToAppStore(locale);
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          const writer = {
-            write: (data: any) => {
-              controller.enqueue(encoder.encode(JSON.stringify(data) + '\n'));
-            },
-          };
-
-          // Convert Google Play locale to App Store locale for competitor research
-          const appStoreLocale = googlePlayToAppStore(locale);
-
-          const result = await findCompetitors(
-            appId,
-            appStoreLocale,
-            data.shortDescription,
-            writer,
-            locale // Pass original locale for DB lookup
-          );
-          controller.close();
-        } catch (err) {
-          controller.error(err);
-        }
-      },
-    });
-
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-      },
+    return createStreamingResponse(async (writer) => {
+      await findCompetitors(
+        appId,
+        appStoreLocale,
+        data.shortDescription,
+        writer,
+        locale
+      );
     });
   } catch (error) {
     return handleAppError(error as Error);
