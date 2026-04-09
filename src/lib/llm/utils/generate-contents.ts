@@ -126,7 +126,7 @@ export async function generateContents(
   }
 
   const response = await openai.beta.chat.completions.parse({
-    model: 'gpt-4.1',
+    model: LLM_MODEL,
     messages,
     response_format:
       store === Store.APPSTORE
