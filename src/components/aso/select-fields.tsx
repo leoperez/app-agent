@@ -55,7 +55,7 @@ export default function SelectFields({
     (value) => value
   );
 
-  const getPreviewText = (text: string, maxLength: number = 100) => {
+  const getPreviewText = (text?: string, maxLength: number = 100) => {
     if (!text) return '-';
     return text.length > maxLength
       ? `${text.substring(0, maxLength)}...`
