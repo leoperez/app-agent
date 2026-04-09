@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { validateCronSecret } from '@/lib/utils/cron-auth';
 import { Store } from '@/types/aso';
 import client from '@/lib/app-store/client';
 import scraperClient from '@/lib/google-play/scraper-client';
@@ -21,6 +22,9 @@ const TRACKED_FIELDS = ['title', 'subtitle', 'description'] as const;
 
 // Daily cron: detect competitor title/subtitle/description changes
 export async function GET(request: NextRequest) {
+  const authError = validateCronSecret(request);
+  if (authError) return authError;
+
   try {
     const competitors = await prisma.competitor.findMany({
       include: {

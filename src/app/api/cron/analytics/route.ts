@@ -8,9 +8,16 @@ import {
   readAnalyticsReport,
 } from '@/lib/app-store-connect/analytics';
 import prisma from '@/lib/prisma';
-import { generateJWT, isAppStoreConnectJWTExpired } from '@/lib/app-store-connect/auth';
+import {
+  generateJWT,
+  isAppStoreConnectJWTExpired,
+} from '@/lib/app-store-connect/auth';
+import { validateCronSecret } from '@/lib/utils/cron-auth';
 
 export async function GET(request: NextRequest) {
+  const authError = validateCronSecret(request);
+  if (authError) return authError;
+
   try {
     // 1. Fetch all user apps that need analytics updates
     const userApps = await prisma.app.findMany({
@@ -56,7 +63,10 @@ export async function GET(request: NextRequest) {
         expiresAt.setMinutes(expiresAt.getMinutes() + 20);
         await prisma.team.update({
           where: { id: app.team.id },
-          data: { appStoreConnectJWT: jwt, appStoreConnectJWTExpiresAt: expiresAt },
+          data: {
+            appStoreConnectJWT: jwt,
+            appStoreConnectJWTExpiresAt: expiresAt,
+          },
         });
       }
 
@@ -71,10 +81,7 @@ export async function GET(request: NextRequest) {
       if (!reportRequests.length) {
         await requestReport(jwt, app.storeAppId);
         console.log('requested report, and going to get the list again');
-        reportRequests = await getAnalyticsReportRequests(
-          jwt,
-          app.storeAppId
-        );
+        reportRequests = await getAnalyticsReportRequests(jwt, app.storeAppId);
       }
 
       if (!reportRequests.length) {
@@ -90,10 +97,7 @@ export async function GET(request: NextRequest) {
       //   reportRequestId
       // );
       // console.log('analyticsReport', JSON.stringify(analyticsReport, null, 2));
-      const analyticsReports = await getAnalyticsReports(
-        jwt,
-        reportRequestId
-      );
+      const analyticsReports = await getAnalyticsReports(jwt, reportRequestId);
       console.log(`analytics reports: ${analyticsReports.length}`);
 
       const instances = await getAnalyticsReportInstances(

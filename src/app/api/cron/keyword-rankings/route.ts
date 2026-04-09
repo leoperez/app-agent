@@ -3,11 +3,15 @@ import prisma from '@/lib/prisma';
 import { scoreKeyword } from '@/lib/aso/score';
 import { googlePlayToAppStore } from '@/lib/utils/locale';
 import { Platform, Store } from '@/types/aso';
+import { validateCronSecret } from '@/lib/utils/cron-auth';
 
 export const maxDuration = 300;
 
 // Daily cron: snapshot keyword positions for all tracked keywords
 export async function GET(request: NextRequest) {
+  const authError = validateCronSecret(request);
+  if (authError) return authError;
+
   try {
     // Fetch all keywords grouped by app
     const keywords = await prisma.asoKeyword.findMany({
