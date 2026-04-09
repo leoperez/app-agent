@@ -1152,7 +1152,7 @@ export const STOP_WORDS: Record<string, string[]> = {
   [LocaleCode.VI]: [],
 };
 
-export const NON_SPACE_LANGUAGES = new Set([
+export const NON_SPACE_LANGUAGES: Set<string> = new Set([
   LocaleCode.JA,
   LocaleCode.ZH_HANS,
   LocaleCode.ZH_HANT,
