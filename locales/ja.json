@@ -56,6 +56,18 @@
     "aso-focus-description": "日本やアメリカのみでASOを徹底的にハックしたい。すでにASOをハックしていてさらにASOをハックしたい。"
   },
   "emails": {
+    "competitor-changes": {
+      "title": "競合アプリの変更を検出しました",
+      "intro": "トラッキング中の競合アプリに以下の変更が検出されました：",
+      "field-title": "タイトル",
+      "field-subtitle": "サブタイトル",
+      "field-description": "説明文",
+      "changed": "が変更されました",
+      "empty": "（空）",
+      "cta": "ダッシュボードを開く",
+      "subject-single": "競合アプリの変更が1件検出されました",
+      "subject-plural": "競合アプリの変更が{count}件検出されました"
+    },
     "cancel-plan": {
       "title": "AppAgent有料プランのキャンセル完了通知",
       "description": "AppAgentの有料プランがキャンセルされました。現在の請求期間終了までは引き続きご利用いただけます。",

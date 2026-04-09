@@ -56,6 +56,18 @@
     "aso-focus-description": "You need a tool that excels at ASO for English markets alone. AppAgent is built for global reach, not market-specific optimization."
   },
   "emails": {
+    "competitor-changes": {
+      "title": "Competitor updates detected",
+      "intro": "We detected the following changes in your tracked competitors:",
+      "field-title": "Title",
+      "field-subtitle": "Subtitle",
+      "field-description": "Description",
+      "changed": "changed",
+      "empty": "(empty)",
+      "cta": "View dashboard",
+      "subject-single": "1 competitor update detected",
+      "subject-plural": "{count} competitor updates detected"
+    },
     "cancel-plan": {
       "title": "Your AppAgent subscription has been canceled",
       "description": "This email confirms that your AppAgent subscription has been canceled. Your subscription benefits will remain active until the end of your current billing period.",
