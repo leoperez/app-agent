@@ -254,6 +254,10 @@ export async function upsertLocalizationInfo(
   localizationData: AppStoreConnectAppInfoLocalization['attributes']
 ) {
   const { locale, ...rest } = localizationData;
+  // Apple rejects empty strings for URL/text fields with a 409 "wrong type" error.
+  const attributes = Object.fromEntries(
+    Object.entries(rest).filter(([, v]) => v !== '')
+  );
   // Update existing localization
   const response = await fetch(
     `https://api.appstoreconnect.apple.com/v1/appInfoLocalizations/${appInfoLocalizationId}`,
@@ -267,7 +271,7 @@ export async function upsertLocalizationInfo(
         data: {
           id: appInfoLocalizationId,
           type: 'appInfoLocalizations',
-          attributes: rest,
+          attributes,
         },
       }),
     }
@@ -303,6 +307,12 @@ export async function updateLocalization(
     whatsNew?: string; // Release notes
   }
 ) {
+  // Apple rejects empty strings for URL fields with a 409 "wrong type" error.
+  // Strip any field whose value is an empty string before sending.
+  const attributes = Object.fromEntries(
+    Object.entries(localizationData).filter(([, v]) => v !== '')
+  );
+
   const response = await fetch(
     `https://api.appstoreconnect.apple.com/v1/appStoreVersionLocalizations/${localizationId}`,
     {
@@ -315,7 +325,7 @@ export async function updateLocalization(
         data: {
           id: localizationId,
           type: 'appStoreVersionLocalizations',
-          attributes: localizationData,
+          attributes,
         },
       }),
     }
