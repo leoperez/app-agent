@@ -379,6 +379,8 @@
     "researching-competitors": "Researching Competitors ({locale})",
     "manage-competitors": "Manage Competitors ({locale})",
     "no-competitors-yet": "No Competitors Yet",
+    "competitor-changelog-title": "Recent Changes",
+    "competitor-changelog-changed": "changed",
     "generating-keywords": "Generating Keywords ({locale})",
     "manage-keywords": "Manage Keywords ({locale})",
     "select-fields-to-generate": "Select Fields to Generate ({locale})",

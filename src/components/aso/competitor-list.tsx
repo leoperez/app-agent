@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { AppStoreApp } from '@/types/app-store';
 import { toast } from 'react-hot-toast';
 import { useApp } from '@/context/app';
+import CompetitorChangelog from '@/components/aso/competitor-changelog';
 
 interface CompetitorListProps {
   appId: string;
@@ -35,10 +36,11 @@ export default function CompetitorList({
   const t = useTranslations('aso');
   const teamInfo = useTeam();
   const appInfo = useApp();
-  const { changedCompetitorIds } = useGetCompetitorChanges(
-    appInfo?.currentApp?.id || '',
-    locale
-  );
+  const {
+    changedCompetitorIds,
+    changes,
+    loading: changesLoading,
+  } = useGetCompetitorChanges(appInfo?.currentApp?.id || '', locale);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Partial<AppStoreApp>[]>(
     []
@@ -295,6 +297,8 @@ export default function CompetitorList({
           )}
         </div>
       </ScrollArea>
+
+      <CompetitorChangelog changes={changes} loading={changesLoading} />
     </div>
   );
 }
