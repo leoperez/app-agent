@@ -272,7 +272,8 @@
         "expand-global-reach": "もっとグローバル対応するのがオススメです！",
         "add-more-locales-message": "より多くの言語を追加することで、より多くのユーザーにアプリを見つけてもらえるようになります。",
         "whats-new-history": "リリースノート履歴",
-        "whats-new-history-use": "これを使う"
+        "whats-new-history-use": "これを使う",
+        "completeness-score": "メタデータの完成度"
       },
       "submit": {
         "title": "App Storeにリリース",

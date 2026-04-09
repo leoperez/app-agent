@@ -66,6 +66,24 @@ export default function AppLocalizationView({
     setIsExpanded(defaultExpanded);
   }, [defaultExpanded]);
 
+  // Compute completeness as a percentage of relevant filled fields
+  const completenessScore = (() => {
+    const fields = isGooglePlay
+      ? ['title', 'shortDescription', 'fullDescription']
+      : ['title', 'subtitle', 'description', 'keywords'];
+    const filled = fields.filter(
+      (f) => !!(localization as any)[f]?.trim()
+    ).length;
+    return Math.round((filled / fields.length) * 100);
+  })();
+
+  const completenessColor =
+    completenessScore === 100
+      ? 'text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400'
+      : completenessScore >= 50
+        ? 'text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400'
+        : 'text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-400';
+
   const handleChange = (field: keyof AppLocalization, value: string) => {
     onUpdate({ [field]: value });
   };
@@ -329,6 +347,14 @@ export default function AppLocalizationView({
                 </span>
               )}
             </>
+          )}
+          {mode !== LocalizationEditMode.QUICK_RELEASE && (
+            <span
+              className={`text-xs font-medium px-2 py-0.5 rounded-full ${completenessColor}`}
+              title={t('completeness-score')}
+            >
+              {completenessScore}%
+            </span>
           )}
           {onASOClick && (
             <Button
