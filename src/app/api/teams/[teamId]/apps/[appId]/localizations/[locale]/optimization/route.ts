@@ -22,12 +22,16 @@ export async function POST(
   // It will take the final keywords, the current title, subtitle, and description as an input.
   // It will leverage LLM to generate the title, subtitle, and description.
   // It will validate the length and format of the LLM output. If it fails, it will retry with the feedback message.
+  const startedAt = Date.now();
+  let userId = 'unknown';
+  let teamId = 'unknown';
   try {
-    const { teamId, userId } = await validateTeamAccess(request);
+    ({ teamId, userId } = await validateTeamAccess(request));
     await checkRateLimit(`optimization:${userId}`, 10, '1 m');
 
     const { appId, locale } = params;
     const data = await request.json();
+    console.log(JSON.stringify({ event: 'optimization_start', userId, teamId, appId, locale }));
 
     // Verify app belongs to team
     const app = await prisma.app.findFirst({
@@ -86,8 +90,10 @@ export async function POST(
       app.store
     );
 
+    console.log(JSON.stringify({ event: 'optimization_complete', userId, teamId, appId, locale, durationMs: Date.now() - startedAt }));
     return NextResponse.json(result);
   } catch (error) {
+    console.log(JSON.stringify({ event: 'optimization_error', userId, teamId, error: (error as Error).message, durationMs: Date.now() - startedAt }));
     return handleAppError(error as Error);
   }
 }
