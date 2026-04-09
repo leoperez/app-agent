@@ -60,11 +60,11 @@ export default function AppLocalizationView({
   const renderQuickReleaseMode = () => (
     <div className="space-y-4">
       <LocalizationField
-        label={t('whats-new')}
-        value={localization.whatsNew}
+        label={isGooglePlay ? "Recent Changes (What's New)" : t('whats-new')}
+        value={localization.whatsNew || localization.recentChanges}
         onChange={(value) => handleChange('whatsNew', value)}
         multiline
-        characterLimit={FIELD_LIMITS.whatsNew}
+        characterLimit={isGooglePlay ? 500 : FIELD_LIMITS.whatsNew}
         hasChanged={hasFieldChanged('whatsNew')}
       />
     </div>
@@ -101,6 +101,17 @@ export default function AppLocalizationView({
             hasChanged={hasFieldChanged('fullDescription')}
             originalValue={
               originalData?.fullDescription || originalData?.description
+            }
+          />
+          <LocalizationField
+            label="Recent Changes (What's New)"
+            value={localization.whatsNew || localization.recentChanges}
+            onChange={(value) => handleChange('whatsNew', value)}
+            multiline
+            characterLimit={500}
+            hasChanged={hasFieldChanged('whatsNew')}
+            originalValue={
+              originalData?.whatsNew || originalData?.recentChanges
             }
           />
         </>
