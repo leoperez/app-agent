@@ -8,6 +8,7 @@ import { validateCronSecret } from '@/lib/utils/cron-auth';
 import { redis } from '@/lib/redis';
 import { sendKeywordDropEmail } from '@/lib/emails/send-keyword-drop';
 import { KeywordDropEntry } from '@/components/emails/keyword-drop';
+import { sendSlackMessage } from '@/lib/slack';
 
 export const maxDuration = 300;
 
@@ -52,6 +53,7 @@ export async function GET(request: NextRequest) {
                         email: true,
                         locale: true,
                         notifyCompetitorChanges: true,
+                        slackWebhookUrl: true,
                       },
                     },
                   },
@@ -85,7 +87,11 @@ export async function GET(request: NextRequest) {
       string,
       {
         drops: KeywordDropEntry[];
-        users: { email: string; locale: string }[];
+        users: {
+          email: string;
+          locale: string;
+          slackWebhookUrl: string | null;
+        }[];
       }
     > = {};
 
@@ -159,6 +165,7 @@ export async function GET(request: NextRequest) {
                     .map((u) => ({
                       email: u.user.email as string,
                       locale: u.user.locale ?? 'en',
+                      slackWebhookUrl: u.user.slackWebhookUrl ?? null,
                     })),
                 };
               }
@@ -186,17 +193,36 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Send drop alert emails (fire & forget)
+    // Send drop alert emails + Slack (fire & forget)
     let totalDrops = 0;
     for (const { drops, users } of Object.values(dropsByTeam)) {
       totalDrops += drops.length;
-      for (const { email, locale } of users) {
+      for (const { email, locale, slackWebhookUrl } of users) {
         sendKeywordDropEmail(email, drops, locale).catch((err) =>
           console.error(
             `keyword-rankings: failed to send drop alert to ${email}:`,
             err
           )
         );
+
+        if (slackWebhookUrl) {
+          const lines = drops.map((d) => {
+            const prev =
+              d.previousPosition != null
+                ? `#${d.previousPosition}`
+                : 'unranked';
+            const next =
+              d.newPosition != null ? `#${d.newPosition}` : 'out of top 100';
+            return `• *${d.keyword}* (${d.appTitle}): ${prev} → ${next}`;
+          });
+          const text = `:chart_with_downwards_trend: *${drops.length} keyword drop${drops.length === 1 ? '' : 's'} detected*\n${lines.join('\n')}`;
+          sendSlackMessage(slackWebhookUrl, text).catch((err) =>
+            console.error(
+              `keyword-rankings: failed to send Slack to ${email}:`,
+              err
+            )
+          );
+        }
       }
     }
 

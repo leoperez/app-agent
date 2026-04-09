@@ -14,10 +14,12 @@ export async function GET() {
     const userId = (session.user as User).id;
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { notifyCompetitorChanges: true },
+      select: { notifyCompetitorChanges: true, slackWebhookUrl: true },
     });
 
-    return NextResponse.json(user ?? { notifyCompetitorChanges: true });
+    return NextResponse.json(
+      user ?? { notifyCompetitorChanges: true, slackWebhookUrl: null }
+    );
   } catch (error) {
     return handleAppError(error as Error);
   }
@@ -30,12 +32,25 @@ export async function PATCH(request: Request) {
     if (!session) return new NextResponse('Unauthorized', { status: 401 });
 
     const userId = (session.user as User).id;
-    const { notifyCompetitorChanges } = await request.json();
+    const body = await request.json();
+
+    const data: {
+      notifyCompetitorChanges?: boolean;
+      slackWebhookUrl?: string | null;
+    } = {};
+
+    if ('notifyCompetitorChanges' in body) {
+      data.notifyCompetitorChanges = Boolean(body.notifyCompetitorChanges);
+    }
+    if ('slackWebhookUrl' in body) {
+      // Store empty string as null
+      data.slackWebhookUrl = body.slackWebhookUrl?.trim() || null;
+    }
 
     const user = await prisma.user.update({
       where: { id: userId },
-      data: { notifyCompetitorChanges: Boolean(notifyCompetitorChanges) },
-      select: { notifyCompetitorChanges: true },
+      data,
+      select: { notifyCompetitorChanges: true, slackWebhookUrl: true },
     });
 
     return NextResponse.json(user);

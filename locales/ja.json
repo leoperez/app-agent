@@ -468,7 +468,12 @@
     "notifications-description": "受け取るメール通知を管理します",
     "notify-competitor-changes": "競合アプリ変更アラート",
     "notify-competitor-changes-description": "追跡中の競合アプリのタイトル・サブタイトル・説明文が更新された際に日次ダイジェストメールを受け取ります",
-    "notifications-saved": "通知設定を保存しました"
+    "notifications-saved": "通知設定を保存しました",
+    "slack-webhook": "Slack Webhook",
+    "slack-webhook-description": "Slack Incoming Webhook URLを貼り付けると、キーワード順位の下落や競合アプリの変更をSlackで受け取れます",
+    "save": "保存",
+    "saving": "保存中...",
+    "notifications-save-error": "通知設定の保存に失敗しました"
   },
   "common": {
     "coming-soon": "開発中",

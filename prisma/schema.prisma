@@ -57,6 +57,7 @@ model User {
 
   // Notification preferences
   notifyCompetitorChanges Boolean @default(true)
+  slackWebhookUrl         String? // Optional Slack incoming webhook URL for alerts
 
   // Stripe subscription fields
   plan           String         @default("free")

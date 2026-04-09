@@ -16,6 +16,7 @@ import {
 import { googlePlayToAppStore } from '@/lib/utils/locale';
 import { CompetitorChangeEntry } from '@/components/emails/competitor-changes';
 import { sendCompetitorChangesEmail } from '@/lib/emails/send-competitor-changes';
+import { sendSlackMessage } from '@/lib/slack';
 
 export const maxDuration = 300;
 
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
                         email: true,
                         locale: true,
                         notifyCompetitorChanges: true,
+                        slackWebhookUrl: true,
                       },
                     },
                   },
@@ -63,7 +65,10 @@ export async function GET(request: NextRequest) {
 
     // Group by team for email digest
     const changesByTeam: Record<string, CompetitorChangeEntry[]> = {};
-    const teamUsers: Record<string, { email: string; locale: string }[]> = {};
+    const teamUsers: Record<
+      string,
+      { email: string; locale: string; slackWebhookUrl: string | null }[]
+    > = {};
     let totalChanges = 0;
 
     for (const competitor of competitors) {
@@ -156,6 +161,7 @@ export async function GET(request: NextRequest) {
               .map((u) => ({
                 email: u.user.email as string,
                 locale: u.user.locale ?? 'en',
+                slackWebhookUrl: u.user.slackWebhookUrl ?? null,
               }));
           }
 
@@ -180,17 +186,31 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Send email digest per team (fire & forget)
+    // Send email + Slack digest per team (fire & forget)
     for (const teamId of Object.keys(changesByTeam)) {
       const users = teamUsers[teamId] ?? [];
       const changes = changesByTeam[teamId];
-      for (const { email, locale: userLocale } of users) {
+      for (const { email, locale: userLocale, slackWebhookUrl } of users) {
         sendCompetitorChangesEmail(email, changes, userLocale).catch((err) =>
           console.error(
             `competitor-changes: failed to send email to ${email}:`,
             err
           )
         );
+
+        if (slackWebhookUrl) {
+          const lines = changes.map(
+            (c) =>
+              `• *${c.competitorTitle}* updated *${c.field}*: "${c.previousValue}" → "${c.newValue}"`
+          );
+          const text = `:bell: *${changes.length} competitor change${changes.length === 1 ? '' : 's'} detected*\n${lines.join('\n')}`;
+          sendSlackMessage(slackWebhookUrl, text).catch((err) =>
+            console.error(
+              `competitor-changes: failed to send Slack to ${email}:`,
+              err
+            )
+          );
+        }
       }
     }
 

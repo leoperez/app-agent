@@ -503,7 +503,12 @@
     "notifications-description": "Control which email notifications you receive",
     "notify-competitor-changes": "Competitor change alerts",
     "notify-competitor-changes-description": "Receive a daily digest when tracked competitors update their app title, subtitle, or description",
-    "notifications-saved": "Notification preferences saved"
+    "notifications-saved": "Notification preferences saved",
+    "slack-webhook": "Slack Webhook",
+    "slack-webhook-description": "Paste a Slack Incoming Webhook URL to receive keyword drop and competitor alerts in your Slack workspace",
+    "save": "Save",
+    "saving": "Saving...",
+    "notifications-save-error": "Failed to save notification preferences"
   },
   "common": {
     "coming-soon": "Coming Soon",
