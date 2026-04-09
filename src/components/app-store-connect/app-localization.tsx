@@ -42,8 +42,7 @@ export default function AppLocalizationView({
   const isGooglePlay = store === Store.GOOGLEPLAY;
 
   useEffect(() => {
-    // FIXME: this doesn't work
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
   }, [mode]);
 
   useEffect(() => {
