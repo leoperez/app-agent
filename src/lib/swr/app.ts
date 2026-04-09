@@ -147,6 +147,30 @@ export function useGetAppRatings(teamId: string, appId: string, days = 30) {
   return { data: data ?? [], loading: isLoading, error };
 }
 
+export interface KeywordConversionRow {
+  date: string;
+  keyword: string;
+  position: number | null;
+  downloads: number | null;
+  impressions: number | null;
+}
+
+export function useGetKeywordConversion(
+  teamId: string,
+  appId: string,
+  locale: string,
+  keyword: string,
+  days = 30
+) {
+  const { data, error, isLoading } = useSWR<KeywordConversionRow[]>(
+    teamId && appId && locale && keyword
+      ? `/api/teams/${teamId}/apps/${appId}/keyword-conversion?locale=${locale}&keyword=${encodeURIComponent(keyword)}&days=${days}`
+      : null,
+    fetcher
+  );
+  return { data: data ?? [], loading: isLoading, error };
+}
+
 export async function checkShortDescription(teamId: string, appId: string) {
   const response = await fetch(
     `/api/teams/${teamId}/apps/${appId}/short-description`,

@@ -21,8 +21,10 @@ import {
   useGetKeywordRankings,
   useGetKeywordOpportunities,
 } from '@/lib/swr/aso';
+import { useGetKeywordConversion } from '@/lib/swr/app';
 import { useApp } from '@/context/app';
 import { useTeam } from '@/context/team';
+import { KeywordConversionChart } from './keyword-conversion-chart';
 
 const APP_STORE_KEYWORD_LIMIT = 100;
 
@@ -101,6 +103,15 @@ export default function KeywordChips({
       locale || ('' as LocaleCode)
     );
   const [showOpportunities, setShowOpportunities] = useState(false);
+  const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
+
+  const { data: conversionData, loading: conversionLoading } =
+    useGetKeywordConversion(
+      teamInfo?.currentTeam?.id || '',
+      appInfo?.currentApp?.id || '',
+      locale || '',
+      selectedKeyword || ''
+    );
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -241,7 +252,13 @@ export default function KeywordChips({
                       },
                     }}
                     layout
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${getChipColor(keywordObj.overall)}`}
+                    onClick={() =>
+                      setSelectedKeyword((k) =>
+                        k === keywordObj.keyword ? null : keywordObj.keyword
+                      )
+                    }
+                    style={{ cursor: 'pointer' }}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${getChipColor(keywordObj.overall)} ${selectedKeyword === keywordObj.keyword ? 'ring-2 ring-primary/50' : ''}`}
                   >
                     <motion.span layout style={{ originX: 0 }}>
                       {keywordObj.keyword}
@@ -438,6 +455,38 @@ export default function KeywordChips({
           </AnimatePresence>
         </div>
       )}
+
+      {/* Keyword → downloads correlation panel */}
+      <AnimatePresence>
+        {selectedKeyword && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-3 border-t border-border space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium">
+                  {t('keyword-conversion-title', { keyword: selectedKeyword })}
+                </p>
+                <button
+                  onClick={() => setSelectedKeyword(null)}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </button>
+              </div>
+              <KeywordConversionChart
+                data={conversionData}
+                loading={conversionLoading}
+                keyword={selectedKeyword}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

@@ -501,7 +501,8 @@
     "research-competitors-button": "Research Competitors",
     "keyword-opportunities": "{count} keyword opportunities from competitors",
     "keyword-opportunities-description": "These keywords are used by your competitors but not yet tracked by you. Click to add.",
-    "from-competitor": "From competitor"
+    "from-competitor": "From competitor",
+    "keyword-conversion-title": "Position & downloads for \"{keyword}\""
   },
   "account": {
     "account-settings": "Account Settings",
