@@ -198,6 +198,7 @@ model App {
   asoKeywordRankings AsoKeywordRanking[]
   competitors        Competitor[]
   analytics          AppAnalytics[]
+  whatsNewHistory    WhatsNewHistory[]
 
   isStaged        Boolean   @default(false)
 
@@ -288,6 +289,18 @@ model AppLocalization {
   @@index([appId])
   @@index([appVersionId])
   @@index([locale])
+}
+
+model WhatsNewHistory {
+  id        String   @id @default(cuid())
+  appId     String
+  app       App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  locale    String
+  text      String   @db.Text
+  version   String?  // version string at time of push, if available
+  pushedAt  DateTime @default(now())
+
+  @@index([appId, locale, pushedAt])
 }
 
 model AsoKeyword {

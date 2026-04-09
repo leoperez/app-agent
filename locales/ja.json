@@ -270,7 +270,9 @@
         "pulling": "取得中...",
         "pull-latest-version": "最新バージョンを取得する",
         "expand-global-reach": "もっとグローバル対応するのがオススメです！",
-        "add-more-locales-message": "より多くの言語を追加することで、より多くのユーザーにアプリを見つけてもらえるようになります。"
+        "add-more-locales-message": "より多くの言語を追加することで、より多くのユーザーにアプリを見つけてもらえるようになります。",
+        "whats-new-history": "リリースノート履歴",
+        "whats-new-history-use": "これを使う"
       },
       "submit": {
         "title": "App Storeにリリース",

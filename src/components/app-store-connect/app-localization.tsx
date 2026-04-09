@@ -10,12 +10,14 @@ import {
   MdAutoFixHigh,
   MdWarning,
   MdCheckCircle,
+  MdHistory,
 } from 'react-icons/md';
 import { getLocaleName, LocaleCode } from '@/lib/utils/locale';
 import LocalizationField from '@/components/common/localization-field';
 import { FIELD_LIMITS, GOOGLE_PLAY_FIELD_LIMITS } from '@/types/app-store';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
+import { useGetWhatsNewHistory } from '@/lib/swr/aso';
 
 interface AppLocalizationProps {
   // Current localization data in draft
@@ -43,10 +45,18 @@ export default function AppLocalizationView({
 }: AppLocalizationProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const t = useTranslations('dashboard.app-store-connect.localization');
 
   // Determine if we're in Google Play mode
   const isGooglePlay = store === Store.GOOGLEPLAY;
+
+  const isQuickRelease = mode === LocalizationEditMode.QUICK_RELEASE;
+  const { history } = useGetWhatsNewHistory(
+    localization.appId,
+    localization.locale ?? '',
+    isQuickRelease
+  );
 
   useEffect(() => {
     document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -74,6 +84,57 @@ export default function AppLocalizationView({
         characterLimit={isGooglePlay ? 500 : FIELD_LIMITS.whatsNew}
         hasChanged={hasFieldChanged('whatsNew')}
       />
+      {history.length > 0 && (
+        <div>
+          <button
+            onClick={() => setShowHistory((v) => !v)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <MdHistory className="h-3.5 w-3.5" />
+            {t('whats-new-history')} ({history.length})
+            <span>{showHistory ? '▲' : '▼'}</span>
+          </button>
+          <AnimatePresence>
+            {showHistory && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-2 space-y-2">
+                  {history.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className="rounded-lg border border-border p-3 text-sm hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-muted-foreground">
+                          {entry.version ? `v${entry.version} · ` : ''}
+                          {new Date(entry.pushedAt).toLocaleDateString()}
+                        </span>
+                        <button
+                          onClick={() => {
+                            handleChange('whatsNew', entry.text);
+                            setShowHistory(false);
+                          }}
+                          className="text-xs text-primary hover:underline"
+                        >
+                          {t('whats-new-history-use')}
+                        </button>
+                      </div>
+                      <p className="text-xs text-foreground/80 whitespace-pre-wrap line-clamp-3">
+                        {entry.text}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 

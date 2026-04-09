@@ -11,6 +11,7 @@ import {
   Competitor,
 } from '@/types/aso';
 import type { KeywordOpportunity } from '@/app/api/teams/[teamId]/apps/[appId]/keywords/opportunities/route';
+import type { WhatsNewHistoryEntry } from '@/app/api/teams/[teamId]/apps/[appId]/localizations/[locale]/whats-new-history/route';
 import { fetcher } from '../utils/fetcher';
 import { useState } from 'react';
 import useSWR from 'swr';
@@ -138,6 +139,22 @@ export function useGetKeywordOpportunities(appId: string, locale: LocaleCode) {
   );
 
   return { opportunities: data ?? [], loading: isLoading, error, mutate };
+}
+
+export function useGetWhatsNewHistory(
+  appId: string,
+  locale: string,
+  enabled = true
+) {
+  const teamInfo = useTeam();
+  const { data, error, isLoading } = useSWR<WhatsNewHistoryEntry[]>(
+    enabled && teamInfo?.currentTeam?.id && appId && locale
+      ? `/api/teams/${teamInfo.currentTeam.id}/apps/${appId}/localizations/${locale}/whats-new-history`
+      : null,
+    fetcher
+  );
+
+  return { history: data ?? [], loading: isLoading, error };
 }
 
 export async function researchCompetitors(

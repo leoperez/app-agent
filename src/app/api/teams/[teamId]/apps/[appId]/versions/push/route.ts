@@ -159,6 +159,19 @@ export async function POST(
       data: { isStaged: false },
     });
 
+    // Save whatsNew to history for future reference/reuse
+    const historyEntries = localizations
+      .filter((loc) => loc.whatsNew?.trim())
+      .map((loc) => ({
+        appId,
+        locale: loc.locale ?? 'en-US',
+        text: loc.whatsNew!,
+        version: loc.appVersion.version ?? undefined,
+      }));
+    if (historyEntries.length > 0) {
+      await prisma.whatsNewHistory.createMany({ data: historyEntries });
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return handleAppError(error as Error);
