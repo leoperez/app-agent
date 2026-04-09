@@ -89,9 +89,17 @@ export default function KeywordChips({
     locale || ('' as LocaleCode)
   );
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   const isAppStore = appInfo?.currentApp?.store === Store.APPSTORE;
   const keywordChars = keywords.map((k) => k.keyword).join(',').length;
   const charsRemaining = APP_STORE_KEYWORD_LIMIT - keywordChars;
+
+  const filteredKeywords = searchQuery.trim()
+    ? keywords.filter((k) =>
+        k.keyword.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : keywords;
 
   const handleAddKeyword = async (value: string) => {
     if (!value.trim()) return;
@@ -172,6 +180,15 @@ export default function KeywordChips({
             </Button>
           )}
       </div>
+      {keywords.length > 8 && (
+        <Input
+          placeholder={t('search-keywords-placeholder')}
+          className="h-7 text-xs"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      )}
+
       <div className="flex flex-wrap gap-2">
         <AnimatePresence mode="popLayout">
           {isLoading ? (
@@ -192,7 +209,7 @@ export default function KeywordChips({
               ))
           ) : (
             <>
-              {keywords.map((keywordObj, index) => (
+              {filteredKeywords.map((keywordObj, index) => (
                 <React.Fragment key={keywordObj.keyword}>
                   <motion.div
                     {...(keywordObj.overall !== null && {

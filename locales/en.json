@@ -401,6 +401,7 @@
     "bulk-import-button": "Import All",
     "cancel": "Cancel",
     "export-keywords": "Export CSV",
+    "search-keywords-placeholder": "Search keywords...",
     "working-hard": "Working hard...",
     "completed": "Completed",
     "error-occurred-during-competitor-research": "Error occurred during competitor research",
