@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
             team: {
               include: {
                 users: {
-                  include: { user: { select: { email: true } } },
+                  include: { user: { select: { email: true, locale: true } } },
                 },
               },
             },
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     // Group by team for email digest
     const changesByTeam: Record<string, CompetitorChangeEntry[]> = {};
-    const teamEmails: Record<string, string[]> = {};
+    const teamUsers: Record<string, { email: string; locale: string }[]> = {};
     let totalChanges = 0;
 
     for (const competitor of competitors) {
@@ -140,10 +140,13 @@ export async function GET(request: NextRequest) {
 
           const teamId = competitor.app.team.id;
           if (!changesByTeam[teamId]) changesByTeam[teamId] = [];
-          if (!teamEmails[teamId]) {
-            teamEmails[teamId] = competitor.app.team.users
-              .map((u) => u.user.email)
-              .filter(Boolean) as string[];
+          if (!teamUsers[teamId]) {
+            teamUsers[teamId] = competitor.app.team.users
+              .filter((u) => u.user.email)
+              .map((u) => ({
+                email: u.user.email as string,
+                locale: u.user.locale ?? 'en',
+              }));
           }
 
           for (const c of detectedChanges) {
@@ -169,10 +172,10 @@ export async function GET(request: NextRequest) {
 
     // Send email digest per team (fire & forget)
     for (const teamId of Object.keys(changesByTeam)) {
-      const emails = teamEmails[teamId] ?? [];
+      const users = teamUsers[teamId] ?? [];
       const changes = changesByTeam[teamId];
-      for (const email of emails) {
-        sendCompetitorChangesEmail(email, changes).catch((err) =>
+      for (const { email, locale: userLocale } of users) {
+        sendCompetitorChangesEmail(email, changes, userLocale).catch((err) =>
           console.error(
             `competitor-changes: failed to send email to ${email}:`,
             err
