@@ -96,7 +96,7 @@
     }
   },
   "login": {
-    "title": "{{appName}}",
+    "title": "AppAgent",
     "description": "From ASO to Release, All Streamlined",
     "sign-in-to-your-account": "Sign in to your account",
     "sign-in-with-email": "Sign in with email",
@@ -500,7 +500,7 @@
     }
   },
   "layout": {
-    "title": "{{appName}}",
+    "title": "AppAgent",
     "description": "From ASO to Release, All Streamlined",
     "manage-apps": "Manage apps",
     "user-avatar": "User avatar",

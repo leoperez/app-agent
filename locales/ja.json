@@ -4,10 +4,10 @@
       "title": "{{appName}} | ASO、そしてリリースまでを効率化",
       "description": "{{appName}}は、専門知識なしで、アプリストア最適化（ASO）を自動化し、多言語のリリースノートの自動化等、リリースまでの工程を効率化します。App Radar、AppTweak、Sensor Towerなどの既存のASOツールは高価で煩雑なままですが、{{appName}}は、AIを駆使しゼロからユーザ体験を再設計しました。"
     },
-    "title": "{{appName}}"
+    "title": "AppAgent"
   },
   "landing-page": {
-    "title": "{{appName}}",
+    "title": "AppAgent",
     "tagline": "ASO、そしてリリースまでを効率化",
     "description": "{{appName}}は、専門知識なしで、アプリストア最適化（ASO）を自動化し、多言語のリリースノートの自動化等、リリースまでの工程を効率化します。",
     "get-started-now": "無料で始める",
