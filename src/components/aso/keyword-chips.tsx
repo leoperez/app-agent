@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { IoMdClose, IoMdAdd } from 'react-icons/io';
+import { MdOutlineFileUpload } from 'react-icons/md';
 import Skeleton from 'react-loading-skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -77,6 +78,9 @@ export default function KeywordChips({
   const [loadingKeywords, setLoadingKeywords] = useState<Set<string>>(
     new Set()
   );
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [bulkValue, setBulkValue] = useState('');
+  const [isBulkImporting, setIsBulkImporting] = useState(false);
   const appInfo = useApp();
   const { rankings } = useGetKeywordRankings(
     appInfo?.currentApp?.id || '',
@@ -102,6 +106,26 @@ export default function KeywordChips({
         return next;
       });
     }
+  };
+
+  const handleBulkImport = async () => {
+    const terms = bulkValue
+      .split(/[,\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!terms.length) return;
+
+    setIsBulkImporting(true);
+    for (const term of terms) {
+      try {
+        await handleAddKeyword(term);
+      } catch {
+        // continue with the rest even if one fails
+      }
+    }
+    setIsBulkImporting(false);
+    setBulkValue('');
+    setShowBulkImport(false);
   };
 
   return (
@@ -246,12 +270,71 @@ export default function KeywordChips({
                       <IoMdAdd className="h-4 w-4" />
                     </Button>
                   </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-2"
+                      onClick={() => setShowBulkImport((v) => !v)}
+                      title={t('bulk-import-placeholder')}
+                    >
+                      <MdOutlineFileUpload className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
                 </motion.div>
               )}
             </>
           )}
         </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {showBulkImport && !readonly && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-3 space-y-2">
+              <p className="text-xs text-muted-foreground">
+                {t('bulk-import-placeholder')}
+              </p>
+              <textarea
+                className="w-full h-20 text-sm border border-input rounded-md px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                placeholder="keyword1, keyword2, keyword3"
+                value={bulkValue}
+                onChange={(e) => setBulkValue(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleBulkImport}
+                  disabled={isBulkImporting || !bulkValue.trim()}
+                >
+                  {isBulkImporting
+                    ? t('working-hard')
+                    : t('bulk-import-button')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setShowBulkImport(false);
+                    setBulkValue('');
+                  }}
+                >
+                  {t('cancel')}
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
