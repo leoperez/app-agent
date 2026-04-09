@@ -1,7 +1,7 @@
 import { GooglePlayApp } from '@/types/google-play';
 import { getGooglePlayClient } from './client';
 import { getApp } from './get-app';
-import { LocaleCode } from '@/lib/utils/locale';
+import { AppStoreLocaleCode } from '@/lib/utils/locale';
 
 export interface GooglePlayConsoleApp {
   appId: string;
@@ -77,7 +77,7 @@ export async function getGooglePlayAppsByPackageNames(
       if (edit.data.id) {
         // Get app details using the scraper (public data)
         try {
-          const appDetails = await getApp(packageName, LocaleCode.EN);
+          const appDetails = await getApp(packageName, AppStoreLocaleCode.EN);
 
           apps.push({
             appId: packageName,

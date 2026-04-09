@@ -1,7 +1,7 @@
 import client from '@/lib/app-store/client';
 import { tarseAppData } from '@/lib/aso/tarser';
 import { AppStoreApp } from '@/types/app-store';
-import { LocaleCode } from '@/lib/utils/locale';
+import { AppStoreLocaleCode } from '@/lib/utils/locale';
 import {
   getCountryCode,
   getLocaleString,
@@ -9,7 +9,7 @@ import {
 
 export async function getApp(
   appId: string,
-  locale: LocaleCode
+  locale: AppStoreLocaleCode
 ): Promise<Partial<AppStoreApp>> {
   const app = await client.app({
     id: appId,
