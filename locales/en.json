@@ -191,6 +191,8 @@
         "connect-store-account": "Connect Store Account",
         "error-loading-localizations": "Error loading localizations. Please try again.",
         "try-again": "Try Again",
+        "export-csv": "Export all localizations as CSV",
+        "export-json": "Export all localizations as JSON",
         "pull": "Pull",
         "pull-latest-version-from-app-store-connect": "Pull latest version from App Store Connect",
         "save": "Save",

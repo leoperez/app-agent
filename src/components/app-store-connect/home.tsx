@@ -8,6 +8,7 @@ import {
   MdDownload,
   MdSave,
   MdOutlineRocketLaunch,
+  MdOutlineFileDownload,
 } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import {
@@ -363,6 +364,46 @@ export default function Home() {
 
         {versionStatus?.upToDate && (
           <div className="flex items-center space-x-2">
+            <div>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  window.open(
+                    `/api/teams/${teamInfo?.currentTeam?.id}/apps/${currentApp?.id}/localizations/export?format=csv`,
+                    '_blank'
+                  )
+                }
+                className="flex items-center"
+                data-tooltip-id="export-csv-tooltip"
+              >
+                <MdOutlineFileDownload className="w-5 h-5" />
+                CSV
+              </Button>
+              <Tooltip id="export-csv-tooltip" place="top">
+                {t('export-csv')}
+              </Tooltip>
+            </div>
+
+            <div>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  window.open(
+                    `/api/teams/${teamInfo?.currentTeam?.id}/apps/${currentApp?.id}/localizations/export?format=json`,
+                    '_blank'
+                  )
+                }
+                className="flex items-center"
+                data-tooltip-id="export-json-tooltip"
+              >
+                <MdOutlineFileDownload className="w-5 h-5" />
+                JSON
+              </Button>
+              <Tooltip id="export-json-tooltip" place="top">
+                {t('export-json')}
+              </Tooltip>
+            </div>
+
             <div>
               <Button
                 variant="outline"

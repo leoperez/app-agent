@@ -191,6 +191,8 @@
         "connect-store-account": "ストアアカウントを連携する",
         "error-loading-localizations": "アプリ情報の読み込み中にエラーが発生しました。再試行してください。",
         "try-again": "再試行する",
+        "export-csv": "全ローカリゼーションをCSVでエクスポート",
+        "export-json": "全ローカリゼーションをJSONでエクスポート",
         "pull": "プル",
         "pull-latest-version-from-app-store-connect": "App Store Connectから最新バージョンを取得",
         "save": "保存",
