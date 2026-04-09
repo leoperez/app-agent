@@ -64,6 +64,18 @@
       "cta": "招待を承認する",
       "link-note": "または以下のURLをブラウザに貼り付けてください："
     },
+    "keyword-drop": {
+      "subject-single": "キーワードランキングの急落が1件検出されました",
+      "subject-plural": "キーワードランキングの急落が{count}件検出されました",
+      "title": "キーワードランキングの急落を検出しました",
+      "intro": "以下のキーワードのランキングが大幅に下がりました：",
+      "field-keyword": "キーワード",
+      "field-locale": "ロケール",
+      "field-previous": "以前",
+      "field-new": "現在",
+      "dropped-out": "圏外（100位以下）",
+      "cta": "ダッシュボードを開く"
+    },
     "competitor-changes": {
       "title": "競合アプリの変更を検出しました",
       "intro": "トラッキング中の競合アプリに以下の変更が検出されました：",

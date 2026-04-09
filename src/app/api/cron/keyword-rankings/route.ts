@@ -6,8 +6,13 @@ import { googlePlayToAppStore } from '@/lib/utils/locale';
 import { Platform, Store } from '@/types/aso';
 import { validateCronSecret } from '@/lib/utils/cron-auth';
 import { redis } from '@/lib/redis';
+import { sendKeywordDropEmail } from '@/lib/emails/send-keyword-drop';
+import { KeywordDropEntry } from '@/components/emails/keyword-drop';
 
 export const maxDuration = 300;
+
+// A keyword drop is significant if it falls ≥5 positions or exits the top 100
+const DROP_THRESHOLD = 5;
 
 // Daily cron: snapshot keyword positions for all tracked keywords
 export async function GET(request: NextRequest) {
@@ -25,7 +30,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Already ran today', snapshots: 0 });
     }
 
-    // Fetch all keywords grouped by app
+    // Fetch all keywords with current position and team members
     const keywords = await prisma.asoKeyword.findMany({
       select: {
         appId: true,
@@ -33,8 +38,27 @@ export async function GET(request: NextRequest) {
         platform: true,
         locale: true,
         keyword: true,
+        position: true, // previous position — used for drop detection
         app: {
-          select: { storeAppId: true },
+          select: {
+            storeAppId: true,
+            title: true,
+            team: {
+              select: {
+                users: {
+                  include: {
+                    user: {
+                      select: {
+                        email: true,
+                        locale: true,
+                        notifyCompetitorChanges: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     });
@@ -56,6 +80,15 @@ export async function GET(request: NextRequest) {
     }[] = [];
     const errors: string[] = [];
 
+    // Drops grouped by teamId → appId → drops
+    const dropsByTeam: Record<
+      string,
+      {
+        drops: KeywordDropEntry[];
+        users: { email: string; locale: string }[];
+      }
+    > = {};
+
     // Process in batches of 5 to avoid overwhelming the App Store search API
     const batchSize = 5;
     for (let i = 0; i < keywords.length; i += batchSize) {
@@ -76,7 +109,8 @@ export async function GET(request: NextRequest) {
                     kw.keyword,
                     kw.app.storeAppId
                   );
-            const position = score.position === -1 ? null : score.position;
+            const newPosition = score.position === -1 ? null : score.position;
+            const prevPosition = kw.position; // value before today's update
 
             snapshots.push({
               appId: kw.appId,
@@ -84,10 +118,10 @@ export async function GET(request: NextRequest) {
               platform: kw.platform,
               locale: kw.locale,
               keyword: kw.keyword,
-              position,
+              position: newPosition,
             });
 
-            // Also update the current position on the AsoKeyword record
+            // Update the current position on the AsoKeyword record
             await prisma.asoKeyword.updateMany({
               where: {
                 appId: kw.appId,
@@ -97,10 +131,46 @@ export async function GET(request: NextRequest) {
                 keyword: kw.keyword,
               },
               data: {
-                position,
+                position: newPosition,
                 lastCheckedAt: new Date(),
               },
             });
+
+            // Detect significant drops
+            const isSignificantDrop =
+              prevPosition != null && // was ranked before
+              (newPosition === null || // dropped out of top 100
+                newPosition - prevPosition >= DROP_THRESHOLD); // fell ≥ threshold
+
+            if (isSignificantDrop) {
+              const teamId = kw.app.team
+                ? Object.keys(kw.app.team)[0] // use appId as team key
+                : kw.appId;
+              const teamKey = kw.appId; // group by app
+
+              if (!dropsByTeam[teamKey]) {
+                dropsByTeam[teamKey] = {
+                  drops: [],
+                  users: (kw.app.team?.users ?? [])
+                    .filter(
+                      (u) =>
+                        u.user.email && u.user.notifyCompetitorChanges !== false
+                    )
+                    .map((u) => ({
+                      email: u.user.email as string,
+                      locale: u.user.locale ?? 'en',
+                    })),
+                };
+              }
+
+              dropsByTeam[teamKey].drops.push({
+                appTitle: kw.app.title ?? kw.app.storeAppId,
+                keyword: kw.keyword,
+                locale: kw.locale,
+                previousPosition: prevPosition,
+                newPosition,
+              });
+            }
           } catch (err) {
             errors.push(`${kw.appId}/${kw.keyword}: ${(err as Error).message}`);
           }
@@ -116,6 +186,20 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Send drop alert emails (fire & forget)
+    let totalDrops = 0;
+    for (const { drops, users } of Object.values(dropsByTeam)) {
+      totalDrops += drops.length;
+      for (const { email, locale } of users) {
+        sendKeywordDropEmail(email, drops, locale).catch((err) =>
+          console.error(
+            `keyword-rankings: failed to send drop alert to ${email}:`,
+            err
+          )
+        );
+      }
+    }
+
     // Clean up snapshots older than 90 days
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 90);
@@ -127,11 +211,16 @@ export async function GET(request: NextRequest) {
       JSON.stringify({
         event: 'keyword_ranking_snapshot',
         snapshots: snapshots.length,
+        drops: totalDrops,
         errors: errors.length,
       })
     );
 
-    return NextResponse.json({ snapshots: snapshots.length, errors });
+    return NextResponse.json({
+      snapshots: snapshots.length,
+      drops: totalDrops,
+      errors,
+    });
   } catch (error) {
     console.error('keyword-rankings cron error:', error);
     return NextResponse.json(

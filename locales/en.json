@@ -64,6 +64,18 @@
       "cta": "Accept Invitation",
       "link-note": "Or copy and paste this URL into your browser:"
     },
+    "keyword-drop": {
+      "subject-single": "1 keyword ranking drop detected",
+      "subject-plural": "{count} keyword ranking drops detected",
+      "title": "Keyword ranking drops detected",
+      "intro": "The following keywords dropped significantly in ranking:",
+      "field-keyword": "Keyword",
+      "field-locale": "Locale",
+      "field-previous": "Previous",
+      "field-new": "New",
+      "dropped-out": "Out of top 100",
+      "cta": "View dashboard"
+    },
     "competitor-changes": {
       "title": "Competitor updates detected",
       "intro": "We detected the following changes in your tracked competitors:",
