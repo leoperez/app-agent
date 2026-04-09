@@ -1,6 +1,6 @@
 import { LocaleCode } from '../utils/locale';
 
-export const BLACKLIST_KEYWORDS = {
+export const BLACKLIST_KEYWORDS: Record<string, string[]> = {
   // English variants
   [LocaleCode.EN]: ['free'],
   [LocaleCode.EN_GB]: ['free'],
