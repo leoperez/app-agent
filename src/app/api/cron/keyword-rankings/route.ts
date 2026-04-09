@@ -5,6 +5,7 @@ import { scoreKeywordGPlay } from '@/lib/google-play/score-keyword';
 import { googlePlayToAppStore } from '@/lib/utils/locale';
 import { Platform, Store } from '@/types/aso';
 import { validateCronSecret } from '@/lib/utils/cron-auth';
+import { redis } from '@/lib/redis';
 
 export const maxDuration = 300;
 
@@ -14,6 +15,16 @@ export async function GET(request: NextRequest) {
   if (authError) return authError;
 
   try {
+    // Idempotency: use Redis lock with 23h TTL to prevent duplicate runs
+    const lockKey = `cron:keyword-rankings:${new Date().toISOString().split('T')[0]}`;
+    const locked = await redis.set(lockKey, '1', {
+      ex: 23 * 60 * 60,
+      nx: true,
+    });
+    if (!locked) {
+      return NextResponse.json({ message: 'Already ran today', snapshots: 0 });
+    }
+
     // Fetch all keywords grouped by app
     const keywords = await prisma.asoKeyword.findMany({
       select: {
@@ -97,9 +108,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Bulk insert all snapshots
+    // Bulk insert all snapshots (skipDuplicates guards against re-runs on the same day)
     if (snapshots.length > 0) {
-      await prisma.asoKeywordRanking.createMany({ data: snapshots });
+      await prisma.asoKeywordRanking.createMany({
+        data: snapshots,
+        skipDuplicates: true,
+      });
     }
 
     // Clean up snapshots older than 90 days

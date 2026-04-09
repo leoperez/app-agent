@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { validateCronSecret } from '@/lib/utils/cron-auth';
+import { redis } from '@/lib/redis';
 import { Store } from '@/types/aso';
 import client from '@/lib/app-store/client';
 import scraperClient from '@/lib/google-play/scraper-client';
@@ -26,6 +27,16 @@ export async function GET(request: NextRequest) {
   if (authError) return authError;
 
   try {
+    // Idempotency: use Redis lock with 23h TTL to prevent duplicate runs
+    const lockKey = `cron:competitor-changes:${new Date().toISOString().split('T')[0]}`;
+    const locked = await redis.set(lockKey, '1', {
+      ex: 23 * 60 * 60,
+      nx: true,
+    });
+    if (!locked) {
+      return NextResponse.json({ message: 'Already ran today', changes: 0 });
+    }
+
     const competitors = await prisma.competitor.findMany({
       include: {
         app: {
