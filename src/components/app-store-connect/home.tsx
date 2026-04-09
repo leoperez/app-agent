@@ -25,7 +25,12 @@ import { Tooltip } from 'react-tooltip';
 
 import { useApp } from '@/context/app';
 import { useTeam } from '@/context/team';
-import { checkShortDescription, useGetAppLocalizations } from '@/lib/swr/app';
+import {
+  checkShortDescription,
+  useGetAppLocalizations,
+  useGetAppAnalytics,
+} from '@/lib/swr/app';
+import AnalyticsChart from '@/components/app-store-connect/analytics-chart';
 import {
   createNewVersion,
   pullLatestVersion,
@@ -71,6 +76,10 @@ export default function Home() {
   } = useVersionCheck(currentApp?.id || '');
   const { localizations, loading, error, isRefreshing, refresh } =
     useGetAppLocalizations(currentApp?.id || '');
+  const { data: analyticsData, loading: analyticsLoading } = useGetAppAnalytics(
+    teamInfo?.currentTeam?.id || '',
+    currentApp?.id || ''
+  );
   const [isStaged, setIsStaged] = useState(currentApp?.isStaged || false);
   const [isPushing, setIsPushing] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
@@ -525,6 +534,13 @@ export default function Home() {
                 </div>
               </div>
             )}
+
+          {/* Analytics chart — App Store only */}
+          {currentApp?.store !== 'GOOGLEPLAY' && (
+            <div className="mb-6">
+              <AnalyticsChart data={analyticsData} loading={analyticsLoading} />
+            </div>
+          )}
 
           {needCreateNewVersion ? (
             <CreateNewVersion

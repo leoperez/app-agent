@@ -112,6 +112,25 @@ export function useGetAppLocalizations(appId: string) {
   };
 }
 
+export interface AppAnalyticsRow {
+  date: string;
+  impressions: number;
+  pageViews: number;
+  downloads: number;
+  sessions: number;
+  activeDevices: number;
+}
+
+export function useGetAppAnalytics(teamId: string, appId: string, days = 30) {
+  const { data, error, isLoading } = useSWR<AppAnalyticsRow[]>(
+    teamId && appId
+      ? `/api/teams/${teamId}/apps/${appId}/analytics?days=${days}`
+      : null,
+    fetcher
+  );
+  return { data: data ?? [], loading: isLoading, error };
+}
+
 export async function checkShortDescription(teamId: string, appId: string) {
   const response = await fetch(
     `/api/teams/${teamId}/apps/${appId}/short-description`,
