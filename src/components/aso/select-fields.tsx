@@ -43,9 +43,6 @@ export default function SelectFields({
       fullDescription: false,
     };
 
-const [selectedFields, setSelectedFields] =
-  useState<Record<string, boolean>>(defaultFields);
-
   const [selectedFields, setSelectedFields] =
     useState<Record<string, boolean>>(defaultFields);
   const [outline, setOutline] = useState('');
