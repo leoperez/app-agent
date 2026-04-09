@@ -16,6 +16,7 @@ export async function setLocale(locale: string) {
 export async function getNotificationPrefs(): Promise<{
   notifyCompetitorChanges: boolean;
   slackWebhookUrl: string | null;
+  ratingAlertThreshold: number | null;
 }> {
   const response = await fetch(`/api/account/notifications`);
   return response.json();
@@ -24,6 +25,7 @@ export async function getNotificationPrefs(): Promise<{
 export async function setNotificationPrefs(prefs: {
   notifyCompetitorChanges?: boolean;
   slackWebhookUrl?: string | null;
+  ratingAlertThreshold?: number | null;
 }) {
   const response = await fetch(`/api/account/notifications`, {
     method: 'PATCH',

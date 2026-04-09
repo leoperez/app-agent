@@ -131,6 +131,22 @@ export function useGetAppAnalytics(teamId: string, appId: string, days = 30) {
   return { data: data ?? [], loading: isLoading, error };
 }
 
+export interface AppRatingRow {
+  date: string;
+  rating: number;
+  ratingCount: number;
+}
+
+export function useGetAppRatings(teamId: string, appId: string, days = 30) {
+  const { data, error, isLoading } = useSWR<AppRatingRow[]>(
+    teamId && appId
+      ? `/api/teams/${teamId}/apps/${appId}/ratings?days=${days}`
+      : null,
+    fetcher
+  );
+  return { data: data ?? [], loading: isLoading, error };
+}
+
 export async function checkShortDescription(teamId: string, appId: string) {
   const response = await fetch(
     `/api/teams/${teamId}/apps/${appId}/short-description`,

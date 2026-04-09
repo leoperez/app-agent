@@ -58,6 +58,7 @@ model User {
   // Notification preferences
   notifyCompetitorChanges Boolean @default(true)
   slackWebhookUrl         String? // Optional Slack incoming webhook URL for alerts
+  ratingAlertThreshold    Float?  // Alert when app rating drops below this value (e.g. 4.0)
 
   // Stripe subscription fields
   plan           String         @default("free")
@@ -200,6 +201,7 @@ model App {
   analytics          AppAnalytics[]
   whatsNewHistory    WhatsNewHistory[]
   metadataVariants   MetadataVariant[]
+  ratingSnapshots    AppRatingSnapshot[]
 
   isStaged        Boolean   @default(false)
 
@@ -302,6 +304,18 @@ model WhatsNewHistory {
   pushedAt  DateTime @default(now())
 
   @@index([appId, locale, pushedAt])
+}
+
+model AppRatingSnapshot {
+  id          String   @id @default(cuid())
+  appId       String
+  app         App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  rating      Float    // current average rating
+  ratingCount Int      // total number of ratings
+  recordedAt  DateTime @default(now())
+
+  @@unique([appId, recordedAt])
+  @@index([appId, recordedAt])
 }
 
 model MetadataVariant {

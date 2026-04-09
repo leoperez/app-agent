@@ -14,11 +14,19 @@ export async function GET() {
     const userId = (session.user as User).id;
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { notifyCompetitorChanges: true, slackWebhookUrl: true },
+      select: {
+        notifyCompetitorChanges: true,
+        slackWebhookUrl: true,
+        ratingAlertThreshold: true,
+      },
     });
 
     return NextResponse.json(
-      user ?? { notifyCompetitorChanges: true, slackWebhookUrl: null }
+      user ?? {
+        notifyCompetitorChanges: true,
+        slackWebhookUrl: null,
+        ratingAlertThreshold: null,
+      }
     );
   } catch (error) {
     return handleAppError(error as Error);
@@ -37,20 +45,30 @@ export async function PATCH(request: Request) {
     const data: {
       notifyCompetitorChanges?: boolean;
       slackWebhookUrl?: string | null;
+      ratingAlertThreshold?: number | null;
     } = {};
 
     if ('notifyCompetitorChanges' in body) {
       data.notifyCompetitorChanges = Boolean(body.notifyCompetitorChanges);
     }
     if ('slackWebhookUrl' in body) {
-      // Store empty string as null
       data.slackWebhookUrl = body.slackWebhookUrl?.trim() || null;
+    }
+    if ('ratingAlertThreshold' in body) {
+      const val = parseFloat(body.ratingAlertThreshold);
+      data.ratingAlertThreshold = isNaN(val)
+        ? null
+        : Math.min(5, Math.max(1, val));
     }
 
     const user = await prisma.user.update({
       where: { id: userId },
       data,
-      select: { notifyCompetitorChanges: true, slackWebhookUrl: true },
+      select: {
+        notifyCompetitorChanges: true,
+        slackWebhookUrl: true,
+        ratingAlertThreshold: true,
+      },
     });
 
     return NextResponse.json(user);

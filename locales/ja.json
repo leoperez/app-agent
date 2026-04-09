@@ -125,6 +125,16 @@
       "shu-from-appagent": "AppAgentのShuより",
       "copyright": "© {year}年 AppAgent",
       "hi": "こんにちは！"
+    },
+    "rating-drop": {
+      "subject-single": "評価アラート: {app}が下落",
+      "subject-plural": "評価アラート: {count}件のアプリが下落",
+      "title": "アプリの評価が下落しました",
+      "intro": "以下のアプリがアラートのしきい値を下回りました：",
+      "field-previous": "以前",
+      "field-new": "新しい評価",
+      "field-count": "総評価数",
+      "cta": "ダッシュボードを見る"
     }
   },
   "login": {
@@ -499,7 +509,9 @@
     "slack-webhook-description": "Slack Incoming Webhook URLを貼り付けると、キーワード順位の下落や競合アプリの変更をSlackで受け取れます",
     "save": "保存",
     "saving": "保存中...",
-    "notifications-save-error": "通知設定の保存に失敗しました"
+    "notifications-save-error": "通知設定の保存に失敗しました",
+    "rating-alert-threshold": "評価アラートのしきい値",
+    "rating-alert-threshold-description": "いずれかのアプリがこの星評価（1〜5）を下回った場合にアラートを受け取ります。空欄にするとアラートを無効化します。"
   },
   "common": {
     "coming-soon": "開発中",

@@ -12,15 +12,18 @@ export function NotificationSettings() {
   const t = useTranslations('account');
   const [notifyCompetitorChanges, setNotifyCompetitorChanges] = useState(true);
   const [slackWebhookUrl, setSlackWebhookUrl] = useState('');
+  const [ratingThreshold, setRatingThreshold] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingSlack, setSavingSlack] = useState(false);
+  const [savingRating, setSavingRating] = useState(false);
 
   useEffect(() => {
     getNotificationPrefs()
       .then((prefs) => {
         setNotifyCompetitorChanges(prefs.notifyCompetitorChanges);
         setSlackWebhookUrl(prefs.slackWebhookUrl ?? '');
+        setRatingThreshold(prefs.ratingAlertThreshold?.toString() ?? '');
       })
       .finally(() => setLoading(false));
   }, []);
@@ -47,6 +50,19 @@ export function NotificationSettings() {
       toast.error(t('notifications-save-error'));
     } finally {
       setSavingSlack(false);
+    }
+  };
+
+  const handleRatingThresholdSave = async () => {
+    setSavingRating(true);
+    try {
+      const val = ratingThreshold.trim() ? parseFloat(ratingThreshold) : null;
+      await setNotificationPrefs({ ratingAlertThreshold: val });
+      toast.success(t('notifications-saved'));
+    } catch {
+      toast.error(t('notifications-save-error'));
+    } finally {
+      setSavingRating(false);
     }
   };
 
@@ -126,6 +142,47 @@ export function NotificationSettings() {
                   >
                     {savingSlack ? t('saving') : t('save')}
                   </button>
+                </div>
+              </div>
+
+              {/* Rating alert threshold */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium">
+                  {t('rating-alert-threshold')}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t('rating-alert-threshold-description')}
+                </p>
+                <div className="flex gap-2 items-center">
+                  <span className="text-sm text-muted-foreground">★</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="5"
+                    step="0.1"
+                    placeholder="e.g. 4.0"
+                    value={ratingThreshold}
+                    onChange={(e) => setRatingThreshold(e.target.value)}
+                    className="w-28 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900"
+                  />
+                  <button
+                    onClick={handleRatingThresholdSave}
+                    disabled={savingRating}
+                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {savingRating ? t('saving') : t('save')}
+                  </button>
+                  {ratingThreshold && (
+                    <button
+                      onClick={() => {
+                        setRatingThreshold('');
+                        setNotificationPrefs({ ratingAlertThreshold: null });
+                      }}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      {t('cancel')}
+                    </button>
+                  )}
                 </div>
               </div>
             </>

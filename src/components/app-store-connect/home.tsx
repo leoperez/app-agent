@@ -29,8 +29,10 @@ import {
   checkShortDescription,
   useGetAppLocalizations,
   useGetAppAnalytics,
+  useGetAppRatings,
 } from '@/lib/swr/app';
 import AnalyticsChart from '@/components/app-store-connect/analytics-chart';
+import { RatingChart } from '@/components/app-store-connect/rating-chart';
 import {
   createNewVersion,
   pullLatestVersion,
@@ -77,6 +79,10 @@ export default function Home() {
   const { localizations, loading, error, isRefreshing, refresh } =
     useGetAppLocalizations(currentApp?.id || '');
   const { data: analyticsData, loading: analyticsLoading } = useGetAppAnalytics(
+    teamInfo?.currentTeam?.id || '',
+    currentApp?.id || ''
+  );
+  const { data: ratingsData, loading: ratingsLoading } = useGetAppRatings(
     teamInfo?.currentTeam?.id || '',
     currentApp?.id || ''
   );
@@ -541,6 +547,11 @@ export default function Home() {
               <AnalyticsChart data={analyticsData} loading={analyticsLoading} />
             </div>
           )}
+
+          {/* Rating chart — all stores */}
+          <div className="mb-6">
+            <RatingChart data={ratingsData} loading={ratingsLoading} />
+          </div>
 
           {needCreateNewVersion ? (
             <CreateNewVersion
