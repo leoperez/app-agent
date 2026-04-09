@@ -200,8 +200,6 @@ export async function generateDescription(
     messages.push({ role: 'user', content: retry.feedback });
   }
 
-  console.log(JSON.stringify(messages, null, 2));
-
   const response = await openai.chat.completions.create({
     model: LLM_MODEL,
     messages,
