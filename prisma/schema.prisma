@@ -193,6 +193,7 @@ model App {
   asoKeywords        AsoKeyword[]
   asoKeywordRankings AsoKeywordRanking[]
   competitors        Competitor[]
+  analytics          AppAnalytics[]
 
   isStaged        Boolean   @default(false)
 
@@ -337,6 +338,22 @@ model AsoKeywordRanking {
   @@index([appId, locale, keyword, recordedAt])
   @@index([appId])
   @@index([recordedAt])
+}
+
+model AppAnalytics {
+  id            String   @id @default(cuid())
+  appId         String
+  app           App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  date          DateTime @db.Date
+  impressions   Int?
+  pageViews     Int?
+  downloads     Int?
+  sessions      Int?
+  activeDevices Int?
+  createdAt     DateTime @default(now())
+
+  @@unique([appId, date])
+  @@index([appId, date])
 }
 
 model Competitor {

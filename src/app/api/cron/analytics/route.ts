@@ -1,47 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getAnalyticsReportRequests,
-  getAnalyticsReport,
   getAnalyticsReports,
-  requestReport,
   getAnalyticsReportInstances,
-  readAnalyticsReport,
+  getAnalyticsSegments,
+  downloadAndParseSegment,
+  parseEngagementRow,
+  requestReport,
 } from '@/lib/app-store-connect/analytics';
-import prisma from '@/lib/prisma';
 import {
   generateJWT,
   isAppStoreConnectJWTExpired,
 } from '@/lib/app-store-connect/auth';
 import { validateCronSecret } from '@/lib/utils/cron-auth';
+import prisma from '@/lib/prisma';
+import { subDays } from 'date-fns';
+import { Store } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   const authError = validateCronSecret(request);
   if (authError) return authError;
 
-  try {
-    // 1. Fetch all user apps that need analytics updates
-    const userApps = await prisma.app.findMany({
-      include: {
-        team: {
-          select: {
-            id: true,
-            appStoreConnectJWT: true,
-            appStoreConnectJWTExpiresAt: true,
-            appStoreConnectIssuerId: true,
-            appStoreConnectKeyId: true,
-            appStoreConnectPrivateKey: true,
-          },
+  const results: { appId: string; rowsSaved: number }[] = [];
+  const errors: { appId: string; error: string }[] = [];
+
+  const apps = await prisma.app.findMany({
+    where: { store: Store.APPSTORE },
+    include: {
+      team: {
+        select: {
+          id: true,
+          appStoreConnectJWT: true,
+          appStoreConnectJWTExpiresAt: true,
+          appStoreConnectIssuerId: true,
+          appStoreConnectKeyId: true,
+          appStoreConnectPrivateKey: true,
         },
       },
-    });
+    },
+  });
 
-    // 2. For each app, retrieve analytics
-    const results = [];
-
-    for (const app of userApps) {
-      if (!app.team.appStoreConnectJWT) {
-        continue;
-      }
+  for (const app of apps) {
+    try {
+      if (!app.team.appStoreConnectJWT) continue;
 
       // Refresh JWT if expired
       let jwt = app.team.appStoreConnectJWT;
@@ -70,87 +71,113 @@ export async function GET(request: NextRequest) {
         });
       }
 
+      // Get or create report request
       let reportRequests = await getAnalyticsReportRequests(
         jwt,
         app.storeAppId
       );
-      // console.log('reportRequests', JSON.stringify(reportRequests, null, 2));
       reportRequests = reportRequests.filter(
-        (report) => report.attributes.stoppedDueToInactivity === false
+        (r) => r.attributes.stoppedDueToInactivity === false
       );
-      if (!reportRequests.length) {
-        await requestReport(jwt, app.storeAppId);
-        console.log('requested report, and going to get the list again');
-        reportRequests = await getAnalyticsReportRequests(jwt, app.storeAppId);
-      }
 
       if (!reportRequests.length) {
-        console.log('no report requests found');
-        continue;
+        await requestReport(jwt, app.storeAppId);
+        console.log(`Requested new analytics report for app ${app.storeAppId}`);
+        continue; // Report won't be ready until tomorrow
       }
 
       const reportRequestId = reportRequests[0].id;
+      const reports = await getAnalyticsReports(jwt, reportRequestId);
 
-      // const analyticsReport = await getAnalyticsReport(
-      //   jwt,
-      //   app.storeAppId,
-      //   reportRequestId
-      // );
-      // console.log('analyticsReport', JSON.stringify(analyticsReport, null, 2));
-      const analyticsReports = await getAnalyticsReports(jwt, reportRequestId);
-      console.log(`analytics reports: ${analyticsReports.length}`);
-
-      const instances = await getAnalyticsReportInstances(
-        jwt,
-        analyticsReports[0].id
-      );
-      console.log('instances', JSON.stringify(instances, null, 2));
-      console.log(`instances: ${instances.length}`);
-      // console.log(
-      //   'analyticsReports',
-      //   JSON.stringify(analyticsReports, null, 2)
-      // );
-
-      // NOTE: download is "APP_USAGE"
-      const engagementInstance = analyticsReports.find(
-        (report) => report.attributes.category === 'APP_STORE_ENGAGEMENT'
+      const engagementReport = reports.find(
+        (r) => r.attributes.category === 'APP_STORE_ENGAGEMENT'
       );
 
-      if (!engagementInstance) {
-        console.log('still generating report');
+      if (!engagementReport) {
+        console.log(
+          `No engagement report ready for app ${app.storeAppId}, available: ${reports.map((r) => r.attributes.category).join(', ')}`
+        );
         continue;
       }
 
-      console.log(
-        'engagementInstance',
-        JSON.stringify(engagementInstance, null, 2)
-      );
-
-      const instanceData = await readAnalyticsReport(
+      const instances = await getAnalyticsReportInstances(
         jwt,
-        engagementInstance.id
+        engagementReport.id
       );
-      console.log('instanceData', JSON.stringify(instanceData, null, 2));
-      // // 3. Insert into DB or update
-      // const stored = await db.analytics.create({
-      //   data: {
-      //     appId: app.appId,
-      //     userId: app.userId,
-      //     date: new Date(),
-      //     impressions: analyticsReports?.data?.impressions || 0,
-      //     // ...
-      //   },
-      // });
 
-      results.push(instanceData);
+      // instances is raw JSON — extract the data array
+      const instanceList: any[] = instances?.data || [];
+
+      // Find most recent daily instance
+      const dailyInstances = instanceList.filter(
+        (i: any) => i.attributes?.granularity === 'DAILY'
+      );
+      if (!dailyInstances.length) {
+        console.log(`No daily instances for app ${app.storeAppId}`);
+        continue;
+      }
+
+      // Sort by processingDate descending and take the latest
+      dailyInstances.sort(
+        (a: any, b: any) =>
+          new Date(b.attributes.processingDate).getTime() -
+          new Date(a.attributes.processingDate).getTime()
+      );
+      const latestInstance = dailyInstances[0];
+
+      const segments = await getAnalyticsSegments(jwt, latestInstance.id);
+      if (!segments.length || !segments[0].url) {
+        console.log(`No segments for app ${app.storeAppId}`);
+        continue;
+      }
+
+      // Download and parse the first segment (usually one per instance)
+      const rows = await downloadAndParseSegment(segments[0].url);
+      let rowsSaved = 0;
+
+      for (const row of rows) {
+        const parsed = parseEngagementRow(row);
+        if (!parsed.date) continue;
+
+        const date = new Date(parsed.date);
+        if (isNaN(date.getTime())) continue;
+
+        await prisma.appAnalytics.upsert({
+          where: { appId_date: { appId: app.id, date } },
+          update: {
+            impressions: parsed.impressions,
+            pageViews: parsed.pageViews,
+            downloads: parsed.downloads,
+            sessions: parsed.sessions,
+            activeDevices: parsed.activeDevices,
+          },
+          create: {
+            appId: app.id,
+            date,
+            impressions: parsed.impressions,
+            pageViews: parsed.pageViews,
+            downloads: parsed.downloads,
+            sessions: parsed.sessions,
+            activeDevices: parsed.activeDevices,
+          },
+        });
+        rowsSaved++;
+      }
+
+      // Clean up records older than 90 days
+      await prisma.appAnalytics.deleteMany({
+        where: {
+          appId: app.id,
+          date: { lt: subDays(new Date(), 90) },
+        },
+      });
+
+      results.push({ appId: app.id, rowsSaved });
+    } catch (err: any) {
+      console.error(`Analytics cron error for app ${app.id}:`, err);
+      errors.push({ appId: app.id, error: err.message });
     }
-
-    return NextResponse.json({ success: true, data: results });
-  } catch (error: any) {
-    console.error(error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
   }
+
+  return NextResponse.json({ success: true, results, errors });
 }
