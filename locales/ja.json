@@ -489,6 +489,18 @@
     "reviews-count": "件",
     "recent-negative": "最近のネガティブレビュー"
   },
+  "schedule-publish": {
+    "schedule-for-later": "後で公開予約",
+    "scheduled-for": "公開予約日時:",
+    "cancel-schedule": "予約をキャンセル",
+    "scheduled-success": "公開が予約されました",
+    "scheduled-error": "公開の予約に失敗しました",
+    "cancelled": "公開予約をキャンセルしました",
+    "cancel-error": "予約のキャンセルに失敗しました",
+    "scheduling": "予約中…",
+    "confirm": "予約する",
+    "cancel": "キャンセル"
+  },
   "account": {
     "account-settings": "アカウント設定",
     "account-settings-description": "アカウント設定と環境設定を管理",

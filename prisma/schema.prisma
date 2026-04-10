@@ -200,9 +200,10 @@ model App {
   competitors        Competitor[]
   analytics          AppAnalytics[]
   whatsNewHistory    WhatsNewHistory[]
-  metadataVariants   MetadataVariant[]
-  ratingSnapshots    AppRatingSnapshot[]
-  reviews            AppReview[]
+  metadataVariants    MetadataVariant[]
+  ratingSnapshots     AppRatingSnapshot[]
+  reviews             AppReview[]
+  scheduledPublishes  ScheduledPublish[]
 
   isStaged        Boolean   @default(false)
 
@@ -305,6 +306,20 @@ model WhatsNewHistory {
   pushedAt  DateTime @default(now())
 
   @@index([appId, locale, pushedAt])
+}
+
+model ScheduledPublish {
+  id          String   @id @default(cuid())
+  appId       String
+  app         App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  scheduledAt DateTime
+  status      String   @default("pending") // "pending" | "done" | "failed"
+  executedAt  DateTime?
+  error       String?
+  createdAt   DateTime @default(now())
+
+  @@index([appId])
+  @@index([status, scheduledAt])
 }
 
 model AppReview {

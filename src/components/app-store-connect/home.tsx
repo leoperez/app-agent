@@ -31,10 +31,12 @@ import {
   useGetAppAnalytics,
   useGetAppRatings,
   useGetReviewSentiment,
+  useGetScheduledPublish,
 } from '@/lib/swr/app';
 import AnalyticsChart from '@/components/app-store-connect/analytics-chart';
 import { RatingChart } from '@/components/app-store-connect/rating-chart';
 import { ReviewSentiment } from '@/components/app-store-connect/review-sentiment';
+import { SchedulePublish } from '@/components/app-store-connect/schedule-publish';
 import {
   createNewVersion,
   pullLatestVersion,
@@ -93,6 +95,10 @@ export default function Home() {
       teamInfo?.currentTeam?.id || '',
       currentApp?.id || ''
     );
+  const { scheduled, mutate: mutateScheduled } = useGetScheduledPublish(
+    teamInfo?.currentTeam?.id || '',
+    currentApp?.id || ''
+  );
   const [isStaged, setIsStaged] = useState(currentApp?.isStaged || false);
   const [isPushing, setIsPushing] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
@@ -485,6 +491,15 @@ export default function Home() {
                       : t('push-changes-to-app-store-connect')}
                   </Tooltip>
                 </div>
+
+                <SchedulePublish
+                  teamId={teamInfo?.currentTeam?.id || ''}
+                  appId={currentApp?.id || ''}
+                  isStaged={isStaged}
+                  scheduled={scheduled}
+                  onScheduled={() => mutateScheduled()}
+                  onCancelled={() => mutateScheduled()}
+                />
 
                 {currentApp?.store !== 'GOOGLEPLAY' && (
                   <div>

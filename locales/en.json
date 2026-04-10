@@ -524,6 +524,18 @@
     "reviews-count": "reviews",
     "recent-negative": "Recent negative reviews"
   },
+  "schedule-publish": {
+    "schedule-for-later": "Schedule for later",
+    "scheduled-for": "Scheduled to publish on",
+    "cancel-schedule": "Cancel schedule",
+    "scheduled-success": "Publish scheduled",
+    "scheduled-error": "Failed to schedule publish",
+    "cancelled": "Scheduled publish cancelled",
+    "cancel-error": "Failed to cancel scheduled publish",
+    "scheduling": "Scheduling…",
+    "confirm": "Schedule",
+    "cancel": "Cancel"
+  },
   "account": {
     "account-settings": "Account Settings",
     "account-settings-description": "Manage your account settings and preferences",

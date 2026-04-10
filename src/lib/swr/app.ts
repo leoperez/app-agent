@@ -209,6 +209,25 @@ export function useGetReviewSentiment(
   return { data, loading: isLoading, error };
 }
 
+export interface ScheduledPublishEntry {
+  id: string;
+  appId: string;
+  scheduledAt: string;
+  status: string;
+  createdAt: string;
+}
+
+export function useGetScheduledPublish(teamId: string, appId: string) {
+  const { data, error, isLoading, mutate } =
+    useSWR<ScheduledPublishEntry | null>(
+      teamId && appId
+        ? `/api/teams/${teamId}/apps/${appId}/schedule-publish`
+        : null,
+      fetcher
+    );
+  return { scheduled: data ?? null, loading: isLoading, error, mutate };
+}
+
 export async function checkShortDescription(teamId: string, appId: string) {
   const response = await fetch(
     `/api/teams/${teamId}/apps/${appId}/short-description`,
