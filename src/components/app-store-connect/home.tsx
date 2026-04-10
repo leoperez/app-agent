@@ -70,6 +70,7 @@ import { CustomProductPages } from '@/components/aso/custom-product-pages';
 import { StoreExperiments } from '@/components/aso/store-experiments';
 import { OnboardingChecklist } from '@/components/dashboard/onboarding-checklist';
 import { SearchAdsTracker } from '@/components/aso/search-ads-tracker';
+import { CronStatus } from '@/components/dashboard/cron-status';
 
 export default function Home() {
   const t = useTranslations('dashboard.app-store-connect.localization');
@@ -615,6 +616,11 @@ export default function Home() {
           {/* Search Ads Tracker */}
           <div className="mb-6">
             <SearchAdsTracker />
+          </div>
+
+          {/* Cron Status */}
+          <div className="mb-6">
+            <CronStatus />
           </div>
 
           {needCreateNewVersion ? (

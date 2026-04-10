@@ -97,6 +97,7 @@ model Team {
   limits        Json?    // Plan limits, e.g., {apps: 1, users: 1}
   notifications          Notification[]
   descriptionTemplates   DescriptionTemplate[]
+  reviewTemplates        ReviewTemplate[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -512,6 +513,31 @@ model Notification {
 
   @@index([teamId, readAt])
   @@index([teamId, createdAt])
+}
+
+model ReviewTemplate {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name      String
+  body      String   @db.Text
+  rating    Int?     // optional: associate template with a star rating (1-5)
+  createdAt DateTime @default(now())
+
+  @@index([teamId])
+}
+
+model CronLog {
+  id               String   @id @default(cuid())
+  cronName         String
+  status           String   // "success" | "error"
+  recordsProcessed Int      @default(0)
+  durationMs       Int      @default(0)
+  errorMessage     String?  @db.Text
+  runAt            DateTime @default(now())
+
+  @@index([cronName, runAt])
+  @@index([runAt])
 }
 
 model SearchAdsMetric {

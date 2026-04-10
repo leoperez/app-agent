@@ -14,6 +14,7 @@ import { sendRatingDropEmail } from '@/lib/emails/send-rating-drop';
 import { sendSlackMessage } from '@/lib/slack';
 import { RatingDropEntry } from '@/components/emails/rating-drop';
 import { createNotification } from '@/lib/notifications';
+import { logCron } from '@/lib/utils/log-cron';
 
 export const maxDuration = 120;
 
@@ -22,6 +23,7 @@ export async function GET(request: NextRequest) {
   const authError = validateCronSecret(request);
   if (authError) return authError;
 
+  const startTime = Date.now();
   try {
     const lockKey = `cron:rating-monitor:${new Date().toISOString().split('T')[0]}`;
     const locked = await redis.set(lockKey, '1', {
@@ -215,12 +217,18 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    await logCron({
+      cronName: 'rating-monitor',
+      startTime,
+      recordsProcessed: snapshots.length,
+    });
     return NextResponse.json({
       snapshots: snapshots.length,
       alerts: Object.keys(dropsByApp).length,
       errors,
     });
   } catch (error) {
+    await logCron({ cronName: 'rating-monitor', startTime, error });
     console.error('rating-monitor cron error:', error);
     return NextResponse.json(
       { error: (error as Error).message },

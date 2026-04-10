@@ -8,6 +8,7 @@ import { getCountryCode } from '@/lib/app-store/country-mapper';
 import { googlePlayToAppStore } from '@/lib/utils/locale';
 import { AppStoreLocaleCode } from '@/lib/utils/locale';
 import { Country } from 'app-store-client';
+import { logCron } from '@/lib/utils/log-cron';
 
 export const maxDuration = 120;
 
@@ -16,6 +17,7 @@ export async function GET(request: NextRequest) {
   const authError = validateCronSecret(request);
   if (authError) return authError;
 
+  const startTime = Date.now();
   const lockKey = `cron:review-sync:${new Date().toISOString().split('T')[0]}`;
   const locked = await redis.set(lockKey, '1', { ex: 23 * 60 * 60, nx: true });
   if (!locked) {
@@ -103,5 +105,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  await logCron({
+    cronName: 'review-sync',
+    startTime,
+    recordsProcessed: totalSaved,
+  });
   return NextResponse.json({ saved: totalSaved });
 }

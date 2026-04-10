@@ -10,6 +10,7 @@ import { sendKeywordDropEmail } from '@/lib/emails/send-keyword-drop';
 import { KeywordDropEntry } from '@/components/emails/keyword-drop';
 import { sendSlackMessage } from '@/lib/slack';
 import { createNotification } from '@/lib/notifications';
+import { logCron } from '@/lib/utils/log-cron';
 
 export const maxDuration = 300;
 
@@ -20,6 +21,7 @@ const DROP_THRESHOLD = 5;
 export async function GET(request: NextRequest) {
   const authError = validateCronSecret(request);
   if (authError) return authError;
+  const startTime = Date.now();
 
   try {
     // Idempotency: use Redis lock with 23h TTL to prevent duplicate runs
@@ -267,12 +269,18 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    await logCron({
+      cronName: 'keyword-rankings',
+      startTime,
+      recordsProcessed: snapshots.length,
+    });
     return NextResponse.json({
       snapshots: snapshots.length,
       drops: totalDrops,
       errors,
     });
   } catch (error) {
+    await logCron({ cronName: 'keyword-rankings', startTime, error });
     console.error('keyword-rankings cron error:', error);
     return NextResponse.json(
       { error: (error as Error).message },

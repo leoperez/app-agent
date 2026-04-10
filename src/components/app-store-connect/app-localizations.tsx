@@ -52,6 +52,7 @@ import { useTranslations } from 'next-intl';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '../ui/badge';
 import { AppStoreState } from '@/types/app-store';
+import { LocalizationCompleteness } from '@/components/app-store-connect/localization-completeness';
 
 interface AppLocalizationsProps {
   versionStatus: {
@@ -355,6 +356,13 @@ export default function AppLocalizations({
               {t('add-more-locales-message')}
             </AlertDescription>
           </Alert>
+        )}
+
+        {Object.keys(localizations).length > 1 && (
+          <LocalizationCompleteness
+            localizations={localizations}
+            store={appInfo?.currentApp?.store as any}
+          />
         )}
 
         {Object.entries(localizations).map(([locale, data]) => {

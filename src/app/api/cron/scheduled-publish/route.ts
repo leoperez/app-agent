@@ -10,6 +10,7 @@ import { updateMultipleListings as updateGooglePlayMultipleListings } from '@/li
 import { getGooglePlayKeyFromDB } from '@/lib/google-play/key';
 import { hasPublicVersion } from '@/lib/utils/versions';
 import { Store } from '@prisma/client';
+import { logCron } from '@/lib/utils/log-cron';
 
 export const maxDuration = 120;
 
@@ -17,6 +18,7 @@ export const maxDuration = 120;
 export async function GET(request: NextRequest) {
   const authError = validateCronSecret(request);
   if (authError) return authError;
+  const startTime = Date.now();
 
   const now = new Date();
 
@@ -177,5 +179,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  await logCron({
+    cronName: 'scheduled-publish',
+    startTime,
+    recordsProcessed: executed,
+  });
   return NextResponse.json({ executed, failed });
 }

@@ -16,6 +16,7 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import { StoreReview, useGetStoreReviews } from '@/lib/swr/app';
 import { useTeam } from '@/context/team';
 import { useApp } from '@/context/app';
+import { ReviewTemplates } from '@/components/aso/review-templates';
 
 function Stars({ rating }: { rating: number }) {
   return (
@@ -181,6 +182,10 @@ function ReviewCard({
                 onChange={(e) => setReplyText(e.target.value)}
                 maxLength={5970}
                 autoFocus
+              />
+              <ReviewTemplates
+                onApply={(text) => setReplyText(text)}
+                currentText={replyText}
               />
               <div className="flex gap-2">
                 <button
