@@ -198,6 +198,74 @@ export default function AppLocalizations({
     return Object.keys(localizations).length < 10;
   }, [localizations]);
 
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  const handleAutoTranslate = async () => {
+    const localeKeys = Object.keys(localizations);
+    if (localeKeys.length < 2) return;
+
+    // Use primary locale (first) as source
+    const primaryLocale = appInfo?.currentApp?.primaryLocale || localeKeys[0];
+    const sourceData =
+      localizations[primaryLocale]?.draft ||
+      localizations[primaryLocale]?.public;
+    if (!sourceData) return;
+
+    const store = appInfo?.currentApp?.store || 'APPSTORE';
+    const isAppStore = store !== 'GOOGLEPLAY';
+
+    const fields: Record<string, string> = {};
+    if (sourceData.title) fields.title = sourceData.title;
+    if (isAppStore) {
+      if (sourceData.subtitle) fields.subtitle = sourceData.subtitle;
+      if (sourceData.description) fields.description = sourceData.description;
+      if (sourceData.keywords) fields.keywords = sourceData.keywords;
+    } else {
+      if (sourceData.shortDescription)
+        fields.shortDescription = sourceData.shortDescription;
+      if (sourceData.fullDescription || sourceData.description)
+        fields.fullDescription =
+          sourceData.fullDescription || sourceData.description || '';
+    }
+
+    if (Object.keys(fields).length === 0) return;
+
+    const targetLocales = localeKeys.filter((l) => l !== primaryLocale);
+
+    setIsTranslating(true);
+    try {
+      const res = await fetch(
+        `/api/teams/${teamInfo?.currentTeam?.id}/apps/${appInfo?.currentApp?.id}/localizations/translate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceLocale: primaryLocale,
+            targetLocales,
+            fields,
+            store,
+          }),
+        }
+      );
+      if (!res.ok) throw new Error();
+      const translations: Record<
+        string,
+        Record<string, string>
+      > = await res.json();
+
+      for (const [locale, translated] of Object.entries(translations)) {
+        if (Object.keys(translated).length > 0) {
+          updateLocalLocalizations(locale, translated as any);
+        }
+      }
+      toast.success(t('auto-translate-success'));
+    } catch {
+      toast.error(t('auto-translate-error'));
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   if (currentStepIndex === 0) {
     return (
       <InitialStep
@@ -212,6 +280,7 @@ export default function AppLocalizations({
     <div className="space-y-6 pb-24">
       {isLocalizing && <LoadingOverlay />}
       {addingLocale && <LoadingOverlay />}
+      {isTranslating && <LoadingOverlay />}
 
       <StepIndicator
         steps={steps}
@@ -231,12 +300,19 @@ export default function AppLocalizations({
             </Badge>
           )}
         </h2>
-        {/* <button
-          onClick={() => setCurrentStepIndex(0)}
-          className="text-sm text-gray-500 hover:text-gray-700"
-        >
-          Start Over
-        </button> */}
+        {Object.keys(localizations).length > 1 &&
+          currentStep.mode === LocalizationEditMode.IMPROVE_ASO && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1.5 text-xs"
+              onClick={handleAutoTranslate}
+              disabled={isTranslating}
+            >
+              <MdAutoFixHigh className="h-3.5 w-3.5" />
+              {isTranslating ? t('auto-translating') : t('auto-translate')}
+            </Button>
+          )}
       </div>
 
       {currentStep.mode === LocalizationEditMode.QUICK_RELEASE && (
