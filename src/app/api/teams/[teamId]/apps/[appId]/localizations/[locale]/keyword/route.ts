@@ -135,3 +135,34 @@ export async function POST(
     return handleAppError(error as Error);
   }
 }
+
+// DELETE /api/teams/[teamId]/apps/[appId]/localizations/[locale]/keyword
+// Body: { ids: string[] } — bulk delete
+export async function DELETE(
+  request: Request,
+  { params }: { params: { teamId: string; appId: string; locale: string } }
+) {
+  try {
+    const { teamId } = await validateTeamAccess(request);
+    const { appId, locale } = params;
+    const { ids }: { ids: string[] } = await request.json();
+
+    if (!ids?.length) {
+      return NextResponse.json({ error: 'ids required' }, { status: 400 });
+    }
+
+    const app = await prisma.app.findFirst({
+      where: { id: appId, teamId },
+      select: { id: true },
+    });
+    if (!app) throw new AppNotFoundError(`App ${appId} not found`);
+
+    const { count } = await prisma.asoKeyword.deleteMany({
+      where: { id: { in: ids }, appId, locale },
+    });
+
+    return NextResponse.json({ deleted: count });
+  } catch (error) {
+    return handleAppError(error as Error);
+  }
+}

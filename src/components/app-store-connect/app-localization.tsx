@@ -20,6 +20,7 @@ import { useTranslations } from 'next-intl';
 import { useGetWhatsNewHistory } from '@/lib/swr/aso';
 import { MetadataVariants } from './metadata-variants';
 import { MetadataHistory } from '@/components/aso/metadata-history';
+import { DescriptionTemplates } from '@/components/aso/description-templates';
 
 interface AppLocalizationProps {
   // Current localization data in draft
@@ -409,6 +410,10 @@ export default function AppLocalizationView({
 
               {mode !== LocalizationEditMode.QUICK_RELEASE && (
                 <>
+                  <DescriptionTemplates
+                    currentValues={localization}
+                    onApply={(values) => onUpdate(values)}
+                  />
                   <MetadataVariants
                     appId={localization.appId}
                     locale={localization.locale ?? ''}

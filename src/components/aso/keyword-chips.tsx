@@ -4,6 +4,10 @@ import {
   MdOutlineFileUpload,
   MdOutlineFileDownload,
   MdLightbulb,
+  MdContentCopy,
+  MdDeleteSweep,
+  MdCheckBox,
+  MdCheckBoxOutlineBlank,
 } from 'react-icons/md';
 import Skeleton from 'react-loading-skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -60,6 +64,7 @@ interface KeywordChipsProps {
   onAdd: (keyword: string) => Promise<void>;
   onDelete: (keywordId: string) => Promise<void>;
   isLoading?: boolean;
+  availableLocales?: string[];
 }
 
 function renderTooltipContent(
@@ -120,6 +125,7 @@ export default function KeywordChips({
   onAdd,
   onDelete,
   isLoading = false,
+  availableLocales,
 }: KeywordChipsProps) {
   const t = useTranslations('aso');
   const [loadingKeywords, setLoadingKeywords] = useState<Set<string>>(
@@ -144,6 +150,13 @@ export default function KeywordChips({
   );
   const [showReviewSuggestions, setShowReviewSuggestions] = useState(false);
   const [showOpportunities, setShowOpportunities] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkSelectMode, setBulkSelectMode] = useState(false);
+  const [showCopyLocale, setShowCopyLocale] = useState(false);
+  const [copyingLocale, setCopyingLocale] = useState(false);
+  const [selectedCopyLocales, setSelectedCopyLocales] = useState<Set<string>>(
+    new Set()
+  );
   const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
 
   const { data: conversionData, loading: conversionLoading } =
@@ -165,6 +178,46 @@ export default function KeywordChips({
         k.keyword.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : keywords;
+
+  const handleBulkDelete = async () => {
+    if (!selectedIds.size) return;
+    const ids = Array.from(selectedIds);
+    try {
+      await fetch(
+        `/api/teams/${teamInfo!.currentTeam!.id}/apps/${appInfo!.currentApp!.id}/localizations/${locale}/keyword`,
+        {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids }),
+        }
+      );
+      for (const id of ids) await onDelete(id);
+      setSelectedIds(new Set());
+      setBulkSelectMode(false);
+    } catch {
+      // silently handled
+    }
+  };
+
+  const handleCopyToLocales = async (targetLocales: string[]) => {
+    if (!targetLocales.length || !locale) return;
+    setCopyingLocale(true);
+    try {
+      await fetch(
+        `/api/teams/${teamInfo!.currentTeam!.id}/apps/${appInfo!.currentApp!.id}/localizations/${locale}/keyword/copy`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetLocales }),
+        }
+      );
+      setShowCopyLocale(false);
+    } catch {
+      // silently handled
+    } finally {
+      setCopyingLocale(false);
+    }
+  };
 
   const handleAddKeyword = async (value: string) => {
     if (!value.trim()) return;
@@ -229,6 +282,21 @@ export default function KeywordChips({
           appInfo?.currentApp?.id &&
           keywords.length > 0 && (
             <div className="flex items-center gap-1">
+              {!readonly && (
+                <Button
+                  size="sm"
+                  variant={bulkSelectMode ? 'default' : 'ghost'}
+                  className="h-6 px-2 text-xs"
+                  onClick={() => {
+                    setBulkSelectMode((v) => !v);
+                    setSelectedIds(new Set());
+                    setShowCopyLocale(false);
+                  }}
+                >
+                  <MdCheckBoxOutlineBlank className="h-3.5 w-3.5 mr-1" />
+                  Select
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="ghost"
@@ -264,6 +332,144 @@ export default function KeywordChips({
             </div>
           )}
       </div>
+
+      {/* Bulk action toolbar */}
+      <AnimatePresence>
+        {bulkSelectMode && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-center gap-2 py-1.5 px-2 rounded-md bg-muted/60 border border-border text-xs">
+              <button
+                className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  if (selectedIds.size === filteredKeywords.length) {
+                    setSelectedIds(new Set());
+                  } else {
+                    setSelectedIds(new Set(filteredKeywords.map((k) => k.id)));
+                  }
+                }}
+              >
+                {selectedIds.size === filteredKeywords.length &&
+                filteredKeywords.length > 0 ? (
+                  <MdCheckBox className="h-3.5 w-3.5 text-primary" />
+                ) : (
+                  <MdCheckBoxOutlineBlank className="h-3.5 w-3.5" />
+                )}
+                {selectedIds.size > 0
+                  ? `${selectedIds.size} selected`
+                  : 'Select all'}
+              </button>
+              <div className="flex-1" />
+              {selectedIds.size > 0 && (
+                <>
+                  {locale && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowCopyLocale((v) => !v)}
+                    >
+                      <MdContentCopy className="h-3.5 w-3.5 mr-1" />
+                      Copy to locales
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                    onClick={handleBulkDelete}
+                  >
+                    <MdDeleteSweep className="h-3.5 w-3.5 mr-1" />
+                    Delete ({selectedIds.size})
+                  </Button>
+                </>
+              )}
+            </div>
+
+            {/* Copy to locales panel */}
+            <AnimatePresence>
+              {showCopyLocale && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-1.5 p-2 rounded-md border border-border bg-background space-y-2 text-xs">
+                    <p className="text-muted-foreground">
+                      Select target locales:
+                    </p>
+                    {availableLocales &&
+                    availableLocales.filter((l) => l !== locale).length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {availableLocales
+                          .filter((l) => l !== locale)
+                          .map((l) => (
+                            <button
+                              key={l}
+                              onClick={() =>
+                                setSelectedCopyLocales((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(l)) next.delete(l);
+                                  else next.add(l);
+                                  return next;
+                                })
+                              }
+                              className={`px-2 py-0.5 rounded-full border transition-colors ${
+                                selectedCopyLocales.has(l)
+                                  ? 'bg-primary text-primary-foreground border-primary'
+                                  : 'border-border hover:bg-muted'
+                              }`}
+                            >
+                              {l}
+                            </button>
+                          ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground italic text-xs">
+                        No other locales available.
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        disabled={
+                          copyingLocale || selectedCopyLocales.size === 0
+                        }
+                        onClick={() =>
+                          handleCopyToLocales(Array.from(selectedCopyLocales))
+                        }
+                      >
+                        {copyingLocale
+                          ? 'Copying…'
+                          : `Copy to ${selectedCopyLocales.size} locale${selectedCopyLocales.size !== 1 ? 's' : ''}`}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-xs"
+                        onClick={() => {
+                          setShowCopyLocale(false);
+                          setSelectedCopyLocales(new Set());
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {keywords.length > 8 && (
         <Input
           placeholder={t('search-keywords-placeholder')}
@@ -312,14 +518,40 @@ export default function KeywordChips({
                       },
                     }}
                     layout
-                    onClick={() =>
-                      setSelectedKeyword((k) =>
-                        k === keywordObj.keyword ? null : keywordObj.keyword
-                      )
-                    }
+                    onClick={() => {
+                      if (bulkSelectMode) {
+                        setSelectedIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(keywordObj.id))
+                            next.delete(keywordObj.id);
+                          else next.add(keywordObj.id);
+                          return next;
+                        });
+                      } else {
+                        setSelectedKeyword((k) =>
+                          k === keywordObj.keyword ? null : keywordObj.keyword
+                        );
+                      }
+                    }}
                     style={{ cursor: 'pointer' }}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${getChipColor(keywordObj.overall)} ${selectedKeyword === keywordObj.keyword ? 'ring-2 ring-primary/50' : ''}`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${getChipColor(keywordObj.overall)} ${
+                      bulkSelectMode && selectedIds.has(keywordObj.id)
+                        ? 'ring-2 ring-primary'
+                        : !bulkSelectMode &&
+                            selectedKeyword === keywordObj.keyword
+                          ? 'ring-2 ring-primary/50'
+                          : ''
+                    }`}
                   >
+                    {bulkSelectMode && (
+                      <span className="flex-shrink-0">
+                        {selectedIds.has(keywordObj.id) ? (
+                          <MdCheckBox className="h-3.5 w-3.5 text-primary" />
+                        ) : (
+                          <MdCheckBoxOutlineBlank className="h-3.5 w-3.5 opacity-50" />
+                        )}
+                      </span>
+                    )}
                     <motion.span layout style={{ originX: 0 }}>
                       {keywordObj.keyword}
                       {keywordObj.overall !== null && (
@@ -342,11 +574,14 @@ export default function KeywordChips({
                         </span>
                       )}
                     </motion.span>
-                    {!readonly && (
+                    {!readonly && !bulkSelectMode && (
                       <motion.button
                         whileHover={{ scale: 1.1, rotate: 180 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => onDelete(keywordObj.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(keywordObj.id);
+                        }}
                         className="hover:bg-secondary-foreground/20 rounded-full p-1"
                       >
                         <IoMdClose className="h-3 w-3" />

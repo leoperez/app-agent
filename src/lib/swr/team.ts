@@ -84,6 +84,60 @@ export function useGetNotifications() {
   };
 }
 
+export interface DescriptionTemplate {
+  id: string;
+  teamId: string;
+  store: string;
+  name: string;
+  title: string | null;
+  subtitle: string | null;
+  keywords: string | null;
+  description: string | null;
+  shortDescription: string | null;
+  fullDescription: string | null;
+  createdAt: string;
+}
+
+export function useGetTemplates(store?: string) {
+  const teamInfo = useTeam();
+  const { data, error, isLoading, mutate } = useSWR<DescriptionTemplate[]>(
+    teamInfo?.currentTeam?.id
+      ? `/api/teams/${teamInfo.currentTeam.id}/templates${store ? `?store=${store}` : ''}`
+      : null,
+    fetcher,
+    { dedupingInterval: 30000 }
+  );
+
+  const saveTemplate = async (
+    template: Omit<DescriptionTemplate, 'id' | 'teamId' | 'createdAt'>
+  ) => {
+    if (!teamInfo?.currentTeam?.id) return;
+    await fetch(`/api/teams/${teamInfo.currentTeam.id}/templates`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(template),
+    });
+    await mutate();
+  };
+
+  const deleteTemplate = async (id: string) => {
+    if (!teamInfo?.currentTeam?.id) return;
+    await fetch(`/api/teams/${teamInfo.currentTeam.id}/templates/${id}`, {
+      method: 'DELETE',
+    });
+    await mutate();
+  };
+
+  return {
+    templates: data ?? [],
+    loading: isLoading,
+    error,
+    saveTemplate,
+    deleteTemplate,
+    mutate,
+  };
+}
+
 export function useGetRankingsCompare(locale?: string) {
   const teamInfo = useTeam();
   const { data, error, isLoading } = useSWR<RankingsCompareEntry[]>(

@@ -95,7 +95,8 @@ model Team {
   canceledAt     DateTime? // Stripe subscription canceled date
 
   limits        Json?    // Plan limits, e.g., {apps: 1, users: 1}
-  notifications Notification[]
+  notifications          Notification[]
+  descriptionTemplates   DescriptionTemplate[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -297,6 +298,23 @@ model AppLocalization {
   @@index([appId])
   @@index([appVersionId])
   @@index([locale])
+}
+
+model DescriptionTemplate {
+  id               String   @id @default(cuid())
+  teamId           String
+  team             Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  store            String   // "APPSTORE" | "GOOGLEPLAY"
+  name             String
+  title            String?
+  subtitle         String?
+  keywords         String?  @db.Text
+  description      String?  @db.Text
+  shortDescription String?
+  fullDescription  String?  @db.Text
+  createdAt        DateTime @default(now())
+
+  @@index([teamId, store])
 }
 
 model StoreExperiment {
