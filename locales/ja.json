@@ -595,6 +595,23 @@
     "schedule-publish": "公開をスケジュールする",
     "schedule-publish-desc": "スケジューラーを使ってメタデータの更新を自動的にストアに反映させてください。"
   },
+  "publish-approval-queue": {
+    "title": "公開承認",
+    "show-all": "すべて表示",
+    "show-pending": "保留中のみ表示",
+    "no-approvals": "まだ承認リクエストはありません。",
+    "no-pending": "保留中の承認リクエストはありません。",
+    "requested-by": "{name} によるリクエスト",
+    "review": "レビュー",
+    "collapse": "閉じる",
+    "review-note-placeholder": "任意: リクエスト者へのメモを追加…",
+    "approve": "承認",
+    "reject": "却下",
+    "approved-toast": "リクエストを承認しました",
+    "rejected-toast": "リクエストを却下しました",
+    "approved-by": "{name} が承認",
+    "rejected-by": "{name} が却下"
+  },
   "ratings-by-version": {
     "title": "バージョン別評価",
     "subtitle": "各バージョンリリース時のユーザー評価の変化",

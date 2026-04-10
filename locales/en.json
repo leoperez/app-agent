@@ -630,6 +630,23 @@
     "schedule-publish": "Schedule a publish",
     "schedule-publish-desc": "Use the scheduler to push metadata updates to the store automatically."
   },
+  "publish-approval-queue": {
+    "title": "Publish approvals",
+    "show-all": "Show all",
+    "show-pending": "Show pending only",
+    "no-approvals": "No approval requests yet.",
+    "no-pending": "No pending approval requests.",
+    "requested-by": "by {name}",
+    "review": "Review",
+    "collapse": "Collapse",
+    "review-note-placeholder": "Optional: add a note for the requester…",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approved-toast": "Request approved",
+    "rejected-toast": "Request rejected",
+    "approved-by": "Approved by {name}",
+    "rejected-by": "Rejected by {name}"
+  },
   "ratings-by-version": {
     "title": "Rating by version",
     "subtitle": "How user ratings changed across app releases",

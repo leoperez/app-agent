@@ -4,6 +4,7 @@ import { AccountInfo } from '@/components/account/account-info';
 import { TeamSettings } from '@/components/account/team-settings';
 import { BillingSettings } from '@/components/account/bill-settings';
 import { NotificationSettings } from '@/components/account/notification-settings';
+import { PublishApprovalQueue } from '@/components/account/publish-approval-queue';
 import { motion } from 'framer-motion';
 import { DeleteAccount } from '@/components/account/delete-account';
 import { useTranslations } from 'next-intl';
@@ -26,6 +27,7 @@ export default function AccountSettingsView() {
       <div className="space-y-6">
         <AccountInfo />
         <TeamSettings />
+        <PublishApprovalQueue />
         <BillingSettings />
         <NotificationSettings />
         <DeleteAccount />

@@ -150,6 +150,32 @@ export function useGetRankingsCompare(locale?: string) {
   return { compare: data ?? [], loading: isLoading, error };
 }
 
+export interface PublishApprovalEntry {
+  id: string;
+  teamId: string;
+  appId: string;
+  appTitle: string;
+  requestedBy: string;
+  requesterName: string;
+  summary: string;
+  status: string;
+  reviewedBy: string | null;
+  reviewerName: string | null;
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
+export function useGetPublishApprovals(status: 'pending' | 'all' = 'pending') {
+  const teamInfo = useTeam();
+  const teamId = teamInfo?.currentTeam?.id;
+  const { data, error, isLoading, mutate } = useSWR<PublishApprovalEntry[]>(
+    teamId ? `/api/teams/${teamId}/publish-approvals?status=${status}` : null,
+    fetcher
+  );
+  return { approvals: data ?? [], loading: isLoading, error, mutate };
+}
+
 export function useTeams() {
   const { data: session } = useSession();
 
