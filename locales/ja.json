@@ -481,7 +481,9 @@
     "keyword-gap-col-locale": "ロケール",
     "keyword-gap-col-competitors": "競合数",
     "keyword-gap-add": "キーワードを追加",
-    "keyword-gap-showing": "{total}件中{shown}件を表示"
+    "keyword-gap-showing": "{total}件中{shown}件を表示",
+    "review-suggestions": "レビューからのキーワード（{count}件）",
+    "review-suggestions-description": "ポジティブなレビューでユーザーが言及する言葉 — キーワードリストの候補として最適です。"
   },
   "reviews": {
     "sentiment-title": "レビュー感情分析",

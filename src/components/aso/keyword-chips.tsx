@@ -20,6 +20,7 @@ import { LocaleCode } from '@/lib/utils/locale';
 import {
   useGetKeywordRankings,
   useGetKeywordOpportunities,
+  useGetReviewKeywords,
 } from '@/lib/swr/aso';
 import { useGetKeywordConversion } from '@/lib/swr/app';
 import { useApp } from '@/context/app';
@@ -138,6 +139,10 @@ export default function KeywordChips({
       appInfo?.currentApp?.id || '',
       locale || ('' as LocaleCode)
     );
+  const { suggestions: reviewSuggestions } = useGetReviewKeywords(
+    appInfo?.currentApp?.id || ''
+  );
+  const [showReviewSuggestions, setShowReviewSuggestions] = useState(false);
   const [showOpportunities, setShowOpportunities] = useState(false);
   const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
 
@@ -488,6 +493,68 @@ export default function KeywordChips({
                       {opp.keyword}
                     </motion.button>
                   ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* Review-based keyword suggestions */}
+      {!readonly && reviewSuggestions.length > 0 && (
+        <div className="pt-2 border-t border-border">
+          <button
+            onClick={() => setShowReviewSuggestions((v) => !v)}
+            className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 font-medium hover:underline"
+          >
+            <MdOutlineFileUpload className="h-3.5 w-3.5" />
+            {t('review-suggestions', { count: reviewSuggestions.length })}
+            <span className="text-muted-foreground ml-1">
+              {showReviewSuggestions ? '▲' : '▼'}
+            </span>
+          </button>
+          <AnimatePresence>
+            {showReviewSuggestions && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t('review-suggestions-description')}
+                </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {reviewSuggestions.map((s) => {
+                    const alreadyTracked = keywords.some(
+                      (k) => k.keyword.toLowerCase() === s.keyword.toLowerCase()
+                    );
+                    return (
+                      <motion.button
+                        key={s.keyword}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        disabled={alreadyTracked}
+                        onClick={async () => {
+                          if (!alreadyTracked)
+                            await handleAddKeyword(s.keyword);
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                          alreadyTracked
+                            ? 'opacity-40 cursor-not-allowed border-border bg-muted text-muted-foreground'
+                            : 'bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40'
+                        }`}
+                        title={`Mentioned in ~${s.frequency} reviews`}
+                      >
+                        {!alreadyTracked && <IoMdAdd className="h-3 w-3" />}
+                        {s.keyword}
+                        <span className="text-xs opacity-60">
+                          {s.frequency}×
+                        </span>
+                      </motion.button>
+                    );
+                  })}
                 </div>
               </motion.div>
             )}

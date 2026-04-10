@@ -516,7 +516,9 @@
     "keyword-gap-col-locale": "Locale",
     "keyword-gap-col-competitors": "Competitors",
     "keyword-gap-add": "Add keyword",
-    "keyword-gap-showing": "Showing {shown} of {total} keywords"
+    "keyword-gap-showing": "Showing {shown} of {total} keywords",
+    "review-suggestions": "Keywords from reviews ({count})",
+    "review-suggestions-description": "Terms users mention in positive reviews — great candidates for your keyword list."
   },
   "reviews": {
     "sentiment-title": "Review Sentiment",

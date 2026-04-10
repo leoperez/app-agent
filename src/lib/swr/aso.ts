@@ -168,6 +168,23 @@ export interface KeywordGapEntry {
   competitorCount: number;
 }
 
+export interface ReviewKeywordSuggestion {
+  keyword: string;
+  frequency: number;
+  sentiment: 'positive' | 'neutral';
+}
+
+export function useGetReviewKeywords(appId: string) {
+  const teamInfo = useTeam();
+  const { data, error, isLoading } = useSWR<ReviewKeywordSuggestion[]>(
+    teamInfo?.currentTeam?.id && appId
+      ? `/api/teams/${teamInfo.currentTeam.id}/apps/${appId}/reviews/keywords`
+      : null,
+    fetcher
+  );
+  return { suggestions: data ?? [], loading: isLoading, error };
+}
+
 export function useGetKeywordGap(appId: string) {
   const teamInfo = useTeam();
   const { data, error, isLoading } = useSWR<KeywordGapEntry[]>(
