@@ -571,6 +571,18 @@
     "schedule-publish": "公開をスケジュールする",
     "schedule-publish-desc": "スケジューラーを使ってメタデータの更新を自動的にストアに反映させてください。"
   },
+  "localization-completeness": {
+    "title": "ローカライズ完成度",
+    "complete-count": "{complete}/{total} 完了",
+    "locale": "ロケール",
+    "score": "スコア",
+    "field-title": "タイトル",
+    "field-subtitle": "サブタイトル",
+    "field-keywords": "キーワード",
+    "field-description": "説明",
+    "field-shortDescription": "短い説明",
+    "field-fullDescription": "完全な説明"
+  },
   "cron-status": {
     "title": "定期実行ジョブ",
     "refresh": "更新",

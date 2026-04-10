@@ -11,6 +11,7 @@ import {
 } from 'react-icons/md';
 import { AppLocalization, Store } from '@/types/aso';
 import { getLocaleName, LocaleCode } from '@/lib/utils/locale';
+import { useTranslations } from 'next-intl';
 
 interface LocalizationEntry {
   public?: AppLocalization;
@@ -52,18 +53,11 @@ export function LocalizationCompleteness({
   localizations,
   store = Store.APPSTORE,
 }: LocalizationCompletenessProps) {
+  const t = useTranslations('localization-completeness');
   const [open, setOpen] = useState(false);
 
   const isGPlay = store === Store.GOOGLEPLAY;
   const fields = isGPlay ? GOOGLE_PLAY_FIELDS : APP_STORE_FIELDS;
-  const labels: Record<string, string> = {
-    title: 'Title',
-    subtitle: 'Subtitle',
-    keywords: 'Keywords',
-    description: 'Description',
-    shortDescription: 'Short Desc.',
-    fullDescription: 'Full Desc.',
-  };
 
   const entries = Object.entries(localizations).map(([locale, entry]) => {
     const loc = entry.draft ?? entry.public;
@@ -86,9 +80,12 @@ export function LocalizationCompleteness({
           ) : (
             <MdCheckCircle className="h-4 w-4 text-green-500" />
           )}
-          <span>Localization completeness</span>
+          <span>{t('title')}</span>
           <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">
-            {completeCount}/{entries.length} complete
+            {t('complete-count', {
+              complete: completeCount,
+              total: entries.length,
+            })}
           </span>
         </div>
         {open ? (
@@ -112,18 +109,18 @@ export function LocalizationCompleteness({
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">
-                      Locale
+                      {t('locale')}
                     </th>
                     {fields.map((f) => (
                       <th
                         key={f}
                         className="text-center px-2 py-2 font-medium text-muted-foreground"
                       >
-                        {labels[f] ?? f}
+                        {t(`field-${f}` as any)}
                       </th>
                     ))}
                     <th className="text-center px-3 py-2 font-medium text-muted-foreground">
-                      Score
+                      {t('score')}
                     </th>
                   </tr>
                 </thead>

@@ -606,6 +606,18 @@
     "schedule-publish": "Schedule a publish",
     "schedule-publish-desc": "Use the scheduler to push metadata updates to the store automatically."
   },
+  "localization-completeness": {
+    "title": "Localization completeness",
+    "complete-count": "{complete}/{total} complete",
+    "locale": "Locale",
+    "score": "Score",
+    "field-title": "Title",
+    "field-subtitle": "Subtitle",
+    "field-keywords": "Keywords",
+    "field-description": "Description",
+    "field-shortDescription": "Short Desc.",
+    "field-fullDescription": "Full Desc."
+  },
   "cron-status": {
     "title": "Cron jobs",
     "refresh": "Refresh",
