@@ -6,6 +6,7 @@ import { googlePlayToAppStore } from '@/lib/utils/locale';
 import { Store } from '@/types/aso';
 import { validateCronSecret } from '@/lib/utils/cron-auth';
 import { redis } from '@/lib/redis';
+import { logCron } from '@/lib/utils/log-cron';
 
 export const maxDuration = 300;
 
@@ -15,6 +16,7 @@ export const maxDuration = 300;
 export async function GET(request: NextRequest) {
   const authError = validateCronSecret(request);
   if (authError) return authError;
+  const startTime = Date.now();
 
   try {
     // Idempotency: lock per ISO-week so it only runs once per week
@@ -107,8 +109,14 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    await logCron({
+      cronName: 'keyword-rescore',
+      startTime,
+      recordsProcessed: updated,
+    });
     return NextResponse.json({ updated, errors });
   } catch (error) {
+    await logCron({ cronName: 'keyword-rescore', startTime, error });
     console.error('keyword-rescore cron error:', error);
     return NextResponse.json(
       { error: (error as Error).message },

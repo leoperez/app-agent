@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { validateCronSecret } from '@/lib/utils/cron-auth';
 import { redis } from '@/lib/redis';
 import { Store } from '@/types/aso';
+import { logCron } from '@/lib/utils/log-cron';
 import client from '@/lib/app-store/client';
 import scraperClient from '@/lib/google-play/scraper-client';
 import {
@@ -26,6 +27,7 @@ const TRACKED_FIELDS = ['title', 'subtitle', 'description'] as const;
 export async function GET(request: NextRequest) {
   const authError = validateCronSecret(request);
   if (authError) return authError;
+  const startTime = Date.now();
 
   try {
     // Idempotency: use Redis lock with 23h TTL to prevent duplicate runs
@@ -229,11 +231,17 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    await logCron({
+      cronName: 'competitor-changes',
+      startTime,
+      recordsProcessed: totalChanges,
+    });
     return NextResponse.json({
       competitors: competitors.length,
       changes: totalChanges,
     });
   } catch (error) {
+    await logCron({ cronName: 'competitor-changes', startTime, error });
     console.error('competitor-changes cron error:', error);
     return NextResponse.json(
       { error: (error as Error).message },

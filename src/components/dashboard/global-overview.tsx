@@ -83,11 +83,25 @@ function AppCard({
             </span>
           </div>
         </div>
-        {entry.pendingSchedule && (
-          <span title="Scheduled publish pending">
-            <MdSchedule className="h-4 w-4 text-amber-500" />
+        <div className="flex items-center gap-1">
+          {entry.pendingSchedule && (
+            <span title="Scheduled publish pending">
+              <MdSchedule className="h-4 w-4 text-amber-500" />
+            </span>
+          )}
+          <span
+            title={`ASO Health Score: ${entry.healthScore}/100`}
+            className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+              entry.healthScore >= 75
+                ? 'bg-green-100 text-green-700'
+                : entry.healthScore >= 50
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-red-100 text-red-600'
+            }`}
+          >
+            {entry.healthScore}
           </span>
-        )}
+        </div>
       </div>
 
       {/* Metrics grid */}

@@ -18,6 +18,7 @@ export interface AppOverviewEntry {
   pendingSchedule: string | null; // ISO scheduledAt if pending publish exists
   recentNegativeReviews: number; // score <= 2 in last 7 days
   unrepliedReviews: number; // reviews without a reply (no developerResponse)
+  healthScore: number; // 0-100 ASO health score
 }
 
 // GET /api/teams/[teamId]/overview
@@ -114,6 +115,17 @@ export async function GET(
           where: { appId: app.id, reviewedAt: { gte: sevenDaysAgo } },
         });
 
+        // Health score (0-100): rating 25% + keyword coverage 25% + top-10 25% + review health 25%
+        const ratingComponent = latestSnapshot
+          ? (latestSnapshot.rating / 5) * 25
+          : 0;
+        const keywordComponent = Math.min(keywords.length / 20, 1) * 25;
+        const top10Component = Math.min(top10 / 5, 1) * 25;
+        const reviewComponent = Math.max(0, 1 - negativeCount / 10) * 25;
+        const healthScore = Math.round(
+          ratingComponent + keywordComponent + top10Component + reviewComponent
+        );
+
         return {
           id: app.id,
           title: app.title,
@@ -129,6 +141,7 @@ export async function GET(
           pendingSchedule: schedule?.scheduledAt?.toISOString() ?? null,
           recentNegativeReviews: negativeCount,
           unrepliedReviews: totalRecentReviews,
+          healthScore,
         };
       })
     );

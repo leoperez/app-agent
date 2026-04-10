@@ -10,6 +10,7 @@ import {
   MdDelete,
   MdEdit,
   MdOutlineFileDownload,
+  MdAutoAwesome,
 } from 'react-icons/md';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
@@ -43,6 +44,7 @@ function ReviewCard({
   const [replyText, setReplyText] = useState(review.responseBody ?? '');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
   const hasReply = !!review.responseBody;
 
   const handleSave = async () => {
@@ -68,6 +70,32 @@ function ReviewCard({
       toast.error(t('reply-error'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAIReply = async () => {
+    setGeneratingAI(true);
+    try {
+      const res = await fetch(
+        `/api/teams/${teamId}/apps/${appId}/reviews/ai-reply`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reviewTitle: review.title,
+            reviewBody: review.body,
+            reviewRating: review.rating,
+            locale: review.territory,
+          }),
+        }
+      );
+      if (!res.ok) throw new Error();
+      const { reply } = await res.json();
+      if (reply) setReplyText(reply);
+    } catch {
+      toast.error('AI reply failed');
+    } finally {
+      setGeneratingAI(false);
     }
   };
 
@@ -187,13 +215,22 @@ function ReviewCard({
                 onApply={(text) => setReplyText(text)}
                 currentText={replyText}
               />
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={handleSave}
                   disabled={saving || !replyText.trim()}
                   className="text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded-md disabled:opacity-50 hover:bg-primary/90 transition-colors"
                 >
                   {saving ? t('sending') : hasReply ? t('update') : t('send')}
+                </button>
+                <button
+                  onClick={handleAIReply}
+                  disabled={generatingAI}
+                  className="text-xs px-3 py-1.5 border border-violet-300 text-violet-700 bg-violet-50 rounded-md disabled:opacity-50 hover:bg-violet-100 transition-colors flex items-center gap-1"
+                  title="Generate AI reply"
+                >
+                  <MdAutoAwesome className="h-3 w-3" />
+                  {generatingAI ? 'Generating…' : 'AI reply'}
                 </button>
                 <button
                   onClick={() => {
@@ -213,12 +250,15 @@ function ReviewCard({
   );
 }
 
+const PAGE_SIZE = 10;
+
 export function ReviewsPanel() {
   const t = useTranslations('reviews-panel');
   const teamInfo = useTeam();
   const appInfo = useApp();
   const [open, setOpen] = useState(false);
   const [filterRating, setFilterRating] = useState<number | 'all'>('all');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const { reviews, loading, mutate } = useGetStoreReviews(
     teamInfo?.currentTeam?.id || '',
@@ -229,6 +269,9 @@ export function ReviewsPanel() {
     filterRating === 'all'
       ? reviews
       : reviews.filter((r) => r.rating === filterRating);
+
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = filtered.length > visibleCount;
 
   const unreplied = reviews.filter((r) => !r.responseBody).length;
 
@@ -289,7 +332,10 @@ export function ReviewsPanel() {
                 {(['all', 5, 4, 3, 2, 1] as const).map((r) => (
                   <button
                     key={r}
-                    onClick={() => setFilterRating(r)}
+                    onClick={() => {
+                      setFilterRating(r);
+                      setVisibleCount(PAGE_SIZE);
+                    }}
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                       filterRating === r
                         ? 'bg-primary text-primary-foreground border-primary'
@@ -310,16 +356,26 @@ export function ReviewsPanel() {
               ) : filtered.length === 0 ? (
                 <p className="text-xs text-muted-foreground">{t('empty')}</p>
               ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {filtered.map((review) => (
-                    <ReviewCard
-                      key={review.id}
-                      review={review}
-                      teamId={teamInfo?.currentTeam?.id || ''}
-                      appId={appInfo?.currentApp?.id || ''}
-                      onReplied={() => mutate()}
-                    />
-                  ))}
+                <div className="space-y-2">
+                  <div className="space-y-2 max-h-[480px] overflow-y-auto">
+                    {visible.map((review) => (
+                      <ReviewCard
+                        key={review.id}
+                        review={review}
+                        teamId={teamInfo?.currentTeam?.id || ''}
+                        appId={appInfo?.currentApp?.id || ''}
+                        onReplied={() => mutate()}
+                      />
+                    ))}
+                  </div>
+                  {hasMore && (
+                    <button
+                      onClick={() => setVisibleCount((v) => v + PAGE_SIZE)}
+                      className="w-full text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg py-2 transition-colors"
+                    >
+                      Load more ({filtered.length - visibleCount} remaining)
+                    </button>
+                  )}
                 </div>
               )}
             </div>

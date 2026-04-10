@@ -16,10 +16,12 @@ import { validateCronSecret } from '@/lib/utils/cron-auth';
 import prisma from '@/lib/prisma';
 import { subDays } from 'date-fns';
 import { Store } from '@prisma/client';
+import { logCron } from '@/lib/utils/log-cron';
 
 export async function GET(request: NextRequest) {
   const authError = validateCronSecret(request);
   if (authError) return authError;
+  const startTime = Date.now();
 
   const results: { appId: string; rowsSaved: number }[] = [];
   const errors: { appId: string; error: string }[] = [];
@@ -179,5 +181,11 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  const totalRows = results.reduce((s, r) => s + r.rowsSaved, 0);
+  await logCron({
+    cronName: 'analytics',
+    startTime,
+    recordsProcessed: totalRows,
+  });
   return NextResponse.json({ success: true, results, errors });
 }
