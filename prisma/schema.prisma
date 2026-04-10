@@ -208,6 +208,7 @@ model App {
   ratingSnapshots     AppRatingSnapshot[]
   reviews             AppReview[]
   scheduledPublishes  ScheduledPublish[]
+  searchAdsMetrics    SearchAdsMetric[]
 
   isStaged        Boolean   @default(false)
 
@@ -511,6 +512,23 @@ model Notification {
 
   @@index([teamId, readAt])
   @@index([teamId, createdAt])
+}
+
+model SearchAdsMetric {
+  id          String   @id @default(cuid())
+  appId       String
+  app         App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  keyword     String
+  date        DateTime @db.Date
+  impressions Int      @default(0)
+  taps        Int      @default(0)
+  installs    Int      @default(0)
+  spend       Float    @default(0)
+  currency    String   @default("USD")
+  createdAt   DateTime @default(now())
+
+  @@unique([appId, keyword, date])
+  @@index([appId, date])
 }
 
 model Competitor {

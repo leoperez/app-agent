@@ -292,6 +292,55 @@ export function useGetCustomProductPages(teamId: string, appId: string) {
   return { pages: data ?? [], loading: isLoading, error, mutate };
 }
 
+export interface SearchAdsMetricEntry {
+  id: string;
+  appId: string;
+  keyword: string;
+  date: string;
+  impressions: number;
+  taps: number;
+  installs: number;
+  spend: number;
+  currency: string;
+  ttr: number | null;
+  cr: number | null;
+}
+
+export function useGetSearchAdsMetrics(teamId: string, appId: string) {
+  const { data, error, isLoading, mutate } = useSWR<SearchAdsMetricEntry[]>(
+    teamId && appId ? `/api/teams/${teamId}/apps/${appId}/search-ads` : null,
+    fetcher,
+    { dedupingInterval: 30000 }
+  );
+
+  const addMetric = async (
+    entry: Omit<SearchAdsMetricEntry, 'id' | 'appId' | 'ttr' | 'cr'>
+  ) => {
+    await fetch(`/api/teams/${teamId}/apps/${appId}/search-ads`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry),
+    });
+    await mutate();
+  };
+
+  const deleteMetric = async (metricId: string) => {
+    await fetch(`/api/teams/${teamId}/apps/${appId}/search-ads/${metricId}`, {
+      method: 'DELETE',
+    });
+    await mutate();
+  };
+
+  return {
+    metrics: data ?? [],
+    loading: isLoading,
+    error,
+    addMetric,
+    deleteMetric,
+    mutate,
+  };
+}
+
 export async function checkShortDescription(teamId: string, appId: string) {
   const response = await fetch(
     `/api/teams/${teamId}/apps/${appId}/short-description`,

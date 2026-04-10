@@ -68,6 +68,8 @@ import { GlobalOverview } from '@/components/dashboard/global-overview';
 import { RankingsCompare } from '@/components/dashboard/rankings-compare';
 import { CustomProductPages } from '@/components/aso/custom-product-pages';
 import { StoreExperiments } from '@/components/aso/store-experiments';
+import { OnboardingChecklist } from '@/components/dashboard/onboarding-checklist';
+import { SearchAdsTracker } from '@/components/aso/search-ads-tracker';
 
 export default function Home() {
   const t = useTranslations('dashboard.app-store-connect.localization');
@@ -380,6 +382,8 @@ export default function Home() {
       {isRefreshing && <LoadingOverlay />}
       {isCreatingNewVersion && <LoadingOverlay />}
 
+      <OnboardingChecklist />
+
       {apps.length > 1 && (
         <div className="mb-8 space-y-6">
           <GlobalOverview />
@@ -606,6 +610,11 @@ export default function Home() {
             ) : (
               <CustomProductPages />
             )}
+          </div>
+
+          {/* Search Ads Tracker */}
+          <div className="mb-6">
+            <SearchAdsTracker />
           </div>
 
           {needCreateNewVersion ? (
