@@ -297,6 +297,9 @@
         "add-more-locales-message": "より多くの言語を追加することで、より多くのユーザーにアプリを見つけてもらえるようになります。",
         "whats-new-history": "リリースノート履歴",
         "whats-new-history-use": "これを使う",
+        "whats-new-generate": "AIで生成",
+        "whats-new-generating": "生成中…",
+        "whats-new-generate-failed": "リリースノートの生成に失敗しました",
         "completeness-score": "メタデータの完成度",
         "gplay-target-keywords": "ターゲットキーワード",
         "gplay-target-keywords-note": "内部参照のみ — Google Playには送信されません。タイトル、簡単な説明、詳細な説明の最適化の参考として使用してください。"

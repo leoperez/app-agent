@@ -11,6 +11,7 @@ import {
   MdWarning,
   MdCheckCircle,
   MdHistory,
+  MdAutoAwesome,
 } from 'react-icons/md';
 import { getLocaleName, LocaleCode } from '@/lib/utils/locale';
 import LocalizationField from '@/components/common/localization-field';
@@ -21,6 +22,8 @@ import { useGetWhatsNewHistory } from '@/lib/swr/aso';
 import { MetadataVariants } from './metadata-variants';
 import { MetadataHistory } from '@/components/aso/metadata-history';
 import { DescriptionTemplates } from '@/components/aso/description-templates';
+import { useTeam } from '@/context/team';
+import { toast } from 'react-hot-toast';
 
 interface AppLocalizationProps {
   // Current localization data in draft
@@ -49,7 +52,9 @@ export default function AppLocalizationView({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [generatingWhatsNew, setGeneratingWhatsNew] = useState(false);
   const t = useTranslations('dashboard.app-store-connect.localization');
+  const teamInfo = useTeam();
 
   // Determine if we're in Google Play mode
   const isGooglePlay = store === Store.GOOGLEPLAY;
@@ -95,10 +100,54 @@ export default function AppLocalizationView({
     return originalData && localization[field] !== originalData[field];
   };
 
+  const handleGenerateWhatsNew = async () => {
+    const teamId = teamInfo?.currentTeam?.id;
+    const appId = localization.appId;
+    const locale = localization.locale;
+    if (!teamId || !appId || !locale) return;
+    setGeneratingWhatsNew(true);
+    try {
+      const res = await fetch(
+        `/api/teams/${teamId}/apps/${appId}/versions/generate-whats-new`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locale }),
+        }
+      );
+      if (!res.ok) throw new Error('Failed to generate');
+      const data = await res.json();
+      if (data.whatsNew) {
+        handleChange('whatsNew', data.whatsNew);
+      }
+    } catch {
+      toast.error(t('whats-new-generate-failed'));
+    } finally {
+      setGeneratingWhatsNew(false);
+    }
+  };
+
   const renderQuickReleaseMode = () => (
     <div className="space-y-4">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          {isGooglePlay ? "Recent Changes (What's New)" : t('whats-new')}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleGenerateWhatsNew}
+          disabled={generatingWhatsNew}
+          className="gap-1.5 text-violet-600 border-violet-200 hover:bg-violet-50 hover:text-violet-700"
+        >
+          <MdAutoAwesome className="w-3.5 h-3.5" />
+          {generatingWhatsNew
+            ? t('whats-new-generating')
+            : t('whats-new-generate')}
+        </Button>
+      </div>
       <LocalizationField
-        label={isGooglePlay ? "Recent Changes (What's New)" : t('whats-new')}
+        label=""
         value={localization.whatsNew || localization.recentChanges}
         onChange={(value) => handleChange('whatsNew', value)}
         multiline
