@@ -543,6 +543,11 @@
     "reply-deleted": "Reply deleted",
     "reply-error": "Failed to send reply"
   },
+  "publish-validation": {
+    "all-good": "All checks passed — ready to publish",
+    "errors": "{count} error{count, plural, one {} other {s}} must be fixed before publishing",
+    "warnings": "{count} warning{count, plural, one {} other {s}}"
+  },
   "schedule-publish": {
     "schedule-for-later": "Schedule for later",
     "scheduled-for": "Scheduled to publish on",

@@ -508,6 +508,11 @@
     "reply-deleted": "返信を削除しました",
     "reply-error": "返信の送信に失敗しました"
   },
+  "publish-validation": {
+    "all-good": "すべてのチェックに合格しました — 公開準備完了",
+    "errors": "公開前に{count}件のエラーを修正してください",
+    "warnings": "{count}件の警告"
+  },
   "schedule-publish": {
     "schedule-for-later": "後で公開予約",
     "scheduled-for": "公開予約日時:",

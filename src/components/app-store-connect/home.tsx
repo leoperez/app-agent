@@ -38,6 +38,8 @@ import { RatingChart } from '@/components/app-store-connect/rating-chart';
 import { ReviewSentiment } from '@/components/app-store-connect/review-sentiment';
 import { ReviewsPanel } from '@/components/app-store-connect/reviews-panel';
 import { SchedulePublish } from '@/components/app-store-connect/schedule-publish';
+import { PublishValidation } from '@/components/app-store-connect/publish-validation';
+import { validateLocalizations } from '@/lib/utils/publish-validation';
 import {
   createNewVersion,
   pullLatestVersion,
@@ -640,6 +642,19 @@ export default function Home() {
                 : t('push-changes-to-app-store-connect-description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {/* Pre-publish validation */}
+          {(() => {
+            const drafts = Object.values(workingLocalizations)
+              .map((l) => l.draft)
+              .filter(Boolean) as AppLocalization[];
+            const result = validateLocalizations(
+              drafts,
+              currentApp?.store ?? 'APPSTORE'
+            );
+            return <PublishValidation result={result} />;
+          })()}
+
           <AlertDialogFooter>
             <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handlePush} className="ml-2">
