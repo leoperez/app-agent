@@ -72,6 +72,7 @@ import { StoreExperiments } from '@/components/aso/store-experiments';
 import { OnboardingChecklist } from '@/components/dashboard/onboarding-checklist';
 import { SearchAdsTracker } from '@/components/aso/search-ads-tracker';
 import { CronStatus } from '@/components/dashboard/cron-status';
+import { KeywordGapAnalysis } from '@/components/aso/keyword-gap-analysis';
 
 export default function Home() {
   const t = useTranslations('dashboard.app-store-connect.localization');
@@ -631,6 +632,11 @@ export default function Home() {
             ) : (
               <CustomProductPages />
             )}
+          </div>
+
+          {/* Keyword gap analysis */}
+          <div className="mb-6">
+            <KeywordGapAnalysis />
           </div>
 
           {/* Search Ads Tracker */}
