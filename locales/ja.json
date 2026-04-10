@@ -489,6 +489,25 @@
     "reviews-count": "件",
     "recent-negative": "最近のネガティブレビュー"
   },
+  "reviews-panel": {
+    "title": "カスタマーレビュー",
+    "unreplied": "未返信",
+    "all": "すべて",
+    "empty": "レビューが見つかりません。",
+    "your-reply": "あなたの返信",
+    "reply": "返信",
+    "edit-reply": "返信を編集",
+    "delete-reply": "返信を削除",
+    "reply-placeholder": "このレビューへの返信を入力…",
+    "send": "返信を送信",
+    "sending": "送信中…",
+    "update": "返信を更新",
+    "cancel": "キャンセル",
+    "reply-sent": "返信を送信しました",
+    "reply-updated": "返信を更新しました",
+    "reply-deleted": "返信を削除しました",
+    "reply-error": "返信の送信に失敗しました"
+  },
   "schedule-publish": {
     "schedule-for-later": "後で公開予約",
     "scheduled-for": "公開予約日時:",

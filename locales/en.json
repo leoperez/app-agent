@@ -524,6 +524,25 @@
     "reviews-count": "reviews",
     "recent-negative": "Recent negative reviews"
   },
+  "reviews-panel": {
+    "title": "Customer Reviews",
+    "unreplied": "unreplied",
+    "all": "All",
+    "empty": "No reviews found.",
+    "your-reply": "Your reply",
+    "reply": "Reply",
+    "edit-reply": "Edit reply",
+    "delete-reply": "Delete reply",
+    "reply-placeholder": "Write a response to this review…",
+    "send": "Send reply",
+    "sending": "Sending…",
+    "update": "Update reply",
+    "cancel": "Cancel",
+    "reply-sent": "Reply sent",
+    "reply-updated": "Reply updated",
+    "reply-deleted": "Reply deleted",
+    "reply-error": "Failed to send reply"
+  },
   "schedule-publish": {
     "schedule-for-later": "Schedule for later",
     "scheduled-for": "Scheduled to publish on",

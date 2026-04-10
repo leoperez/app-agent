@@ -217,6 +217,26 @@ export interface ScheduledPublishEntry {
   createdAt: string;
 }
 
+export interface StoreReview {
+  id: string;
+  rating: number;
+  title: string | null;
+  body: string;
+  reviewerNickname: string;
+  createdDate: string;
+  territory: string | null;
+  responseId: string | null;
+  responseBody: string | null;
+}
+
+export function useGetStoreReviews(teamId: string, appId: string) {
+  const { data, error, isLoading, mutate } = useSWR<StoreReview[]>(
+    teamId && appId ? `/api/teams/${teamId}/apps/${appId}/reviews` : null,
+    fetcher
+  );
+  return { reviews: data ?? [], loading: isLoading, error, mutate };
+}
+
 export function useGetScheduledPublish(teamId: string, appId: string) {
   const { data, error, isLoading, mutate } =
     useSWR<ScheduledPublishEntry | null>(

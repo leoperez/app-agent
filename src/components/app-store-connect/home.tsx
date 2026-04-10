@@ -36,6 +36,7 @@ import {
 import AnalyticsChart from '@/components/app-store-connect/analytics-chart';
 import { RatingChart } from '@/components/app-store-connect/rating-chart';
 import { ReviewSentiment } from '@/components/app-store-connect/review-sentiment';
+import { ReviewsPanel } from '@/components/app-store-connect/reviews-panel';
 import { SchedulePublish } from '@/components/app-store-connect/schedule-publish';
 import {
   createNewVersion,
@@ -578,6 +579,11 @@ export default function Home() {
           {/* Review sentiment */}
           <div className="mb-6">
             <ReviewSentiment data={sentimentData} loading={sentimentLoading} />
+          </div>
+
+          {/* Customer reviews with reply */}
+          <div className="mb-6">
+            <ReviewsPanel />
           </div>
 
           {needCreateNewVersion ? (
