@@ -66,6 +66,8 @@ import { useTranslations } from 'next-intl';
 import { useAnalytics } from '@/lib/analytics';
 import { GlobalOverview } from '@/components/dashboard/global-overview';
 import { RankingsCompare } from '@/components/dashboard/rankings-compare';
+import { CustomProductPages } from '@/components/aso/custom-product-pages';
+import { StoreExperiments } from '@/components/aso/store-experiments';
 
 export default function Home() {
   const t = useTranslations('dashboard.app-store-connect.localization');
@@ -595,6 +597,15 @@ export default function Home() {
           {/* Customer reviews with reply */}
           <div className="mb-6">
             <ReviewsPanel />
+          </div>
+
+          {/* Custom Product Pages (App Store) / Store Listing Experiments (Google Play) */}
+          <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4">
+            {currentApp?.store === 'GOOGLEPLAY' ? (
+              <StoreExperiments />
+            ) : (
+              <CustomProductPages />
+            )}
           </div>
 
           {needCreateNewVersion ? (

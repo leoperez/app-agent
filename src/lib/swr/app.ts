@@ -248,6 +248,50 @@ export function useGetScheduledPublish(teamId: string, appId: string) {
   return { scheduled: data ?? null, loading: isLoading, error, mutate };
 }
 
+export interface StoreExperiment {
+  id: string;
+  appId: string;
+  name: string;
+  hypothesis: string | null;
+  field: string;
+  variantA: string | null;
+  variantB: string | null;
+  status: string;
+  winner: string | null;
+  notes: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function useGetExperiments(teamId: string, appId: string) {
+  const { data, error, isLoading, mutate } = useSWR<StoreExperiment[]>(
+    teamId && appId ? `/api/teams/${teamId}/apps/${appId}/experiments` : null,
+    fetcher
+  );
+  return { experiments: data ?? [], loading: isLoading, error, mutate };
+}
+
+export interface CustomProductPage {
+  id: string;
+  name: string;
+  url: string | null;
+  visible: boolean;
+  versionId: string | null;
+  versionState: string | null;
+}
+
+export function useGetCustomProductPages(teamId: string, appId: string) {
+  const { data, error, isLoading, mutate } = useSWR<CustomProductPage[]>(
+    teamId && appId
+      ? `/api/teams/${teamId}/apps/${appId}/custom-product-pages`
+      : null,
+    fetcher
+  );
+  return { pages: data ?? [], loading: isLoading, error, mutate };
+}
+
 export async function checkShortDescription(teamId: string, appId: string) {
   const response = await fetch(
     `/api/teams/${teamId}/apps/${appId}/short-description`,

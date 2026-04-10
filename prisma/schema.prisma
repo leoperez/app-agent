@@ -202,6 +202,7 @@ model App {
   analytics          AppAnalytics[]
   whatsNewHistory    WhatsNewHistory[]
   metadataHistory    MetadataHistory[]
+  storeExperiments   StoreExperiment[]
   metadataVariants    MetadataVariant[]
   ratingSnapshots     AppRatingSnapshot[]
   reviews             AppReview[]
@@ -296,6 +297,27 @@ model AppLocalization {
   @@index([appId])
   @@index([appVersionId])
   @@index([locale])
+}
+
+model StoreExperiment {
+  id          String   @id @default(cuid())
+  appId       String
+  app         App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  name        String
+  hypothesis  String?  @db.Text
+  field       String   // "title" | "shortDescription" | "fullDescription" | "icon" | "screenshots"
+  variantA    String?  @db.Text
+  variantB    String?  @db.Text
+  status      String   @default("draft") // "draft" | "running" | "completed" | "cancelled"
+  winner      String?  // "A" | "B" | null
+  notes       String?  @db.Text
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([appId])
+  @@index([appId, status])
 }
 
 model MetadataHistory {
