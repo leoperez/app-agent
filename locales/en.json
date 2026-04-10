@@ -619,6 +619,15 @@
     "schedule-publish": "Schedule a publish",
     "schedule-publish-desc": "Use the scheduler to push metadata updates to the store automatically."
   },
+  "ratings-by-version": {
+    "title": "Rating by version",
+    "subtitle": "How user ratings changed across app releases",
+    "col-version": "Version",
+    "col-released": "Released",
+    "col-rating": "Rating",
+    "col-count": "Total ratings",
+    "col-breakdown": "Breakdown"
+  },
   "localization-completeness": {
     "title": "Localization completeness",
     "complete-count": "{complete}/{total} complete",

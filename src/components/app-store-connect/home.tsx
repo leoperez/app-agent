@@ -35,6 +35,7 @@ import {
 } from '@/lib/swr/app';
 import AnalyticsChart from '@/components/app-store-connect/analytics-chart';
 import { RatingChart } from '@/components/app-store-connect/rating-chart';
+import { RatingsByVersion } from '@/components/app-store-connect/ratings-by-version';
 import { ReviewSentiment } from '@/components/app-store-connect/review-sentiment';
 import { ReviewsPanel } from '@/components/app-store-connect/reviews-panel';
 import { SchedulePublish } from '@/components/app-store-connect/schedule-publish';
@@ -613,6 +614,11 @@ export default function Home() {
           {/* Rating chart — all stores */}
           <div className="mb-6">
             <RatingChart data={ratingsData} loading={ratingsLoading} />
+          </div>
+
+          {/* Rating breakdown by version */}
+          <div className="mb-6">
+            <RatingsByVersion />
           </div>
 
           {/* Review sentiment */}

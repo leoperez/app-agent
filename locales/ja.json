@@ -584,6 +584,15 @@
     "schedule-publish": "公開をスケジュールする",
     "schedule-publish-desc": "スケジューラーを使ってメタデータの更新を自動的にストアに反映させてください。"
   },
+  "ratings-by-version": {
+    "title": "バージョン別評価",
+    "subtitle": "各バージョンリリース時のユーザー評価の変化",
+    "col-version": "バージョン",
+    "col-released": "リリース日",
+    "col-rating": "評価",
+    "col-count": "評価数",
+    "col-breakdown": "内訳"
+  },
   "localization-completeness": {
     "title": "ローカライズ完成度",
     "complete-count": "{complete}/{total} 完了",

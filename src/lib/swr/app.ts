@@ -341,6 +341,25 @@ export function useGetSearchAdsMetrics(teamId: string, appId: string) {
   };
 }
 
+export interface RatingByVersion {
+  version: string;
+  state: string | null;
+  releasedAt: string;
+  rating: number | null;
+  ratingCount: number | null;
+  histogram: number[] | null;
+}
+
+export function useGetRatingsByVersion(teamId: string, appId: string) {
+  const { data, error, isLoading } = useSWR<RatingByVersion[]>(
+    teamId && appId
+      ? `/api/teams/${teamId}/apps/${appId}/ratings-by-version`
+      : null,
+    fetcher
+  );
+  return { data: data ?? [], loading: isLoading, error };
+}
+
 export async function checkShortDescription(teamId: string, appId: string) {
   const response = await fetch(
     `/api/teams/${teamId}/apps/${appId}/short-description`,
