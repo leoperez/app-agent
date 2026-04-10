@@ -30,6 +30,8 @@ import { useGetKeywordConversion } from '@/lib/swr/app';
 import { useApp } from '@/context/app';
 import { useTeam } from '@/context/team';
 import { KeywordConversionChart } from './keyword-conversion-chart';
+import { KeywordRankingsTable } from './keyword-rankings-table';
+import { MdTableChart } from 'react-icons/md';
 
 const APP_STORE_KEYWORD_LIMIT = 100;
 
@@ -158,6 +160,7 @@ export default function KeywordChips({
     new Set()
   );
   const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
+  const [showRankingsTable, setShowRankingsTable] = useState(false);
 
   const { data: conversionData, loading: conversionLoading } =
     useGetKeywordConversion(
@@ -312,6 +315,18 @@ export default function KeywordChips({
                 <MdOutlineFileDownload className="h-3.5 w-3.5 mr-1" />
                 {t('export-keywords')}
               </Button>
+              {keywords.length > 0 && rankings && (
+                <Button
+                  size="sm"
+                  variant={showRankingsTable ? 'default' : 'ghost'}
+                  className="h-6 px-2 text-xs text-muted-foreground"
+                  title="Rankings table"
+                  onClick={() => setShowRankingsTable((v) => !v)}
+                >
+                  <MdTableChart className="h-3.5 w-3.5 mr-1" />
+                  Table
+                </Button>
+              )}
               {locale && (
                 <Button
                   size="sm"
@@ -815,6 +830,26 @@ export default function KeywordChips({
           </AnimatePresence>
         </div>
       )}
+
+      {/* Rankings table */}
+      <AnimatePresence>
+        {showRankingsTable && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-3 border-t border-border">
+              <KeywordRankingsTable
+                keywords={filteredKeywords}
+                rankings={rankings}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Keyword → downloads correlation panel */}
       <AnimatePresence>
