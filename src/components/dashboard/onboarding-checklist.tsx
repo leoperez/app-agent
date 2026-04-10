@@ -13,15 +13,19 @@ import { useGetTeamOverview } from '@/lib/swr/team';
 import { useTeam } from '@/context/team';
 import { useGetAppLocalizations } from '@/lib/swr/app';
 import { AppLocalization } from '@/types/aso';
+import { useTranslations } from 'next-intl';
 
-interface Step {
-  id: string;
-  label: string;
-  description: string;
-  done: boolean;
-}
+const STEP_IDS = [
+  'connect-app',
+  'fill-metadata',
+  'track-keywords',
+  'monitor-rating',
+  'schedule-publish',
+] as const;
 
-function computeSteps(
+type StepId = (typeof STEP_IDS)[number];
+
+function computeDone(
   apps: { id: string }[],
   localizations:
     | Record<string, { public?: AppLocalization; draft?: AppLocalization }>
@@ -34,7 +38,7 @@ function computeSteps(
         pendingSchedule: string | null;
       }
     | undefined
-): Step[] {
+): Record<StepId, boolean> {
   const locList = localizations ? Object.values(localizations) : [];
   const metadataFilled = locList.some((entry) => {
     const loc = entry.draft ?? entry.public;
@@ -44,46 +48,19 @@ function computeSteps(
     );
   });
 
-  return [
-    {
-      id: 'connect-app',
-      label: 'Connect your app',
-      description: 'Add your App Store or Google Play app to start optimising.',
-      done: apps.length > 0,
-    },
-    {
-      id: 'fill-metadata',
-      label: 'Fill in your metadata',
-      description:
-        'Set title, subtitle, keywords and description for at least one locale.',
-      done: metadataFilled,
-    },
-    {
-      id: 'track-keywords',
-      label: 'Track keywords',
-      description: 'Add keywords to monitor their search rankings over time.',
-      done: (overviewEntry?.keywordCount ?? 0) > 0,
-    },
-    {
-      id: 'monitor-rating',
-      label: 'Monitor your rating',
-      description:
-        'The rating cron will automatically record daily snapshots once the app is active.',
-      done:
-        overviewEntry?.latestRating !== null &&
-        overviewEntry?.latestRating !== undefined,
-    },
-    {
-      id: 'schedule-publish',
-      label: 'Schedule a publish',
-      description:
-        'Use the scheduler to push metadata updates to the store automatically.',
-      done: !!overviewEntry?.pendingSchedule,
-    },
-  ];
+  return {
+    'connect-app': apps.length > 0,
+    'fill-metadata': metadataFilled,
+    'track-keywords': (overviewEntry?.keywordCount ?? 0) > 0,
+    'monitor-rating':
+      overviewEntry?.latestRating !== null &&
+      overviewEntry?.latestRating !== undefined,
+    'schedule-publish': !!overviewEntry?.pendingSchedule,
+  };
 }
 
 export function OnboardingChecklist() {
+  const t = useTranslations('onboarding-checklist');
   const teamInfo = useTeam();
   const { apps, currentApp } = useApp();
   const { overview } = useGetTeamOverview();
@@ -101,7 +78,8 @@ export function OnboardingChecklist() {
   }, [storageKey, teamInfo?.currentTeam?.id]);
 
   const overviewEntry = overview.find((e) => e.id === currentApp?.id);
-  const steps = computeSteps(apps ?? [], localizations, overviewEntry);
+  const done = computeDone(apps ?? [], localizations, overviewEntry);
+  const steps = STEP_IDS.map((id) => ({ id, done: done[id] }));
   const doneCount = steps.filter((s) => s.done).length;
   const allDone = doneCount === steps.length;
 
@@ -129,15 +107,15 @@ export function OnboardingChecklist() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
           <div className="flex items-center gap-2">
             <MdRocketLaunch className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">Getting started</span>
+            <span className="text-sm font-medium">{t('title')}</span>
             <span className="text-xs text-muted-foreground ml-1">
-              {doneCount}/{steps.length} complete
+              {doneCount}/{steps.length}
             </span>
           </div>
           <button
             onClick={handleDismiss}
             className="text-muted-foreground hover:text-foreground transition-colors"
-            title="Dismiss"
+            title={t('dismiss')}
           >
             <MdClose className="h-4 w-4" />
           </button>
@@ -173,11 +151,11 @@ export function OnboardingChecklist() {
                 <p
                   className={`font-medium ${step.done ? 'line-through text-muted-foreground' : ''}`}
                 >
-                  {step.label}
+                  {t(step.id as StepId)}
                 </p>
                 {!step.done && (
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {step.description}
+                    {t(`${step.id as StepId}-desc`)}
                   </p>
                 )}
               </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { toast } from 'react-hot-toast';
@@ -93,11 +93,19 @@ function ReviewCard({
       const { reply } = await res.json();
       if (reply) setReplyText(reply);
     } catch {
-      toast.error('AI reply failed');
+      toast.error(t('ai-reply-failed'));
     } finally {
       setGeneratingAI(false);
     }
   };
+
+  // Auto-generate AI reply when opening the form for a new reply (no existing reply)
+  useEffect(() => {
+    if (editing && !hasReply && !replyText) {
+      handleAIReply();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing]);
 
   const handleDelete = async () => {
     if (!review.responseId) return;
@@ -227,10 +235,10 @@ function ReviewCard({
                   onClick={handleAIReply}
                   disabled={generatingAI}
                   className="text-xs px-3 py-1.5 border border-violet-300 text-violet-700 bg-violet-50 rounded-md disabled:opacity-50 hover:bg-violet-100 transition-colors flex items-center gap-1"
-                  title="Generate AI reply"
+                  title={t('ai-reply')}
                 >
                   <MdAutoAwesome className="h-3 w-3" />
-                  {generatingAI ? 'Generating…' : 'AI reply'}
+                  {generatingAI ? t('ai-generating') : t('ai-reply')}
                 </button>
                 <button
                   onClick={() => {
@@ -373,7 +381,9 @@ export function ReviewsPanel() {
                       onClick={() => setVisibleCount((v) => v + PAGE_SIZE)}
                       className="w-full text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg py-2 transition-colors"
                     >
-                      Load more ({filtered.length - visibleCount} remaining)
+                      {t('load-more', {
+                        remaining: filtered.length - visibleCount,
+                      })}
                     </button>
                   )}
                 </div>

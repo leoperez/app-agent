@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/utils/fetcher';
 import { useTeam } from '@/context/team';
+import { useTranslations } from 'next-intl';
 
 interface CronLog {
   id: string;
@@ -64,6 +65,7 @@ function timeAgo(iso: string) {
 }
 
 export function CronStatus() {
+  const t = useTranslations('cron-status');
   const teamInfo = useTeam();
   const [open, setOpen] = useState(false);
   const { data, isLoading, mutate } = useSWR<CronStatusResponse>(
@@ -84,11 +86,11 @@ export function CronStatus() {
       >
         <div className="flex items-center gap-2 text-muted-foreground">
           <MdSchedule className="h-4 w-4" />
-          <span>Cron status</span>
+          <span>{t('title')}</span>
           {data && (
             <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">
               {data.latest.filter((e) => e.log?.status === 'error').length > 0
-                ? `${data.latest.filter((e) => e.log?.status === 'error').length} error(s)`
+                ? `${data.latest.filter((e) => e.log?.status === 'error').length} ${t('error')}`
                 : `${data.latest.filter((e) => e.log).length} tracked`}
             </span>
           )}
@@ -100,7 +102,7 @@ export function CronStatus() {
               mutate();
             }}
             className="p-1 rounded hover:bg-muted transition-colors"
-            title="Refresh"
+            title={t('refresh')}
           >
             <MdRefresh className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
@@ -160,7 +162,7 @@ export function CronStatus() {
                             {timeAgo(log.runAt)}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {log.recordsProcessed} records ·{' '}
+                            {log.recordsProcessed} rec ·{' '}
                             {(log.durationMs / 1000).toFixed(1)}s
                           </p>
                           {log.errorMessage && (
@@ -174,7 +176,7 @@ export function CronStatus() {
                         </>
                       ) : (
                         <p className="text-xs text-muted-foreground italic">
-                          Never ran
+                          {t('never-ran')}
                         </p>
                       )}
                     </div>

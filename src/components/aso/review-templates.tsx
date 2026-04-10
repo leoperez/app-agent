@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/utils/fetcher';
 import { useTeam } from '@/context/team';
+import { useTranslations } from 'next-intl';
 
 interface ReviewTemplate {
   id: string;
@@ -31,6 +32,7 @@ export function ReviewTemplates({
   onApply,
   currentText,
 }: ReviewTemplatesProps) {
+  const t = useTranslations('review-templates');
   const teamInfo = useTeam();
   const [open, setOpen] = useState(false);
   const [showSave, setShowSave] = useState(false);
@@ -54,12 +56,12 @@ export function ReviewTemplates({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), body: currentText.trim() }),
       });
-      toast.success('Template saved');
+      toast.success(t('saved'));
       setName('');
       setShowSave(false);
       mutate();
     } catch {
-      toast.error('Failed to save template');
+      toast.error(t('save-failed'));
     } finally {
       setSaving(false);
     }
@@ -80,7 +82,7 @@ export function ReviewTemplates({
         className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
         <MdBookmarkAdd className="h-3.5 w-3.5" />
-        Reply templates
+        {t('title')}
         {templates.length > 0 && (
           <span className="bg-muted px-1 py-0.5 rounded-full text-xs">
             {templates.length}
@@ -125,7 +127,7 @@ export function ReviewTemplates({
                         setOpen(false);
                       }}
                     >
-                      Use
+                      {t('use')}
                     </Button>
                     <button
                       onClick={() => handleDelete(tpl.id)}
@@ -148,7 +150,7 @@ export function ReviewTemplates({
                     <Input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Template name"
+                      placeholder={t('template-name-placeholder')}
                       className="h-7 text-xs"
                       autoFocus
                       onKeyDown={(e) => e.key === 'Enter' && handleSave()}
@@ -159,7 +161,7 @@ export function ReviewTemplates({
                       onClick={handleSave}
                       disabled={saving || !name.trim() || !currentText?.trim()}
                     >
-                      Save
+                      {t('save')}
                     </Button>
                     <Button
                       size="sm"
@@ -167,7 +169,7 @@ export function ReviewTemplates({
                       className="h-7 text-xs px-2"
                       onClick={() => setShowSave(false)}
                     >
-                      Cancel
+                      {t('cancel')}
                     </Button>
                   </motion.div>
                 ) : (
@@ -177,7 +179,7 @@ export function ReviewTemplates({
                       className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
                     >
                       <MdBookmarkAdd className="h-3 w-3" />
-                      Save current reply as template
+                      {t('save-as-template')}
                     </button>
                   )
                 )}

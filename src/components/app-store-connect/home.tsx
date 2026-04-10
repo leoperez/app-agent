@@ -66,6 +66,7 @@ import { useTranslations } from 'next-intl';
 import { useAnalytics } from '@/lib/analytics';
 import { GlobalOverview } from '@/components/dashboard/global-overview';
 import { RankingsCompare } from '@/components/dashboard/rankings-compare';
+import { useGetTeamOverview } from '@/lib/swr/team';
 import { CustomProductPages } from '@/components/aso/custom-product-pages';
 import { StoreExperiments } from '@/components/aso/store-experiments';
 import { OnboardingChecklist } from '@/components/dashboard/onboarding-checklist';
@@ -83,6 +84,9 @@ export default function Home() {
   } = useApp();
   const teamInfo = useTeam();
   const analytics = useAnalytics();
+  const { overview } = useGetTeamOverview();
+  const currentOverview = overview.find((e) => e.id === currentApp?.id);
+
   const {
     versionStatus,
     loading: versionStatusLoading,
@@ -393,21 +397,37 @@ export default function Home() {
       )}
 
       <div className="flex items-center justify-between mb-6">
-        {!versionStatus?.upToDate ? (
-          <VersionStatusInfo
-            teamId={teamInfo?.currentTeam?.id || ''}
-            appId={currentApp?.id || ''}
-            pullLatestVersion={handlePull}
-            isRefreshing={
-              versionStatusIsRefreshing || isPulling || isRefreshing
-            }
-          />
-        ) : (
-          <VersionLabel
-            version={versionStatus?.localVersion?.version || ''}
-            state={versionStatus?.localVersion?.state || ''}
-          />
-        )}
+        <div className="flex items-center gap-3">
+          {!versionStatus?.upToDate ? (
+            <VersionStatusInfo
+              teamId={teamInfo?.currentTeam?.id || ''}
+              appId={currentApp?.id || ''}
+              pullLatestVersion={handlePull}
+              isRefreshing={
+                versionStatusIsRefreshing || isPulling || isRefreshing
+              }
+            />
+          ) : (
+            <VersionLabel
+              version={versionStatus?.localVersion?.version || ''}
+              state={versionStatus?.localVersion?.state || ''}
+            />
+          )}
+          {currentOverview && (
+            <span
+              title={`ASO Health Score: ${currentOverview.healthScore}/100`}
+              className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                currentOverview.healthScore >= 75
+                  ? 'bg-green-100 text-green-700'
+                  : currentOverview.healthScore >= 50
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'bg-red-100 text-red-600'
+              }`}
+            >
+              ASO {currentOverview.healthScore}
+            </span>
+          )}
+        </div>
 
         {versionStatus?.upToDate && (
           <div className="flex items-center space-x-2">

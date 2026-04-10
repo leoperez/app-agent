@@ -9,12 +9,14 @@ import {
   MdAdd,
   MdDelete,
   MdBarChart,
+  MdFilterAlt,
 } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApp } from '@/context/app';
 import { useTeam } from '@/context/team';
 import { useGetSearchAdsMetrics, SearchAdsMetricEntry } from '@/lib/swr/app';
+import { useTranslations } from 'next-intl';
 
 function fmt(n: number) {
   return n.toLocaleString();
@@ -37,6 +39,7 @@ interface AddFormProps {
 }
 
 function AddEntryForm({ keywords, onAdd, onCancel }: AddFormProps) {
+  const t = useTranslations('search-ads-tracker');
   const today = new Date().toISOString().slice(0, 10);
   const [keyword, setKeyword] = useState('');
   const [date, setDate] = useState(today);
@@ -60,10 +63,10 @@ function AddEntryForm({ keywords, onAdd, onCancel }: AddFormProps) {
         spend: parseFloat(spend) || 0,
         currency,
       });
-      toast.success('Entry saved');
+      toast.success(t('saved'));
       onCancel();
     } catch {
-      toast.error('Failed to save entry');
+      toast.error(t('save-failed'));
     } finally {
       setSaving(false);
     }
@@ -74,12 +77,12 @@ function AddEntryForm({ keywords, onAdd, onCancel }: AddFormProps) {
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
-            Keyword
+            {t('keyword')}
           </label>
           <Input
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            placeholder="e.g. photo editor"
+            placeholder={t('keyword-placeholder')}
             className="h-7 text-xs"
             list="keyword-suggestions"
             autoFocus
@@ -94,7 +97,7 @@ function AddEntryForm({ keywords, onAdd, onCancel }: AddFormProps) {
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
-            Date
+            {t('date')}
           </label>
           <Input
             type="date"
@@ -107,7 +110,7 @@ function AddEntryForm({ keywords, onAdd, onCancel }: AddFormProps) {
       <div className="grid grid-cols-4 gap-2">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
-            Impressions
+            {t('impressions')}
           </label>
           <Input
             value={impressions}
@@ -120,7 +123,7 @@ function AddEntryForm({ keywords, onAdd, onCancel }: AddFormProps) {
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
-            Taps
+            {t('taps')}
           </label>
           <Input
             value={taps}
@@ -133,7 +136,7 @@ function AddEntryForm({ keywords, onAdd, onCancel }: AddFormProps) {
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
-            Installs
+            {t('installs')}
           </label>
           <Input
             value={installs}
@@ -146,7 +149,7 @@ function AddEntryForm({ keywords, onAdd, onCancel }: AddFormProps) {
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
-            Spend
+            {t('spend')}
           </label>
           <Input
             value={spend}
@@ -162,7 +165,7 @@ function AddEntryForm({ keywords, onAdd, onCancel }: AddFormProps) {
       <div className="flex items-center gap-2">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
-            Currency
+            {t('currency')}
           </label>
           <select
             value={currency}
@@ -183,7 +186,7 @@ function AddEntryForm({ keywords, onAdd, onCancel }: AddFormProps) {
           onClick={handleSubmit}
           disabled={saving || !keyword.trim()}
         >
-          {saving ? 'Saving…' : 'Save'}
+          {saving ? t('saving') : t('save')}
         </Button>
         <Button
           size="sm"
@@ -191,7 +194,7 @@ function AddEntryForm({ keywords, onAdd, onCancel }: AddFormProps) {
           className="h-7 text-xs px-3"
           onClick={onCancel}
         >
-          Cancel
+          {t('cancel')}
         </Button>
       </div>
     </div>
@@ -199,6 +202,7 @@ function AddEntryForm({ keywords, onAdd, onCancel }: AddFormProps) {
 }
 
 function SummaryRow({ metrics }: { metrics: SearchAdsMetricEntry[] }) {
+  const t = useTranslations('search-ads-tracker');
   const totals = metrics.reduce(
     (acc, m) => ({
       impressions: acc.impressions + m.impressions,
@@ -219,33 +223,33 @@ function SummaryRow({ metrics }: { metrics: SearchAdsMetricEntry[] }) {
   return (
     <div className="grid grid-cols-6 gap-2 px-2 py-2 rounded-md bg-muted/40 text-xs">
       <div>
-        <p className="text-muted-foreground">Impressions</p>
+        <p className="text-muted-foreground">{t('impressions')}</p>
         <p className="font-semibold">{fmt(totals.impressions)}</p>
       </div>
       <div>
-        <p className="text-muted-foreground">Taps</p>
+        <p className="text-muted-foreground">{t('taps')}</p>
         <p className="font-semibold">{fmt(totals.taps)}</p>
       </div>
       <div>
-        <p className="text-muted-foreground">TTR</p>
+        <p className="text-muted-foreground">{t('ttr')}</p>
         <p className="font-semibold">
           {ttr}
           {ttr !== '—' ? '%' : ''}
         </p>
       </div>
       <div>
-        <p className="text-muted-foreground">Installs</p>
+        <p className="text-muted-foreground">{t('installs')}</p>
         <p className="font-semibold">{fmt(totals.installs)}</p>
       </div>
       <div>
-        <p className="text-muted-foreground">Conv. Rate</p>
+        <p className="text-muted-foreground">{t('conv-rate')}</p>
         <p className="font-semibold">
           {cr}
           {cr !== '—' ? '%' : ''}
         </p>
       </div>
       <div>
-        <p className="text-muted-foreground">Spend</p>
+        <p className="text-muted-foreground">{t('spend')}</p>
         <p className="font-semibold">{fmtSpend(totals.spend, currency)}</p>
       </div>
     </div>
@@ -253,15 +257,27 @@ function SummaryRow({ metrics }: { metrics: SearchAdsMetricEntry[] }) {
 }
 
 export function SearchAdsTracker() {
+  const t = useTranslations('search-ads-tracker');
   const appInfo = useApp();
   const teamInfo = useTeam();
   const [open, setOpen] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
+  const [filterFrom, setFilterFrom] = useState('');
+  const [filterTo, setFilterTo] = useState('');
 
   const { metrics, loading, addMetric, deleteMetric } = useGetSearchAdsMetrics(
     teamInfo?.currentTeam?.id ?? '',
     appInfo?.currentApp?.id ?? ''
   );
+
+  // Apply date range filter
+  const filtered = metrics.filter((m) => {
+    if (filterFrom && m.date < filterFrom) return false;
+    if (filterTo && m.date > filterTo) return false;
+    return true;
+  });
+
+  const hasFilter = filterFrom || filterTo;
 
   // Unique tracked keywords for autocomplete
   const trackedKeywords = Array.from(new Set(metrics.map((m) => m.keyword)));
@@ -274,10 +290,10 @@ export function SearchAdsTracker() {
       >
         <div className="flex items-center gap-2 text-muted-foreground">
           <MdBarChart className="h-4 w-4" />
-          <span>Search Ads Tracker</span>
+          <span>{t('title')}</span>
           {metrics.length > 0 && (
             <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">
-              {metrics.length} {metrics.length === 1 ? 'entry' : 'entries'}
+              {metrics.length}
             </span>
           )}
         </div>
@@ -299,12 +315,49 @@ export function SearchAdsTracker() {
           >
             <div className="border-t border-border px-3 pb-3 pt-2 space-y-3">
               <p className="text-xs text-muted-foreground">
-                Manually log Apple Search Ads or Google UAC campaign metrics per
-                keyword and date.
+                {t('description')}
               </p>
 
+              {/* Date range filter */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <MdFilterAlt className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-1.5">
+                  <label className="text-xs text-muted-foreground">
+                    {t('filter-from')}
+                  </label>
+                  <Input
+                    type="date"
+                    value={filterFrom}
+                    onChange={(e) => setFilterFrom(e.target.value)}
+                    className="h-6 text-xs w-32"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <label className="text-xs text-muted-foreground">
+                    {t('filter-to')}
+                  </label>
+                  <Input
+                    type="date"
+                    value={filterTo}
+                    onChange={(e) => setFilterTo(e.target.value)}
+                    className="h-6 text-xs w-32"
+                  />
+                </div>
+                {hasFilter && (
+                  <button
+                    onClick={() => {
+                      setFilterFrom('');
+                      setFilterTo('');
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground underline"
+                  >
+                    {t('clear-filter')}
+                  </button>
+                )}
+              </div>
+
               {/* Summary */}
-              {metrics.length > 0 && <SummaryRow metrics={metrics} />}
+              {filtered.length > 0 && <SummaryRow metrics={filtered} />}
 
               {/* Add form */}
               <AnimatePresence>
@@ -329,7 +382,7 @@ export function SearchAdsTracker() {
                   className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline"
                 >
                   <MdAdd className="h-3.5 w-3.5" />
-                  Add entry
+                  {t('add-entry')}
                 </button>
               )}
 
@@ -337,39 +390,43 @@ export function SearchAdsTracker() {
               {loading && (
                 <p className="text-xs text-muted-foreground">Loading…</p>
               )}
-              {!loading && metrics.length === 0 && (
+              {!loading && filtered.length === 0 && (
                 <p className="text-xs text-muted-foreground italic">
-                  No data yet. Add your first Search Ads entry above.
+                  {t('no-data')}
                 </p>
               )}
-              {!loading && metrics.length > 0 && (
+              {!loading && filtered.length > 0 && (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-border text-muted-foreground text-left">
-                        <th className="pb-1.5 pr-3 font-medium">Date</th>
-                        <th className="pb-1.5 pr-3 font-medium">Keyword</th>
-                        <th className="pb-1.5 pr-3 font-medium text-right">
-                          Impr.
+                        <th className="pb-1.5 pr-3 font-medium">{t('date')}</th>
+                        <th className="pb-1.5 pr-3 font-medium">
+                          {t('keyword')}
                         </th>
                         <th className="pb-1.5 pr-3 font-medium text-right">
-                          Taps
+                          {t('impressions')}
                         </th>
                         <th className="pb-1.5 pr-3 font-medium text-right">
-                          TTR
+                          {t('taps')}
                         </th>
                         <th className="pb-1.5 pr-3 font-medium text-right">
-                          Installs
+                          {t('ttr')}
                         </th>
                         <th className="pb-1.5 pr-3 font-medium text-right">
-                          CR
+                          {t('installs')}
                         </th>
-                        <th className="pb-1.5 font-medium text-right">Spend</th>
+                        <th className="pb-1.5 pr-3 font-medium text-right">
+                          {t('conv-rate')}
+                        </th>
+                        <th className="pb-1.5 font-medium text-right">
+                          {t('spend')}
+                        </th>
                         <th className="pb-1.5 w-6" />
                       </tr>
                     </thead>
                     <tbody>
-                      {metrics.map((m) => (
+                      {filtered.map((m) => (
                         <tr
                           key={m.id}
                           className="border-b border-border/50 hover:bg-muted/30"
