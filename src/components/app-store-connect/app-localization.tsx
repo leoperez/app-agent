@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { useGetWhatsNewHistory } from '@/lib/swr/aso';
 import { MetadataVariants } from './metadata-variants';
+import { MetadataHistory } from '@/components/aso/metadata-history';
 
 interface AppLocalizationProps {
   // Current localization data in draft
@@ -407,12 +408,15 @@ export default function AppLocalizationView({
                 : renderASOMode()}
 
               {mode !== LocalizationEditMode.QUICK_RELEASE && (
-                <MetadataVariants
-                  appId={localization.appId}
-                  locale={localization.locale ?? ''}
-                  localization={localization}
-                  onApply={(fields) => onUpdate(fields)}
-                />
+                <>
+                  <MetadataVariants
+                    appId={localization.appId}
+                    locale={localization.locale ?? ''}
+                    localization={localization}
+                    onApply={(fields) => onUpdate(fields)}
+                  />
+                  <MetadataHistory locale={localization.locale as any} />
+                </>
               )}
 
               <div className="flex justify-end">

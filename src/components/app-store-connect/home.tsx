@@ -65,6 +65,7 @@ import { AppStoreState } from '@/types/app-store';
 import { useTranslations } from 'next-intl';
 import { useAnalytics } from '@/lib/analytics';
 import { GlobalOverview } from '@/components/dashboard/global-overview';
+import { RankingsCompare } from '@/components/dashboard/rankings-compare';
 
 export default function Home() {
   const t = useTranslations('dashboard.app-store-connect.localization');
@@ -378,8 +379,9 @@ export default function Home() {
       {isCreatingNewVersion && <LoadingOverlay />}
 
       {apps.length > 1 && (
-        <div className="mb-8">
+        <div className="mb-8 space-y-6">
           <GlobalOverview />
+          <RankingsCompare />
         </div>
       )}
 

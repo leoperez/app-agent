@@ -7,6 +7,7 @@ import { Team, TeamDetail } from '@/types/user';
 import { fetcher } from '@/lib/utils/fetcher';
 import { useTeam } from '@/context/team';
 import type { AppOverviewEntry } from '@/app/api/teams/[teamId]/overview/route';
+import type { RankingsCompareEntry } from '@/app/api/teams/[teamId]/apps/rankings-compare/route';
 
 export function useGetTeam() {
   const teamInfo = useTeam();
@@ -81,6 +82,18 @@ export function useGetNotifications() {
     markAllRead,
     mutate,
   };
+}
+
+export function useGetRankingsCompare(locale?: string) {
+  const teamInfo = useTeam();
+  const { data, error, isLoading } = useSWR<RankingsCompareEntry[]>(
+    teamInfo?.currentTeam?.id
+      ? `/api/teams/${teamInfo.currentTeam.id}/apps/rankings-compare${locale ? `?locale=${locale}` : ''}`
+      : null,
+    fetcher,
+    { dedupingInterval: 120000 }
+  );
+  return { compare: data ?? [], loading: isLoading, error };
 }
 
 export function useTeams() {

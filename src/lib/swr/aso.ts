@@ -13,6 +13,7 @@ import {
 import type { KeywordOpportunity } from '@/app/api/teams/[teamId]/apps/[appId]/keywords/opportunities/route';
 import type { WhatsNewHistoryEntry } from '@/app/api/teams/[teamId]/apps/[appId]/localizations/[locale]/whats-new-history/route';
 import type { MetadataVariantResponse } from '@/app/api/teams/[teamId]/apps/[appId]/localizations/[locale]/variants/route';
+import type { MetadataHistoryEntry } from '@/app/api/teams/[teamId]/apps/[appId]/localizations/[locale]/metadata-history/route';
 import { fetcher } from '../utils/fetcher';
 import { useState } from 'react';
 import useSWR from 'swr';
@@ -194,6 +195,21 @@ export function useGetKeywordGap(appId: string) {
     fetcher
   );
   return { gaps: data ?? [], loading: isLoading, error };
+}
+
+export function useGetMetadataHistory(
+  appId: string,
+  locale: string,
+  enabled = true
+) {
+  const teamInfo = useTeam();
+  const { data, error, isLoading } = useSWR<MetadataHistoryEntry[]>(
+    enabled && teamInfo?.currentTeam?.id && appId && locale
+      ? `/api/teams/${teamInfo.currentTeam.id}/apps/${appId}/localizations/${locale}/metadata-history`
+      : null,
+    fetcher
+  );
+  return { history: data ?? [], loading: isLoading, error };
 }
 
 export function useGetWhatsNewHistory(

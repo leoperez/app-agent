@@ -201,6 +201,7 @@ model App {
   competitors        Competitor[]
   analytics          AppAnalytics[]
   whatsNewHistory    WhatsNewHistory[]
+  metadataHistory    MetadataHistory[]
   metadataVariants    MetadataVariant[]
   ratingSnapshots     AppRatingSnapshot[]
   reviews             AppReview[]
@@ -295,6 +296,23 @@ model AppLocalization {
   @@index([appId])
   @@index([appVersionId])
   @@index([locale])
+}
+
+model MetadataHistory {
+  id               String   @id @default(cuid())
+  appId            String
+  app              App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  locale           String
+  version          String?
+  title            String?
+  subtitle         String?
+  keywords         String?  @db.Text
+  description      String?  @db.Text
+  shortDescription String?
+  fullDescription  String?  @db.Text
+  pushedAt         DateTime @default(now())
+
+  @@index([appId, locale, pushedAt])
 }
 
 model WhatsNewHistory {

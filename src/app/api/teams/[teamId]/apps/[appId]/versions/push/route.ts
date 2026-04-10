@@ -172,6 +172,22 @@ export async function POST(
       await prisma.whatsNewHistory.createMany({ data: historyEntries });
     }
 
+    // Save metadata snapshot for change history
+    const metadataEntries = localizations.map((loc) => ({
+      appId,
+      locale: loc.locale ?? 'en-US',
+      version: loc.appVersion.version ?? undefined,
+      title: loc.title ?? undefined,
+      subtitle: loc.subtitle ?? undefined,
+      keywords: loc.keywords ?? undefined,
+      description: loc.description ?? undefined,
+      shortDescription: loc.shortDescription ?? undefined,
+      fullDescription: loc.fullDescription ?? undefined,
+    }));
+    if (metadataEntries.length > 0) {
+      await prisma.metadataHistory.createMany({ data: metadataEntries });
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return handleAppError(error as Error);
