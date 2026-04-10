@@ -76,6 +76,16 @@
       "dropped-out": "圏外（100位以下）",
       "cta": "ダッシュボードを開く"
     },
+    "keyword-rise": {
+      "subject-single": "1件のキーワードがトップ10入りしました",
+      "subject-plural": "{count}件のキーワードが大幅に改善されました",
+      "title": "キーワードランキングの改善",
+      "intro": "おめでとうございます！以下のキーワードのランキングが大幅に向上しました：",
+      "field-previous": "以前",
+      "field-new": "現在",
+      "new-entry": "新規ランクイン",
+      "cta": "ダッシュボードを開く"
+    },
     "competitor-changes": {
       "title": "競合アプリの変更を検出しました",
       "intro": "トラッキング中の競合アプリに以下の変更が検出されました：",

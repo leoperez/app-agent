@@ -8,6 +8,8 @@ import { validateCronSecret } from '@/lib/utils/cron-auth';
 import { redis } from '@/lib/redis';
 import { sendKeywordDropEmail } from '@/lib/emails/send-keyword-drop';
 import { KeywordDropEntry } from '@/components/emails/keyword-drop';
+import { sendKeywordRiseEmail } from '@/lib/emails/send-keyword-rise';
+import { KeywordRiseEntry } from '@/components/emails/keyword-rise';
 import { sendSlackMessage } from '@/lib/slack';
 import { createNotification } from '@/lib/notifications';
 import { logCron } from '@/lib/utils/log-cron';
@@ -16,6 +18,9 @@ export const maxDuration = 300;
 
 // A keyword drop is significant if it falls ≥5 positions or exits the top 100
 const DROP_THRESHOLD = 5;
+// A rise is significant if it improves ≥10 positions OR enters the top 10
+const RISE_THRESHOLD = 10;
+const TOP10 = 10;
 
 // Daily cron: snapshot keyword positions for all tracked keywords
 export async function GET(request: NextRequest) {
@@ -86,11 +91,12 @@ export async function GET(request: NextRequest) {
     }[] = [];
     const errors: string[] = [];
 
-    // Drops grouped by teamId → appId → drops
+    // Drops grouped by appId
     const dropsByTeam: Record<
       string,
       {
         drops: KeywordDropEntry[];
+        rises: KeywordRiseEntry[];
         users: {
           email: string;
           locale: string;
@@ -152,34 +158,60 @@ export async function GET(request: NextRequest) {
               (newPosition === null || // dropped out of top 100
                 newPosition - prevPosition >= DROP_THRESHOLD); // fell ≥ threshold
 
-            if (isSignificantDrop) {
-              const teamId = kw.app.team
-                ? Object.keys(kw.app.team)[0] // use appId as team key
-                : kw.appId;
-              const teamKey = kw.appId; // group by app
+            // Detect significant rise: ≥RISE_THRESHOLD improvement OR top-10 entry
+            const isSignificantRise =
+              newPosition !== null &&
+              (prevPosition === null || prevPosition > TOP10) &&
+              newPosition <= TOP10; // entered top 10
+            const isBigJump =
+              newPosition !== null &&
+              prevPosition !== null &&
+              prevPosition - newPosition >= RISE_THRESHOLD; // jumped ≥10 spots
 
+            const teamKey = kw.appId;
+            const buildUsers = () =>
+              (kw.app.team?.users ?? [])
+                .filter(
+                  (u) =>
+                    u.user.email && u.user.notifyCompetitorChanges !== false
+                )
+                .map((u) => ({
+                  email: u.user.email as string,
+                  locale: u.user.locale ?? 'en',
+                  slackWebhookUrl: u.user.slackWebhookUrl ?? null,
+                }));
+
+            if (isSignificantDrop) {
               if (!dropsByTeam[teamKey]) {
                 dropsByTeam[teamKey] = {
                   drops: [],
-                  users: (kw.app.team?.users ?? [])
-                    .filter(
-                      (u) =>
-                        u.user.email && u.user.notifyCompetitorChanges !== false
-                    )
-                    .map((u) => ({
-                      email: u.user.email as string,
-                      locale: u.user.locale ?? 'en',
-                      slackWebhookUrl: u.user.slackWebhookUrl ?? null,
-                    })),
+                  rises: [],
+                  users: buildUsers(),
                 };
               }
-
               dropsByTeam[teamKey].drops.push({
                 appTitle: kw.app.title ?? kw.app.storeAppId,
                 keyword: kw.keyword,
                 locale: kw.locale,
                 previousPosition: prevPosition,
                 newPosition,
+              });
+            }
+
+            if (isSignificantRise || isBigJump) {
+              if (!dropsByTeam[teamKey]) {
+                dropsByTeam[teamKey] = {
+                  drops: [],
+                  rises: [],
+                  users: buildUsers(),
+                };
+              }
+              dropsByTeam[teamKey].rises.push({
+                appTitle: kw.app.title ?? kw.app.storeAppId,
+                keyword: kw.keyword,
+                locale: kw.locale,
+                previousPosition: prevPosition,
+                newPosition: newPosition!,
               });
             }
           } catch (err) {
@@ -220,35 +252,65 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Send drop alert emails + Slack (fire & forget)
+    // Send drop + rise alert emails + Slack (fire & forget)
     let totalDrops = 0;
-    for (const { drops, users } of Object.values(dropsByTeam)) {
+    let totalRises = 0;
+    for (const { drops, rises, users } of Object.values(dropsByTeam)) {
       totalDrops += drops.length;
+      totalRises += rises.length;
       for (const { email, locale, slackWebhookUrl } of users) {
-        sendKeywordDropEmail(email, drops, locale).catch((err) =>
-          console.error(
-            `keyword-rankings: failed to send drop alert to ${email}:`,
-            err
-          )
-        );
-
-        if (slackWebhookUrl) {
-          const lines = drops.map((d) => {
-            const prev =
-              d.previousPosition != null
-                ? `#${d.previousPosition}`
-                : 'unranked';
-            const next =
-              d.newPosition != null ? `#${d.newPosition}` : 'out of top 100';
-            return `• *${d.keyword}* (${d.appTitle}): ${prev} → ${next}`;
-          });
-          const text = `:chart_with_downwards_trend: *${drops.length} keyword drop${drops.length === 1 ? '' : 's'} detected*\n${lines.join('\n')}`;
-          sendSlackMessage(slackWebhookUrl, text).catch((err) =>
+        if (drops.length > 0) {
+          sendKeywordDropEmail(email, drops, locale).catch((err) =>
             console.error(
-              `keyword-rankings: failed to send Slack to ${email}:`,
+              `keyword-rankings: failed to send drop alert to ${email}:`,
               err
             )
           );
+        }
+
+        if (rises.length > 0) {
+          sendKeywordRiseEmail(email, rises, locale).catch((err) =>
+            console.error(
+              `keyword-rankings: failed to send rise alert to ${email}:`,
+              err
+            )
+          );
+        }
+
+        if (slackWebhookUrl) {
+          const messages: string[] = [];
+          if (drops.length > 0) {
+            const lines = drops.map((d) => {
+              const prev =
+                d.previousPosition != null
+                  ? `#${d.previousPosition}`
+                  : 'unranked';
+              const next =
+                d.newPosition != null ? `#${d.newPosition}` : 'out of top 100';
+              return `• *${d.keyword}* (${d.appTitle}): ${prev} → ${next}`;
+            });
+            messages.push(
+              `:chart_with_downwards_trend: *${drops.length} keyword drop${drops.length === 1 ? '' : 's'}*\n${lines.join('\n')}`
+            );
+          }
+          if (rises.length > 0) {
+            const lines = rises.map(
+              (r) =>
+                `• *${r.keyword}* (${r.appTitle}): ${r.previousPosition != null ? `#${r.previousPosition}` : 'unranked'} → #${r.newPosition}`
+            );
+            messages.push(
+              `:rocket: *${rises.length} keyword rise${rises.length === 1 ? '' : 's'}*\n${lines.join('\n')}`
+            );
+          }
+          if (messages.length > 0) {
+            sendSlackMessage(slackWebhookUrl, messages.join('\n\n')).catch(
+              (err) =>
+                console.error(
+                  `keyword-rankings: failed to send Slack to ${email}:`,
+                  err
+                )
+            );
+          }
         }
       }
     }
@@ -265,6 +327,7 @@ export async function GET(request: NextRequest) {
         event: 'keyword_ranking_snapshot',
         snapshots: snapshots.length,
         drops: totalDrops,
+        rises: totalRises,
         errors: errors.length,
       })
     );

@@ -76,6 +76,16 @@
       "dropped-out": "Out of top 100",
       "cta": "View dashboard"
     },
+    "keyword-rise": {
+      "subject-single": "1 keyword entered the top 10",
+      "subject-plural": "{count} keywords improved significantly",
+      "title": "Keyword ranking improvements",
+      "intro": "Great news! The following keywords improved significantly:",
+      "field-previous": "Before",
+      "field-new": "Now",
+      "new-entry": "New entry",
+      "cta": "View dashboard"
+    },
     "competitor-changes": {
       "title": "Competitor updates detected",
       "intro": "We detected the following changes in your tracked competitors:",
