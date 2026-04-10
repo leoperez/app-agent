@@ -229,10 +229,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Create in-app notifications for drops (grouped by app)
-    for (const [appKey, { drops }] of Object.entries(dropsByTeam)) {
+    // Create in-app notifications for drops and rises (grouped by app)
+    for (const [appKey, { drops, rises }] of Object.entries(dropsByTeam)) {
       const firstKw = keywords.find((k) => k.appId === appKey);
-      if (firstKw?.app.teamId && drops.length > 0) {
+      if (!firstKw?.app.teamId) continue;
+
+      if (drops.length > 0) {
         const summary = drops
           .slice(0, 3)
           .map(
@@ -248,6 +250,25 @@ export async function GET(request: NextRequest) {
           body:
             summary +
             (drops.length > 3 ? ` and ${drops.length - 3} more.` : '.'),
+        }).catch(console.error);
+      }
+
+      if (rises.length > 0) {
+        const summary = rises
+          .slice(0, 3)
+          .map(
+            (r) =>
+              `"${r.keyword}" ${r.previousPosition != null ? `#${r.previousPosition}` : 'unranked'} → #${r.newPosition}`
+          )
+          .join(', ');
+        createNotification({
+          teamId: firstKw.app.teamId,
+          appId: appKey,
+          type: 'keyword_rise',
+          title: `${rises.length} keyword rise${rises.length === 1 ? '' : 's'} in ${firstKw.app.title ?? appKey}`,
+          body:
+            summary +
+            (rises.length > 3 ? ` and ${rises.length - 3} more.` : '.'),
         }).catch(console.error);
       }
     }

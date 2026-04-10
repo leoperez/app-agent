@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import CharacterCount from '@/components/common/character-count';
 
 interface LocalizationFieldProps {
-  label: string;
+  label?: string;
   value: string | null;
   onChange: (value: string) => void;
   multiline?: boolean;
@@ -14,7 +14,7 @@ interface LocalizationFieldProps {
 }
 
 export default function LocalizationField({
-  label,
+  label = '',
   value,
   onChange,
   multiline = false,
@@ -35,7 +35,7 @@ export default function LocalizationField({
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between items-center">
-        <Label>{label}</Label>
+        {label ? <Label>{label}</Label> : <span />}
         <div className="flex items-center space-x-2">
           {characterLimit && (
             <CharacterCount current={currentLength} limit={characterLimit} />
