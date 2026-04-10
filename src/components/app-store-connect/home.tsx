@@ -30,9 +30,11 @@ import {
   useGetAppLocalizations,
   useGetAppAnalytics,
   useGetAppRatings,
+  useGetReviewSentiment,
 } from '@/lib/swr/app';
 import AnalyticsChart from '@/components/app-store-connect/analytics-chart';
 import { RatingChart } from '@/components/app-store-connect/rating-chart';
+import { ReviewSentiment } from '@/components/app-store-connect/review-sentiment';
 import {
   createNewVersion,
   pullLatestVersion,
@@ -86,6 +88,11 @@ export default function Home() {
     teamInfo?.currentTeam?.id || '',
     currentApp?.id || ''
   );
+  const { data: sentimentData, loading: sentimentLoading } =
+    useGetReviewSentiment(
+      teamInfo?.currentTeam?.id || '',
+      currentApp?.id || ''
+    );
   const [isStaged, setIsStaged] = useState(currentApp?.isStaged || false);
   const [isPushing, setIsPushing] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
@@ -551,6 +558,11 @@ export default function Home() {
           {/* Rating chart — all stores */}
           <div className="mb-6">
             <RatingChart data={ratingsData} loading={ratingsLoading} />
+          </div>
+
+          {/* Review sentiment */}
+          <div className="mb-6">
+            <ReviewSentiment data={sentimentData} loading={sentimentLoading} />
           </div>
 
           {needCreateNewVersion ? (

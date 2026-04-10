@@ -171,6 +171,44 @@ export function useGetKeywordConversion(
   return { data: data ?? [], loading: isLoading, error };
 }
 
+export interface SentimentByVersion {
+  version: string;
+  positive: number;
+  neutral: number;
+  negative: number;
+  total: number;
+  avgScore: number;
+}
+
+export interface RecentReview {
+  id: string;
+  score: number;
+  title: string | null;
+  body: string | null;
+  version: string | null;
+  reviewedAt: string;
+}
+
+export interface SentimentData {
+  byVersion: SentimentByVersion[];
+  recentNegative: RecentReview[];
+  totals: { positive: number; neutral: number; negative: number };
+}
+
+export function useGetReviewSentiment(
+  teamId: string,
+  appId: string,
+  days = 90
+) {
+  const { data, error, isLoading } = useSWR<SentimentData>(
+    teamId && appId
+      ? `/api/teams/${teamId}/apps/${appId}/reviews/sentiment?days=${days}`
+      : null,
+    fetcher
+  );
+  return { data, loading: isLoading, error };
+}
+
 export async function checkShortDescription(teamId: string, appId: string) {
   const response = await fetch(
     `/api/teams/${teamId}/apps/${appId}/short-description`,

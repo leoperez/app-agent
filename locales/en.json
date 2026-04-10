@@ -514,6 +514,16 @@
     "keyword-gap-add": "Add keyword",
     "keyword-gap-showing": "Showing {shown} of {total} keywords"
   },
+  "reviews": {
+    "sentiment-title": "Review Sentiment",
+    "sentiment-empty": "No reviews collected yet. Reviews will appear after the daily sync runs.",
+    "positive": "Positive",
+    "neutral": "Neutral",
+    "negative": "Negative",
+    "by-version": "By version",
+    "reviews-count": "reviews",
+    "recent-negative": "Recent negative reviews"
+  },
   "account": {
     "account-settings": "Account Settings",
     "account-settings-description": "Manage your account settings and preferences",

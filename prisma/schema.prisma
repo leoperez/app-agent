@@ -202,6 +202,7 @@ model App {
   whatsNewHistory    WhatsNewHistory[]
   metadataVariants   MetadataVariant[]
   ratingSnapshots    AppRatingSnapshot[]
+  reviews            AppReview[]
 
   isStaged        Boolean   @default(false)
 
@@ -304,6 +305,24 @@ model WhatsNewHistory {
   pushedAt  DateTime @default(now())
 
   @@index([appId, locale, pushedAt])
+}
+
+model AppReview {
+  id         String   @id @default(cuid())
+  appId      String
+  app        App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  storeId    String
+  version    String?
+  score      Int
+  title      String?
+  body       String?  @db.Text
+  reviewedAt DateTime
+  locale     String?
+  createdAt  DateTime @default(now())
+
+  @@unique([appId, storeId])
+  @@index([appId, reviewedAt])
+  @@index([appId, score])
 }
 
 model AppRatingSnapshot {

@@ -479,6 +479,16 @@
     "keyword-gap-add": "キーワードを追加",
     "keyword-gap-showing": "{total}件中{shown}件を表示"
   },
+  "reviews": {
+    "sentiment-title": "レビュー感情分析",
+    "sentiment-empty": "まだレビューが収集されていません。日次同期が実行されるとレビューが表示されます。",
+    "positive": "ポジティブ",
+    "neutral": "ニュートラル",
+    "negative": "ネガティブ",
+    "by-version": "バージョン別",
+    "reviews-count": "件",
+    "recent-negative": "最近のネガティブレビュー"
+  },
   "account": {
     "account-settings": "アカウント設定",
     "account-settings-description": "アカウント設定と環境設定を管理",
