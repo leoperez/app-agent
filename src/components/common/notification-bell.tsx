@@ -4,10 +4,14 @@ import { useState } from 'react';
 import { FaBell } from 'react-icons/fa';
 import {
   MdTrendingDown,
+  MdTrendingUp,
   MdStar,
   MdCompareArrows,
   MdReviews,
   MdSchedule,
+  MdHourglassEmpty,
+  MdCheckCircle,
+  MdCancel,
 } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,10 +24,16 @@ import { formatDistanceToNow } from 'date-fns';
 
 const TYPE_ICON: Record<string, React.ReactNode> = {
   keyword_drop: <MdTrendingDown className="h-4 w-4 text-red-500" />,
+  keyword_rise: <MdTrendingUp className="h-4 w-4 text-green-500" />,
   rating_drop: <MdStar className="h-4 w-4 text-amber-500" />,
   competitor_change: <MdCompareArrows className="h-4 w-4 text-blue-500" />,
   new_review: <MdReviews className="h-4 w-4 text-purple-500" />,
   scheduled_publish: <MdSchedule className="h-4 w-4 text-green-500" />,
+  publish_approval_requested: (
+    <MdHourglassEmpty className="h-4 w-4 text-amber-500" />
+  ),
+  publish_approved: <MdCheckCircle className="h-4 w-4 text-green-500" />,
+  publish_rejected: <MdCancel className="h-4 w-4 text-red-500" />,
 };
 
 export function NotificationBell() {

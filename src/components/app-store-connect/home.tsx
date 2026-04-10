@@ -123,6 +123,9 @@ export default function Home() {
   const [showPullDialog, setShowPullDialog] = useState(false);
   const [showPushDialog, setShowPushDialog] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [approvalNote, setApprovalNote] = useState('');
+  const [isRequestingApproval, setIsRequestingApproval] = useState(false);
   const [workingLocalizations, setWorkingLocalizations] = useState<{
     [key: string]: { public?: AppLocalization; draft?: AppLocalization };
   }>(localizations || {});
@@ -302,6 +305,29 @@ export default function Home() {
       toast.error(t('failed-to-push-changes'));
     } finally {
       setIsPushing(false);
+    }
+  };
+
+  const handleRequestApproval = async () => {
+    setIsRequestingApproval(true);
+    try {
+      const teamId = teamInfo?.currentTeam?.id || '';
+      const appId = currentApp?.id || '';
+      const summary =
+        approvalNote.trim() ||
+        `Request to publish ${currentApp?.title ?? 'app'} metadata to ${currentApp?.store === 'GOOGLEPLAY' ? 'Google Play' : 'App Store'}`;
+      await fetch(`/api/teams/${teamId}/apps/${appId}/publish-approvals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary }),
+      });
+      setShowApprovalDialog(false);
+      setApprovalNote('');
+      toast.success(t('approval-requested'));
+    } catch {
+      toast.error(t('approval-request-failed'));
+    } finally {
+      setIsRequestingApproval(false);
     }
   };
 
@@ -514,7 +540,11 @@ export default function Home() {
                 <div>
                   <Button
                     variant="outline"
-                    onClick={() => setShowPushDialog(true)}
+                    onClick={() =>
+                      teamInfo?.currentTeam?.requiresApproval
+                        ? setShowApprovalDialog(true)
+                        : setShowPushDialog(true)
+                    }
                     disabled={!isStaged || isPushing}
                     className={`flex items-center ${
                       isStaged && !isPushing
@@ -726,6 +756,39 @@ export default function Home() {
             <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handlePush} className="ml-2">
               {t('continue')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Approval Request Dialog */}
+      <AlertDialog
+        open={showApprovalDialog}
+        onOpenChange={setShowApprovalDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('approval-required-title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('approval-required-description')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <textarea
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[80px]"
+            placeholder={t('approval-note-placeholder')}
+            value={approvalNote}
+            onChange={(e) => setApprovalNote(e.target.value)}
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRequestApproval}
+              disabled={isRequestingApproval}
+              className="ml-2"
+            >
+              {isRequestingApproval
+                ? t('approval-sending')
+                : t('approval-send-request')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

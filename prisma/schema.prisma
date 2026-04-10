@@ -95,6 +95,8 @@ model Team {
   canceledAt     DateTime? // Stripe subscription canceled date
 
   limits        Json?    // Plan limits, e.g., {apps: 1, users: 1}
+  requiresApproval Boolean @default(false) // Gate publishes behind an approval workflow
+  publishApprovals PublishApproval[]
   notifications          Notification[]
   descriptionTemplates   DescriptionTemplate[]
   reviewTemplates        ReviewTemplate[]
@@ -579,4 +581,23 @@ model Competitor {
   @@index([appId])
   @@index([locale])
   @@index([order])
+}
+
+// Approval request before publishing metadata to the store
+model PublishApproval {
+  id          String    @id @default(cuid())
+  teamId      String
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  appId       String
+  requestedBy String    // userId of the requester
+  summary     String    @db.Text  // human-readable summary of what will be published
+  status      String    @default("pending") // "pending" | "approved" | "rejected"
+  reviewedBy  String?   // userId of the reviewer
+  reviewNote  String?   // optional reviewer comment
+  reviewedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([teamId, status])
+  @@index([appId])
 }
