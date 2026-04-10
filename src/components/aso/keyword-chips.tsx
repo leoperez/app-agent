@@ -228,21 +228,40 @@ export default function KeywordChips({
         {teamInfo?.currentTeam?.id &&
           appInfo?.currentApp?.id &&
           keywords.length > 0 && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 px-2 text-xs text-muted-foreground"
-              title={t('export-keywords')}
-              onClick={() =>
-                window.open(
-                  `/api/teams/${teamInfo.currentTeam!.id}/apps/${appInfo.currentApp!.id}/keywords/export`,
-                  '_blank'
-                )
-              }
-            >
-              <MdOutlineFileDownload className="h-3.5 w-3.5 mr-1" />
-              {t('export-keywords')}
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-xs text-muted-foreground"
+                title={t('export-keywords')}
+                onClick={() =>
+                  window.open(
+                    `/api/teams/${teamInfo.currentTeam!.id}/apps/${appInfo.currentApp!.id}/keywords/export`,
+                    '_blank'
+                  )
+                }
+              >
+                <MdOutlineFileDownload className="h-3.5 w-3.5 mr-1" />
+                {t('export-keywords')}
+              </Button>
+              {locale && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-xs text-muted-foreground"
+                  title={t('export-rankings')}
+                  onClick={() =>
+                    window.open(
+                      `/api/teams/${teamInfo.currentTeam!.id}/apps/${appInfo.currentApp!.id}/localizations/${locale}/keyword/rankings/export`,
+                      '_blank'
+                    )
+                  }
+                >
+                  <MdOutlineFileDownload className="h-3.5 w-3.5 mr-1" />
+                  {t('export-rankings')}
+                </Button>
+              )}
+            </div>
           )}
       </div>
       {keywords.length > 8 && (

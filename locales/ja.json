@@ -416,7 +416,8 @@
     "bulk-import-placeholder": "カンマまたは改行でキーワードを貼り付けてください",
     "bulk-import-button": "一括インポート",
     "cancel": "キャンセル",
-    "export-keywords": "CSVエクスポート",
+    "export-keywords": "キーワードCSVエクスポート",
+    "export-rankings": "ランキングCSVエクスポート",
     "search-keywords-placeholder": "キーワードを検索...",
     "working-hard": "処理中...",
     "completed": "完了",
@@ -512,7 +513,8 @@
     "reply-sent": "返信を送信しました",
     "reply-updated": "返信を更新しました",
     "reply-deleted": "返信を削除しました",
-    "reply-error": "返信の送信に失敗しました"
+    "reply-error": "返信の送信に失敗しました",
+    "export-csv": "レビューCSVエクスポート"
   },
   "publish-validation": {
     "all-good": "すべてのチェックに合格しました — 公開準備完了",

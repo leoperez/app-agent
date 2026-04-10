@@ -24,6 +24,7 @@ import { useWhiteLabelTranslations } from '@/hooks/useWhiteLabelTranslations';
 import { useTeam } from '@/context/team';
 import { FREE_TRIAL_DAYS, NEXT_PUBLIC_FREE_PLAN_ENABLED } from '@/lib/config';
 import { differenceInDays } from 'date-fns';
+import { NotificationBell } from '@/components/common/notification-bell';
 
 const getTrialDaysRemaining = (createdAt: Date) => {
   const trialEndDate = new Date(
@@ -130,9 +131,7 @@ export default function DashboardLayout({
                 </DropdownMenu>
               )}
 
-              {/* <Button variant="ghost" size="icon">
-                <FaBell className="h-5 w-5" />
-              </Button> */}
+              <NotificationBell />
 
               <Button variant="ghost" size="icon" asChild>
                 <Link href="/dashboard/account">

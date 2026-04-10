@@ -4,7 +4,13 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { toast } from 'react-hot-toast';
-import { MdRateReview, MdReply, MdDelete, MdEdit } from 'react-icons/md';
+import {
+  MdRateReview,
+  MdReply,
+  MdDelete,
+  MdEdit,
+  MdOutlineFileDownload,
+} from 'react-icons/md';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { StoreReview, useGetStoreReviews } from '@/lib/swr/app';
@@ -241,9 +247,26 @@ export function ReviewsPanel() {
             </span>
           )}
         </div>
-        <span className="text-xs text-muted-foreground">
-          {open ? '▲' : '▼'}
-        </span>
+        <div className="flex items-center gap-2">
+          {teamInfo?.currentTeam?.id && appInfo?.currentApp?.id && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(
+                  `/api/teams/${teamInfo.currentTeam!.id}/apps/${appInfo.currentApp!.id}/reviews/export`,
+                  '_blank'
+                );
+              }}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              title={t('export-csv')}
+            >
+              <MdOutlineFileDownload className="h-4 w-4" />
+            </button>
+          )}
+          <span className="text-xs text-muted-foreground">
+            {open ? '▲' : '▼'}
+          </span>
+        </div>
       </button>
 
       <AnimatePresence>

@@ -1,9 +1,12 @@
+'use client';
+
 import { useSession } from 'next-auth/react';
 import useSWR from 'swr';
 
 import { Team, TeamDetail } from '@/types/user';
 import { fetcher } from '@/lib/utils/fetcher';
 import { useTeam } from '@/context/team';
+import type { AppOverviewEntry } from '@/app/api/teams/[teamId]/overview/route';
 
 export function useGetTeam() {
   const teamInfo = useTeam();
@@ -24,6 +27,59 @@ export function useGetTeam() {
     team,
     loading: isLoading,
     error,
+  };
+}
+
+export interface NotificationEntry {
+  id: string;
+  appId: string | null;
+  type: string;
+  title: string;
+  body: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export function useGetTeamOverview() {
+  const teamInfo = useTeam();
+  const { data, error, isLoading, mutate } = useSWR<AppOverviewEntry[]>(
+    teamInfo?.currentTeam?.id
+      ? `/api/teams/${teamInfo.currentTeam.id}/overview`
+      : null,
+    fetcher,
+    { dedupingInterval: 60000 }
+  );
+  return { overview: data ?? [], loading: isLoading, error, mutate };
+}
+
+export function useGetNotifications() {
+  const teamInfo = useTeam();
+  const { data, error, isLoading, mutate } = useSWR<{
+    notifications: NotificationEntry[];
+    unreadCount: number;
+  }>(
+    teamInfo?.currentTeam?.id
+      ? `/api/teams/${teamInfo.currentTeam.id}/notifications`
+      : null,
+    fetcher,
+    { refreshInterval: 60000, dedupingInterval: 30000 }
+  );
+
+  const markAllRead = async () => {
+    if (!teamInfo?.currentTeam?.id) return;
+    await fetch(`/api/teams/${teamInfo.currentTeam.id}/notifications`, {
+      method: 'PATCH',
+    });
+    await mutate();
+  };
+
+  return {
+    notifications: data?.notifications ?? [],
+    unreadCount: data?.unreadCount ?? 0,
+    loading: isLoading,
+    error,
+    markAllRead,
+    mutate,
   };
 }
 

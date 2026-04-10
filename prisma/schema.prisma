@@ -94,7 +94,8 @@ model Team {
   endsAt         DateTime? // Stripe subscription end date
   canceledAt     DateTime? // Stripe subscription canceled date
 
-  limits    Json?    // Plan limits, e.g., {apps: 1, users: 1}
+  limits        Json?    // Plan limits, e.g., {apps: 1, users: 1}
+  notifications Notification[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -437,6 +438,21 @@ model AppAnalytics {
 
   @@unique([appId, date])
   @@index([appId, date])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  teamId    String
+  team      Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  appId     String?
+  type      String    // "keyword_drop" | "competitor_change" | "rating_drop" | "new_review"
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([teamId, readAt])
+  @@index([teamId, createdAt])
 }
 
 model Competitor {

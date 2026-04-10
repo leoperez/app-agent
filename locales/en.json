@@ -451,7 +451,8 @@
     "bulk-import-placeholder": "Paste keywords separated by commas or newlines",
     "bulk-import-button": "Import All",
     "cancel": "Cancel",
-    "export-keywords": "Export CSV",
+    "export-keywords": "Export keywords CSV",
+    "export-rankings": "Export rankings CSV",
     "search-keywords-placeholder": "Search keywords...",
     "working-hard": "Working hard...",
     "completed": "Completed",
@@ -547,7 +548,8 @@
     "reply-sent": "Reply sent",
     "reply-updated": "Reply updated",
     "reply-deleted": "Reply deleted",
-    "reply-error": "Failed to send reply"
+    "reply-error": "Failed to send reply",
+    "export-csv": "Export reviews CSV"
   },
   "publish-validation": {
     "all-good": "All checks passed — ready to publish",

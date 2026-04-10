@@ -13,6 +13,7 @@ import { googlePlayToAppStore } from '@/lib/utils/locale';
 import { sendRatingDropEmail } from '@/lib/emails/send-rating-drop';
 import { sendSlackMessage } from '@/lib/slack';
 import { RatingDropEntry } from '@/components/emails/rating-drop';
+import { createNotification } from '@/lib/notifications';
 
 export const maxDuration = 120;
 
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest) {
     const apps = await prisma.app.findMany({
       select: {
         id: true,
+        teamId: true,
         storeAppId: true,
         title: true,
         store: true,
@@ -160,6 +162,20 @@ export async function GET(request: NextRequest) {
         })),
         skipDuplicates: true,
       });
+    }
+
+    // Create in-app notifications for rating drops
+    for (const [appId, { entry }] of Object.entries(dropsByApp)) {
+      const app = apps.find((a) => a.id === appId);
+      if (app?.teamId) {
+        createNotification({
+          teamId: app.teamId,
+          appId,
+          type: 'rating_drop',
+          title: `Rating alert: ${entry.appTitle}`,
+          body: `Rating dropped from ★${entry.previousRating.toFixed(1)} to ★${entry.newRating.toFixed(1)} (${entry.ratingCount.toLocaleString()} ratings).`,
+        }).catch(console.error);
+      }
     }
 
     // Send alerts fire & forget

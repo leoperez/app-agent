@@ -64,6 +64,7 @@ import SubmitDialog from './submission/submit-dialog';
 import { AppStoreState } from '@/types/app-store';
 import { useTranslations } from 'next-intl';
 import { useAnalytics } from '@/lib/analytics';
+import { GlobalOverview } from '@/components/dashboard/global-overview';
 
 export default function Home() {
   const t = useTranslations('dashboard.app-store-connect.localization');
@@ -375,6 +376,12 @@ export default function Home() {
       {isPulling && <LoadingOverlay />}
       {isRefreshing && <LoadingOverlay />}
       {isCreatingNewVersion && <LoadingOverlay />}
+
+      {apps.length > 1 && (
+        <div className="mb-8">
+          <GlobalOverview />
+        </div>
+      )}
 
       <div className="flex items-center justify-between mb-6">
         {!versionStatus?.upToDate ? (

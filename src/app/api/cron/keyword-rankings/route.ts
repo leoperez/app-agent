@@ -9,6 +9,7 @@ import { redis } from '@/lib/redis';
 import { sendKeywordDropEmail } from '@/lib/emails/send-keyword-drop';
 import { KeywordDropEntry } from '@/components/emails/keyword-drop';
 import { sendSlackMessage } from '@/lib/slack';
+import { createNotification } from '@/lib/notifications';
 
 export const maxDuration = 300;
 
@@ -44,6 +45,7 @@ export async function GET(request: NextRequest) {
           select: {
             storeAppId: true,
             title: true,
+            teamId: true,
             team: {
               select: {
                 users: {
@@ -191,6 +193,29 @@ export async function GET(request: NextRequest) {
         data: snapshots,
         skipDuplicates: true,
       });
+    }
+
+    // Create in-app notifications for drops (grouped by app)
+    for (const [appKey, { drops }] of Object.entries(dropsByTeam)) {
+      const firstKw = keywords.find((k) => k.appId === appKey);
+      if (firstKw?.app.teamId && drops.length > 0) {
+        const summary = drops
+          .slice(0, 3)
+          .map(
+            (d) =>
+              `"${d.keyword}" ${d.previousPosition != null ? `#${d.previousPosition}` : '?'} → ${d.newPosition != null ? `#${d.newPosition}` : 'out of top 100'}`
+          )
+          .join(', ');
+        createNotification({
+          teamId: firstKw.app.teamId,
+          appId: appKey,
+          type: 'keyword_drop',
+          title: `${drops.length} keyword drop${drops.length === 1 ? '' : 's'} in ${firstKw.app.title ?? appKey}`,
+          body:
+            summary +
+            (drops.length > 3 ? ` and ${drops.length - 3} more.` : '.'),
+        }).catch(console.error);
+      }
     }
 
     // Send drop alert emails + Slack (fire & forget)
