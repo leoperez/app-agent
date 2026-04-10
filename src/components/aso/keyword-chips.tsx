@@ -31,7 +31,13 @@ import { useApp } from '@/context/app';
 import { useTeam } from '@/context/team';
 import { KeywordConversionChart } from './keyword-conversion-chart';
 import { KeywordRankingsTable } from './keyword-rankings-table';
-import { MdTableChart } from 'react-icons/md';
+import { MdTableChart, MdAutoAwesome } from 'react-icons/md';
+import { toast } from 'react-hot-toast';
+
+interface AISuggestion {
+  keyword: string;
+  rationale: string;
+}
 
 const APP_STORE_KEYWORD_LIMIT = 100;
 
@@ -161,6 +167,10 @@ export default function KeywordChips({
   );
   const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
   const [showRankingsTable, setShowRankingsTable] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[] | null>(
+    null
+  );
+  const [loadingAI, setLoadingAI] = useState(false);
 
   const { data: conversionData, loading: conversionLoading } =
     useGetKeywordConversion(
@@ -325,6 +335,42 @@ export default function KeywordChips({
                 >
                   <MdTableChart className="h-3.5 w-3.5 mr-1" />
                   Table
+                </Button>
+              )}
+              {!readonly && locale && (
+                <Button
+                  size="sm"
+                  variant={aiSuggestions ? 'default' : 'ghost'}
+                  className="h-6 px-2 text-xs text-violet-600 hover:text-violet-700"
+                  title="AI keyword suggestions"
+                  disabled={loadingAI}
+                  onClick={async () => {
+                    if (aiSuggestions) {
+                      setAiSuggestions(null);
+                      return;
+                    }
+                    setLoadingAI(true);
+                    try {
+                      const res = await fetch(
+                        `/api/teams/${teamInfo!.currentTeam!.id}/apps/${appInfo!.currentApp!.id}/keywords/ai-suggestions`,
+                        {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ locale }),
+                        }
+                      );
+                      if (!res.ok) throw new Error();
+                      const { suggestions } = await res.json();
+                      setAiSuggestions(suggestions);
+                    } catch {
+                      toast.error('Failed to get AI suggestions');
+                    } finally {
+                      setLoadingAI(false);
+                    }
+                  }}
+                >
+                  <MdAutoAwesome className="h-3.5 w-3.5 mr-1" />
+                  {loadingAI ? 'Thinking…' : 'AI'}
                 </Button>
               )}
               {locale && (
@@ -830,6 +876,66 @@ export default function KeywordChips({
           </AnimatePresence>
         </div>
       )}
+
+      {/* AI keyword suggestions */}
+      <AnimatePresence>
+        {aiSuggestions && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-3 border-t border-border space-y-2">
+              <p className="text-xs text-muted-foreground font-medium">
+                AI-suggested keywords — click to add
+              </p>
+              <div className="space-y-1">
+                {aiSuggestions.map((s) => {
+                  const alreadyTracked = keywords.some(
+                    (k) => k.keyword.toLowerCase() === s.keyword.toLowerCase()
+                  );
+                  return (
+                    <div
+                      key={s.keyword}
+                      className="flex items-start gap-2 rounded-md border border-violet-200 bg-violet-50 px-2.5 py-2 text-xs"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium text-violet-900">
+                          {s.keyword}
+                        </span>
+                        <span className="text-violet-600 ml-2">
+                          — {s.rationale}
+                        </span>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (alreadyTracked) return;
+                          await handleAddKeyword(s.keyword);
+                          setAiSuggestions((prev) =>
+                            prev
+                              ? prev.filter((x) => x.keyword !== s.keyword)
+                              : null
+                          );
+                        }}
+                        disabled={alreadyTracked}
+                        className={`shrink-0 flex items-center gap-0.5 font-medium transition-colors ${
+                          alreadyTracked
+                            ? 'text-muted-foreground cursor-not-allowed'
+                            : 'text-violet-700 hover:text-violet-900'
+                        }`}
+                      >
+                        {alreadyTracked ? '✓ tracked' : '+ Add'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Rankings table */}
       <AnimatePresence>
