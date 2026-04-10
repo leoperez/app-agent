@@ -9,6 +9,7 @@ import {
   MdSave,
   MdOutlineRocketLaunch,
   MdOutlineFileDownload,
+  MdOutlineFileUpload,
 } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import {
@@ -126,6 +127,7 @@ export default function Home() {
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [approvalNote, setApprovalNote] = useState('');
   const [isRequestingApproval, setIsRequestingApproval] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [workingLocalizations, setWorkingLocalizations] = useState<{
     [key: string]: { public?: AppLocalization; draft?: AppLocalization };
   }>(localizations || {});
@@ -331,6 +333,29 @@ export default function Home() {
     }
   };
 
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setIsImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(
+        `/api/teams/${teamInfo?.currentTeam?.id}/apps/${currentApp?.id}/localizations/import`,
+        { method: 'POST', body: formData }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? 'Import failed');
+      toast.success(t('import-success', { count: data.updated }));
+      await refresh();
+    } catch (err) {
+      toast.error(t('import-failed'));
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const handleCreateNewVersion = async (version: string) => {
     if (!version) {
       toast.error(t('version-cannot-be-empty'));
@@ -496,6 +521,27 @@ export default function Home() {
               </Button>
               <Tooltip id="export-json-tooltip" place="top">
                 {t('export-json')}
+              </Tooltip>
+            </div>
+
+            {/* Import CSV / JSON */}
+            <div>
+              <label
+                data-tooltip-id="import-tooltip"
+                className={`inline-flex items-center gap-1 cursor-pointer rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}
+              >
+                <MdOutlineFileUpload className="w-5 h-5" />
+                {t('import')}
+                <input
+                  type="file"
+                  accept=".csv,.json"
+                  className="hidden"
+                  onChange={handleImportFile}
+                  disabled={isImporting}
+                />
+              </label>
+              <Tooltip id="import-tooltip" place="top">
+                {t('import-csv-json')}
               </Tooltip>
             </div>
 
