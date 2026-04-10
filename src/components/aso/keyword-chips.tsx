@@ -28,6 +28,30 @@ import { KeywordConversionChart } from './keyword-conversion-chart';
 
 const APP_STORE_KEYWORD_LIMIT = 100;
 
+// Returns position improvement over the last 7 days (positive = moved up)
+function computeVelocity(
+  history: { date: string; position: number | null }[] | undefined
+): number | null {
+  if (!history || history.length < 2) return null;
+  const recent = history.slice(-7);
+  const oldest = recent.find((h) => h.position !== null);
+  const newest = [...recent].reverse().find((h) => h.position !== null);
+  if (!oldest || !newest || oldest === newest) return null;
+  return oldest.position! - newest.position!; // positive = improved
+}
+
+function VelocityBadge({ delta }: { delta: number | null }) {
+  if (delta === null || delta === 0) return null;
+  const improved = delta > 0;
+  return (
+    <span
+      className={`ml-1 text-xs font-medium ${improved ? 'text-green-500' : 'text-red-500'}`}
+    >
+      {improved ? `↑${delta}` : `↓${Math.abs(delta)}`}
+    </span>
+  );
+}
+
 interface KeywordChipsProps {
   keywords: AsoKeyword[];
   locale?: LocaleCode;
@@ -41,6 +65,7 @@ function renderTooltipContent(
   keyword: AsoKeyword,
   history?: { date: string; position: number | null }[]
 ) {
+  const velocity = computeVelocity(history);
   const fields = [
     { label: 'Score', value: keyword.overall },
     { label: 'Difficulty', value: keyword.difficultyScore || null },
@@ -51,6 +76,17 @@ function renderTooltipContent(
         keyword.position === null || keyword.position === -1
           ? null
           : `#${keyword.position}`,
+    },
+    {
+      label: '7d trend',
+      value:
+        velocity === null
+          ? null
+          : velocity > 0
+            ? `↑${velocity} spots`
+            : velocity < 0
+              ? `↓${Math.abs(velocity)} spots`
+              : '→ stable',
     },
   ];
 
@@ -273,6 +309,9 @@ export default function KeywordChips({
                             #{keywordObj.position}
                           </span>
                         )}
+                      <VelocityBadge
+                        delta={computeVelocity(rankings?.[keywordObj.keyword])}
+                      />
                       {loadingKeywords.has(keywordObj.keyword) && (
                         <span className="ml-2">
                           <Skeleton width={20} height={16} />
