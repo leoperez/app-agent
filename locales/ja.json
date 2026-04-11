@@ -595,6 +595,13 @@
     "schedule-publish": "公開をスケジュールする",
     "schedule-publish-desc": "スケジューラーを使ってメタデータの更新を自動的にストアに反映させてください。"
   },
+  "release-timeline": {
+    "title": "リリースによる評価への影響",
+    "legend-rating": "評価の推移",
+    "legend-release": "リリース（データなし）",
+    "legend-improved": "評価が改善",
+    "legend-dropped": "評価が低下"
+  },
   "keyword-cannibalization": {
     "title": "{count}件のキーワード競合問題",
     "subtitle": "これらのキーワードは複数のロケールで追跡されています。互いに競合している可能性があります — リーチを最大化するためにロケールごとにユニークなキーワードを使用することを検討してください。"

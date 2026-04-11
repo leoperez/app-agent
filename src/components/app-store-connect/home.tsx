@@ -37,6 +37,7 @@ import {
 import AnalyticsChart from '@/components/app-store-connect/analytics-chart';
 import { RatingChart } from '@/components/app-store-connect/rating-chart';
 import { RatingsByVersion } from '@/components/app-store-connect/ratings-by-version';
+import { ReleaseTimeline } from '@/components/app-store-connect/release-timeline';
 import { ReviewSentiment } from '@/components/app-store-connect/review-sentiment';
 import { ReviewsPanel } from '@/components/app-store-connect/reviews-panel';
 import { SchedulePublish } from '@/components/app-store-connect/schedule-publish';
@@ -695,6 +696,11 @@ export default function Home() {
           {/* Rating breakdown by version */}
           <div className="mb-6">
             <RatingsByVersion />
+          </div>
+
+          {/* Release timeline — rating impact of each release */}
+          <div className="mb-6">
+            <ReleaseTimeline />
           </div>
 
           {/* Review sentiment */}

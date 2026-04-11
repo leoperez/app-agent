@@ -630,6 +630,13 @@
     "schedule-publish": "Schedule a publish",
     "schedule-publish-desc": "Use the scheduler to push metadata updates to the store automatically."
   },
+  "release-timeline": {
+    "title": "Rating impact of releases",
+    "legend-rating": "Rating over time",
+    "legend-release": "Release (no data)",
+    "legend-improved": "Rating improved",
+    "legend-dropped": "Rating dropped"
+  },
   "keyword-cannibalization": {
     "title": "{count} keyword cannibalization issue{count, plural, one {} other {s}}",
     "subtitle": "These keywords are tracked in multiple locales. They compete against each other — consider using unique keywords per locale to maximise reach."

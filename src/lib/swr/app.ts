@@ -360,6 +360,34 @@ export function useGetRatingsByVersion(teamId: string, appId: string) {
   return { data: data ?? [], loading: isLoading, error };
 }
 
+export interface ReleaseTimelineResponse {
+  releases: {
+    version: string;
+    releasedAt: string;
+    ratingAtRelease: number | null;
+    ratingBefore: number | null;
+  }[];
+  ratings: { date: string; rating: number }[];
+}
+
+export function useGetReleaseTimeline(
+  teamId: string,
+  appId: string,
+  days = 180
+) {
+  const { data, error, isLoading } = useSWR<ReleaseTimelineResponse>(
+    teamId && appId
+      ? `/api/teams/${teamId}/apps/${appId}/release-timeline?days=${days}`
+      : null,
+    fetcher
+  );
+  return {
+    data: data ?? { releases: [], ratings: [] },
+    loading: isLoading,
+    error,
+  };
+}
+
 export async function checkShortDescription(teamId: string, appId: string) {
   const response = await fetch(
     `/api/teams/${teamId}/apps/${appId}/short-description`,
