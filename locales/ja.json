@@ -717,6 +717,8 @@
     "notifications-description": "受け取るメール通知を管理します",
     "notify-competitor-changes": "競合アプリ変更アラート",
     "notify-competitor-changes-description": "追跡中の競合アプリのタイトル・サブタイトル・説明文が更新された際に日次ダイジェストメールを受け取ります",
+    "weekly-digest": "週次ASOダイジェスト",
+    "weekly-digest-description": "毎週月曜日に全アプリの評価・キーワードランキング・レビューハイライトをまとめたメールを受け取ります",
     "notifications-saved": "通知設定を保存しました",
     "slack-webhook": "Slack Webhook",
     "slack-webhook-description": "Slack Incoming Webhook URLを貼り付けると、キーワード順位の下落や競合アプリの変更をSlackで受け取れます",

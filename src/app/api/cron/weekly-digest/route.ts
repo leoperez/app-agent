@@ -32,7 +32,11 @@ export async function GET(request: NextRequest) {
         apps: { select: { id: true, title: true, iconUrl: true } },
         users: {
           where: { role: 'ADMIN' },
-          include: { user: { select: { email: true, name: true } } },
+          include: {
+            user: {
+              select: { email: true, name: true, weeklyDigestEnabled: true },
+            },
+          },
         },
       },
     });
@@ -43,6 +47,10 @@ export async function GET(request: NextRequest) {
       if (!team.apps.length) continue;
 
       const adminEmails = team.users
+        .filter(
+          (ut: { user: { weeklyDigestEnabled: boolean } }) =>
+            ut.user.weeklyDigestEnabled
+        )
         .map((ut: { user: { email: string | null } }) => ut.user.email)
         .filter((e: string | null): e is string => !!e);
       if (!adminEmails.length) continue;

@@ -57,6 +57,7 @@ model User {
 
   // Notification preferences
   notifyCompetitorChanges Boolean @default(true)
+  weeklyDigestEnabled     Boolean @default(true)  // Receive weekly ASO digest email
   slackWebhookUrl         String? // Optional Slack incoming webhook URL for alerts
   ratingAlertThreshold    Float?  // Alert when app rating drops below this value (e.g. 4.0)
 
@@ -613,4 +614,15 @@ model PublishApproval {
 
   @@index([teamId, status])
   @@index([appId])
+}
+
+model UserFeedback {
+  id        String   @id @default(cuid())
+  userId    String?  // null if submitted anonymously
+  email     String?
+  message   String   @db.Text
+  page      String?  // URL or route where feedback was submitted
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }

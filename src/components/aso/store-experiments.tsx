@@ -82,8 +82,18 @@ function ExperimentCard({
   const badge = STATUS_BADGE[exp.status] ?? STATUS_BADGE.draft;
   const field = FIELDS.find((f) => f.value === exp.field)?.label ?? exp.field;
 
+  const daysRunning =
+    exp.status === 'running' && exp.startedAt
+      ? Math.floor(
+          (Date.now() - new Date(exp.startedAt).getTime()) / 86_400_000
+        )
+      : null;
+  const isStale = daysRunning !== null && daysRunning > 30;
+
   return (
-    <div className="border border-border rounded-lg overflow-hidden">
+    <div
+      className={`border rounded-lg overflow-hidden ${isStale ? 'border-amber-400 dark:border-amber-600' : 'border-border'}`}
+    >
       <button
         onClick={() => setExpanded((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors text-left"
@@ -96,6 +106,18 @@ function ExperimentCard({
           >
             {badge.label}
           </span>
+          {daysRunning !== null && (
+            <span
+              className={`text-xs px-1.5 py-0.5 rounded-full whitespace-nowrap ${
+                isStale
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              {isStale ? '⚠ ' : ''}
+              {daysRunning}d running
+            </span>
+          )}
           <span className="text-xs text-muted-foreground hidden sm:inline">
             {field}
           </span>
@@ -209,6 +231,13 @@ function ExperimentCard({
                   Started {new Date(exp.startedAt).toLocaleDateString()}
                   {exp.endedAt &&
                     ` · Ended ${new Date(exp.endedAt).toLocaleDateString()}`}
+                  {daysRunning !== null && ` · ${daysRunning} days running`}
+                </p>
+              )}
+              {isStale && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                  This experiment has been running for over 30 days without a
+                  conclusion — consider wrapping it up.
                 </p>
               )}
             </div>

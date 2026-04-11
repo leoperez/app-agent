@@ -41,6 +41,7 @@ import { ReleaseTimeline } from '@/components/app-store-connect/release-timeline
 import { HealthScoreChart } from '@/components/app-store-connect/health-score-chart';
 import { ReviewSentiment } from '@/components/app-store-connect/review-sentiment';
 import { ReviewsPanel } from '@/components/app-store-connect/reviews-panel';
+import { ReviewReplyStats } from '@/components/app-store-connect/review-reply-stats';
 import { SchedulePublish } from '@/components/app-store-connect/schedule-publish';
 import { PublishValidation } from '@/components/app-store-connect/publish-validation';
 import { validateLocalizations } from '@/lib/utils/publish-validation';
@@ -712,6 +713,11 @@ export default function Home() {
           {/* Review sentiment */}
           <div className="mb-6">
             <ReviewSentiment data={sentimentData} loading={sentimentLoading} />
+          </div>
+
+          {/* Review reply rate */}
+          <div className="mb-6">
+            <ReviewReplyStats />
           </div>
 
           {/* Customer reviews with reply */}

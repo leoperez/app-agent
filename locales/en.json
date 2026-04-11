@@ -752,6 +752,8 @@
     "notifications-description": "Control which email notifications you receive",
     "notify-competitor-changes": "Competitor change alerts",
     "notify-competitor-changes-description": "Receive a daily digest when tracked competitors update their app title, subtitle, or description",
+    "weekly-digest": "Weekly ASO digest",
+    "weekly-digest-description": "Receive a weekly email every Monday with ratings, keyword rankings, and review highlights for all your apps",
     "notifications-saved": "Notification preferences saved",
     "slack-webhook": "Slack Webhook",
     "slack-webhook-description": "Paste a Slack Incoming Webhook URL to receive keyword drop and competitor alerts in your Slack workspace",

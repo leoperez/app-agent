@@ -11,10 +11,12 @@ import { toast } from 'react-hot-toast';
 export function NotificationSettings() {
   const t = useTranslations('account');
   const [notifyCompetitorChanges, setNotifyCompetitorChanges] = useState(true);
+  const [weeklyDigestEnabled, setWeeklyDigestEnabled] = useState(true);
   const [slackWebhookUrl, setSlackWebhookUrl] = useState('');
   const [ratingThreshold, setRatingThreshold] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingDigest, setSavingDigest] = useState(false);
   const [savingSlack, setSavingSlack] = useState(false);
   const [savingRating, setSavingRating] = useState(false);
 
@@ -22,6 +24,7 @@ export function NotificationSettings() {
     getNotificationPrefs()
       .then((prefs) => {
         setNotifyCompetitorChanges(prefs.notifyCompetitorChanges);
+        setWeeklyDigestEnabled(prefs.weeklyDigestEnabled);
         setSlackWebhookUrl(prefs.slackWebhookUrl ?? '');
         setRatingThreshold(prefs.ratingAlertThreshold?.toString() ?? '');
       })
@@ -38,6 +41,19 @@ export function NotificationSettings() {
       setNotifyCompetitorChanges(!value); // revert on error
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDigestToggle = async (value: boolean) => {
+    setWeeklyDigestEnabled(value);
+    setSavingDigest(true);
+    try {
+      await setNotificationPrefs({ weeklyDigestEnabled: value });
+      toast.success(t('notifications-saved'));
+    } catch {
+      setWeeklyDigestEnabled(!value);
+    } finally {
+      setSavingDigest(false);
     }
   };
 
@@ -117,6 +133,37 @@ export function NotificationSettings() {
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {t('notify-competitor-changes-description')}
+                  </p>
+                </div>
+              </label>
+
+              {/* Weekly digest toggle */}
+              <label className="flex items-start gap-4 cursor-pointer group">
+                <div className="mt-0.5">
+                  <button
+                    role="switch"
+                    aria-checked={weeklyDigestEnabled}
+                    disabled={savingDigest}
+                    onClick={() => handleDigestToggle(!weeklyDigestEnabled)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
+                      weeklyDigestEnabled ? 'bg-primary' : 'bg-input'
+                    } disabled:opacity-50`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        weeklyDigestEnabled
+                          ? 'translate-x-4'
+                          : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
+                <div>
+                  <p className="text-sm font-medium leading-none">
+                    {t('weekly-digest')}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t('weekly-digest-description')}
                   </p>
                 </div>
               </label>

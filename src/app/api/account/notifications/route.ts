@@ -16,6 +16,7 @@ export async function GET() {
       where: { id: userId },
       select: {
         notifyCompetitorChanges: true,
+        weeklyDigestEnabled: true,
         slackWebhookUrl: true,
         ratingAlertThreshold: true,
       },
@@ -24,6 +25,7 @@ export async function GET() {
     return NextResponse.json(
       user ?? {
         notifyCompetitorChanges: true,
+        weeklyDigestEnabled: true,
         slackWebhookUrl: null,
         ratingAlertThreshold: null,
       }
@@ -44,12 +46,16 @@ export async function PATCH(request: Request) {
 
     const data: {
       notifyCompetitorChanges?: boolean;
+      weeklyDigestEnabled?: boolean;
       slackWebhookUrl?: string | null;
       ratingAlertThreshold?: number | null;
     } = {};
 
     if ('notifyCompetitorChanges' in body) {
       data.notifyCompetitorChanges = Boolean(body.notifyCompetitorChanges);
+    }
+    if ('weeklyDigestEnabled' in body) {
+      data.weeklyDigestEnabled = Boolean(body.weeklyDigestEnabled);
     }
     if ('slackWebhookUrl' in body) {
       data.slackWebhookUrl = body.slackWebhookUrl?.trim() || null;
@@ -66,6 +72,7 @@ export async function PATCH(request: Request) {
       data,
       select: {
         notifyCompetitorChanges: true,
+        weeklyDigestEnabled: true,
         slackWebhookUrl: true,
         ratingAlertThreshold: true,
       },
