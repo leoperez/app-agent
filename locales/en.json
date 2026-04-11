@@ -630,6 +630,10 @@
     "schedule-publish": "Schedule a publish",
     "schedule-publish-desc": "Use the scheduler to push metadata updates to the store automatically."
   },
+  "health-score-chart": {
+    "title": "ASO Health Score",
+    "vs-start": "vs start"
+  },
   "release-timeline": {
     "title": "Rating impact of releases",
     "legend-rating": "Rating over time",

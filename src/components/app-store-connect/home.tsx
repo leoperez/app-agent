@@ -38,6 +38,7 @@ import AnalyticsChart from '@/components/app-store-connect/analytics-chart';
 import { RatingChart } from '@/components/app-store-connect/rating-chart';
 import { RatingsByVersion } from '@/components/app-store-connect/ratings-by-version';
 import { ReleaseTimeline } from '@/components/app-store-connect/release-timeline';
+import { HealthScoreChart } from '@/components/app-store-connect/health-score-chart';
 import { ReviewSentiment } from '@/components/app-store-connect/review-sentiment';
 import { ReviewsPanel } from '@/components/app-store-connect/reviews-panel';
 import { SchedulePublish } from '@/components/app-store-connect/schedule-publish';
@@ -701,6 +702,11 @@ export default function Home() {
           {/* Release timeline — rating impact of each release */}
           <div className="mb-6">
             <ReleaseTimeline />
+          </div>
+
+          {/* ASO Health Score trend */}
+          <div className="mb-6">
+            <HealthScoreChart />
           </div>
 
           {/* Review sentiment */}

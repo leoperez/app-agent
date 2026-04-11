@@ -209,6 +209,7 @@ model App {
   storeExperiments   StoreExperiment[]
   metadataVariants    MetadataVariant[]
   ratingSnapshots     AppRatingSnapshot[]
+  healthSnapshots     AsoHealthSnapshot[]
   reviews             AppReview[]
   scheduledPublishes  ScheduledPublish[]
   searchAdsMetrics    SearchAdsMetric[]
@@ -581,6 +582,18 @@ model Competitor {
   @@index([appId])
   @@index([locale])
   @@index([order])
+}
+
+// Daily snapshot of the computed ASO health score per app
+model AsoHealthSnapshot {
+  id         String   @id @default(cuid())
+  appId      String
+  app        App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  score      Int      // 0–100
+  recordedAt DateTime @default(now())
+
+  @@unique([appId, recordedAt])
+  @@index([appId, recordedAt])
 }
 
 // Approval request before publishing metadata to the store

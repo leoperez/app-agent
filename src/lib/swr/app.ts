@@ -388,6 +388,20 @@ export function useGetReleaseTimeline(
   };
 }
 
+export function useGetHealthScoreHistory(
+  teamId: string,
+  appId: string,
+  days = 90
+) {
+  const { data, error, isLoading } = useSWR<{ date: string; score: number }[]>(
+    teamId && appId
+      ? `/api/teams/${teamId}/apps/${appId}/health-score-history?days=${days}`
+      : null,
+    fetcher
+  );
+  return { data: data ?? [], loading: isLoading, error };
+}
+
 export async function checkShortDescription(teamId: string, appId: string) {
   const response = await fetch(
     `/api/teams/${teamId}/apps/${appId}/short-description`,
