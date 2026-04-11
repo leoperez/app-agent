@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -145,25 +146,20 @@ function ApprovalRow({
 
 export function PublishApprovalQueue() {
   const teamInfo = useTeam();
+  const { data: session } = useSession();
   const t = useTranslations('publish-approval-queue');
   const [showAll, setShowAll] = useState(false);
   const { approvals, loading, mutate } = useGetPublishApprovals(
     showAll ? 'all' : 'pending'
   );
 
-  // Only show to admins and managers
-  const role = (teamInfo?.currentTeam?.users ?? []).find(
-    (u) =>
-      u.userId ===
-      (teamInfo?.currentTeam?.users.find((u2) => u2.role === 'ADMIN')?.userId ??
-        '')
+  // Check if the current user is an admin or manager of this team
+  const currentUserId = (session?.user as { id?: string })?.id;
+  const currentUserRole = (teamInfo?.currentTeam?.users ?? []).find(
+    (u) => u.userId === currentUserId
   )?.role;
-
-  // Determine current user's role from session — we check via the team context
-  // Since we don't have userId directly, show review controls to all admins/managers
-  const canReview = (teamInfo?.currentTeam?.users ?? []).some(
-    (u) => u.role === 'ADMIN' || u.role === 'MANAGER'
-  );
+  const canReview =
+    currentUserRole === 'ADMIN' || currentUserRole === 'MANAGER';
 
   // Don't render if team doesn't require approvals and there are no entries
   if (!teamInfo?.currentTeam?.requiresApproval && approvals.length === 0)
