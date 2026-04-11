@@ -16,7 +16,10 @@ import sendWelcomeEmail from '@/lib/emails/send-welcome';
 import { CreateUserEmailProps, Team, User } from '@/types/user';
 import prisma from '@/lib/prisma';
 import { AnalyticsEvent } from '@/types/analytics';
-import { generateJWT, isAppStoreConnectJWTExpired } from '@/lib/app-store-connect/auth';
+import {
+  generateJWT,
+  isAppStoreConnectJWTExpired,
+} from '@/lib/app-store-connect/auth';
 import {
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
@@ -193,6 +196,7 @@ export async function validateTeamAccess(req: Request): Promise<{
       startsAt: true,
       endsAt: true,
       canceledAt: true,
+      requiresApproval: true,
       users: {
         select: {
           role: true,
