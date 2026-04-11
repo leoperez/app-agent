@@ -595,6 +595,10 @@
     "schedule-publish": "公開をスケジュールする",
     "schedule-publish-desc": "スケジューラーを使ってメタデータの更新を自動的にストアに反映させてください。"
   },
+  "keyword-cannibalization": {
+    "title": "{count}件のキーワード競合問題",
+    "subtitle": "これらのキーワードは複数のロケールで追跡されています。互いに競合している可能性があります — リーチを最大化するためにロケールごとにユニークなキーワードを使用することを検討してください。"
+  },
   "publish-approval-queue": {
     "title": "公開承認",
     "show-all": "すべて表示",

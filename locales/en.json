@@ -630,6 +630,10 @@
     "schedule-publish": "Schedule a publish",
     "schedule-publish-desc": "Use the scheduler to push metadata updates to the store automatically."
   },
+  "keyword-cannibalization": {
+    "title": "{count} keyword cannibalization issue{count, plural, one {} other {s}}",
+    "subtitle": "These keywords are tracked in multiple locales. They compete against each other — consider using unique keywords per locale to maximise reach."
+  },
   "publish-approval-queue": {
     "title": "Publish approvals",
     "show-all": "Show all",
