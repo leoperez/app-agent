@@ -68,7 +68,6 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [customAccent, setCustomAccent] = useState('');
   const [slides, setSlides] = useState<SlideData[]>(defaultSlides());
   const [activeSlide, setActiveSlide] = useState(0);
-  const [screenshots, setScreenshots] = useState<Record<number, string>>({});
   const [setName, setSetName] = useState('Untitled set');
   const [locale, setLocale] = useState(currentApp?.primaryLocale ?? 'en-US');
 
@@ -105,7 +104,6 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     setSetName(set.name);
     setLocale(set.locale);
     setActiveSlide(0);
-    setScreenshots({});
     setView('editor');
   };
 
@@ -121,7 +119,6 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     setSetName('Untitled set');
     setLocale(currentApp?.primaryLocale ?? 'en-US');
     setActiveSlide(0);
-    setScreenshots({});
     setView('editor');
   };
 
@@ -600,7 +597,6 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                     layout={layoutId}
                     theme={theme}
                     slide={s}
-                    screenshotDataUrl={screenshots[i]}
                     preview={true}
                     width={100}
                   />
@@ -641,7 +637,6 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 layout={layoutId}
                 theme={theme}
                 slide={currentSlide}
-                screenshotDataUrl={screenshots[activeSlide]}
                 preview={true}
                 width={PREVIEW_W}
               />
@@ -658,23 +653,11 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             </div>
             <SlideEditor
               slide={currentSlide}
-              screenshotDataUrl={screenshots[activeSlide]}
               onChange={(updated) =>
                 setSlides((prev) =>
                   prev.map((s, i) => (i === activeSlide ? updated : s))
                 )
               }
-              onScreenshotChange={(url) => {
-                if (url === undefined) {
-                  setScreenshots((prev) => {
-                    const next = { ...prev };
-                    delete next[activeSlide];
-                    return next;
-                  });
-                } else {
-                  setScreenshots((prev) => ({ ...prev, [activeSlide]: url }));
-                }
-              }}
             />
           </div>
         </div>

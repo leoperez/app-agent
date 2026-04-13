@@ -7,7 +7,6 @@ interface SlideCanvasProps {
   layout: LayoutId;
   theme: ResolvedTheme;
   slide: SlideData;
-  screenshotDataUrl?: string; // optional user-uploaded image
   /** Render at preview size (true) or export size (false). Default: true */
   preview?: boolean;
   /** Width in px. Default: 300 */
@@ -192,9 +191,10 @@ function TextBlock({
 
 export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
   function SlideCanvas(
-    { layout, theme, slide, screenshotDataUrl, preview = true, width = 300 },
+    { layout, theme, slide, preview = true, width = 300 },
     ref
   ) {
+    const screenshotDataUrl = slide.screenshotUrl;
     // Preview aspect ratio: iPhone-ish 9:19.5
     const height = Math.round(width * (19.5 / 9));
     const pad = Math.round(width * 0.08);

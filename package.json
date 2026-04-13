@@ -38,6 +38,7 @@
     "@types/mdx": "^2.0.13",
     "@upstash/ratelimit": "^2.0.4",
     "@upstash/redis": "^1.34.3",
+    "@vercel/blob": "^2.3.3",
     "app-store-client": "^1.0.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

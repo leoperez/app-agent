@@ -15,7 +15,7 @@ export interface SlideData {
   subtitle: string;
   subtitleFontSize: number;
   badge?: string; // short pill text, e.g. "New" or "Pro"
-  // screenshotDataUrl is NOT saved to DB — managed in client state only
+  screenshotUrl?: string; // Vercel Blob public URL — persisted in DB
 }
 
 export interface ScreenshotSetRecord {
