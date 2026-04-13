@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { LayoutId, SlideData, ResolvedTheme } from '@/types/screenshots';
+import { IPhoneFrame } from './phone-frame';
 
 interface SlideCanvasProps {
   layout: LayoutId;
@@ -13,89 +14,23 @@ interface SlideCanvasProps {
   width?: number;
 }
 
-// Pure CSS phone mockup — no external assets needed
+// Thin wrapper so call sites stay the same
 function PhoneMockup({
   screenshot,
   screenColor,
-  borderColor,
   width,
 }: {
   screenshot?: string;
   screenColor: string;
-  borderColor: string;
+  borderColor: string; // kept for API compat, ignored — SVG frame has own gradient
   width: number;
 }) {
-  const phoneW = width;
-  const phoneH = Math.round(width * 2.05);
-  const bezel = Math.round(width * 0.04);
-  const radius = Math.round(width * 0.12);
-  const screenRadius = Math.round(width * 0.09);
-  const notchW = Math.round(width * 0.28);
-  const notchH = Math.round(width * 0.035);
-
   return (
-    <div
-      style={{
-        width: phoneW,
-        height: phoneH,
-        borderRadius: radius,
-        border: `${bezel}px solid ${borderColor}`,
-        backgroundColor: borderColor,
-        position: 'relative',
-        overflow: 'hidden',
-        flexShrink: 0,
-        boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
-      }}
-    >
-      {/* screen */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: bezel * 0.5,
-          borderRadius: screenRadius,
-          backgroundColor: screenColor,
-          overflow: 'hidden',
-        }}
-      >
-        {screenshot ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={screenshot}
-            alt="App screenshot"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : (
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: 0.3,
-            }}
-          >
-            <svg width="40%" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-            </svg>
-          </div>
-        )}
-      </div>
-      {/* dynamic island / notch */}
-      <div
-        style={{
-          position: 'absolute',
-          top: bezel * 1.5,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: notchW,
-          height: notchH,
-          borderRadius: notchH / 2,
-          backgroundColor: borderColor,
-          zIndex: 10,
-        }}
-      />
-    </div>
+    <IPhoneFrame
+      width={width}
+      screenshotUrl={screenshot}
+      screenFallbackColor={screenColor}
+    />
   );
 }
 
