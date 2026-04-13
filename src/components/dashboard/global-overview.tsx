@@ -11,6 +11,7 @@ import {
   MdSearch,
   MdSchedule,
   MdWarning,
+  MdMarkEmailUnread,
 } from 'react-icons/md';
 import { SiApple, SiGoogleplay } from 'react-icons/si';
 import Image from 'next/image';
@@ -49,7 +50,7 @@ function AppCard({
   return (
     <button
       onClick={onSelect}
-      className="w-full text-left bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-400 hover:shadow-sm transition-all space-y-3"
+      className="w-full text-left bg-card border border-border rounded-xl p-4 hover:border-primary/50 hover:shadow-sm transition-all space-y-3"
     >
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -62,11 +63,11 @@ function AppCard({
             className="rounded-lg flex-shrink-0"
           />
         ) : (
-          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
             {isGPlay ? (
               <SiGoogleplay className="h-5 w-5 text-green-600" />
             ) : (
-              <SiApple className="h-5 w-5 text-gray-700" />
+              <SiApple className="h-5 w-5 text-foreground/70" />
             )}
           </div>
         )}
@@ -76,7 +77,7 @@ function AppCard({
             {isGPlay ? (
               <SiGoogleplay className="h-3 w-3 text-green-600" />
             ) : (
-              <SiApple className="h-3 w-3 text-gray-500" />
+              <SiApple className="h-3 w-3 text-muted-foreground" />
             )}
             <span className="text-xs text-muted-foreground">
               {isGPlay ? 'Google Play' : 'App Store'}
@@ -129,23 +130,38 @@ function AppCard({
                 : '—'}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {entry.top10Keywords > 0 ? `${entry.top10Keywords} top 10` : ''}
-          </p>
+          <p className="text-xs text-muted-foreground">&nbsp;</p>
         </div>
 
         {/* Keywords */}
         <div className="space-y-0.5">
           <p className="text-xs text-muted-foreground">Keywords</p>
           <span className="text-sm font-semibold">{entry.keywordCount}</span>
-          {entry.recentNegativeReviews > 0 && (
-            <div className="flex items-center justify-center gap-0.5 text-red-500">
-              <MdWarning className="h-3 w-3" />
-              <span className="text-xs">{entry.recentNegativeReviews} neg</span>
-            </div>
-          )}
+          <p className="text-xs text-muted-foreground">
+            {entry.top10Keywords > 0
+              ? `${entry.top10Keywords} top-10`
+              : '\u00a0'}
+          </p>
         </div>
       </div>
+
+      {/* Alerts row */}
+      {(entry.recentNegativeReviews > 0 || entry.unrepliedReviews > 0) && (
+        <div className="flex items-center gap-2 pt-1 border-t border-border/50">
+          {entry.recentNegativeReviews > 0 && (
+            <span className="flex items-center gap-0.5 text-xs text-red-500">
+              <MdWarning className="h-3 w-3" />
+              {entry.recentNegativeReviews} negative
+            </span>
+          )}
+          {entry.unrepliedReviews > 0 && (
+            <span className="flex items-center gap-0.5 text-xs text-amber-600 dark:text-amber-400">
+              <MdMarkEmailUnread className="h-3 w-3" />
+              {entry.unrepliedReviews} unreplied
+            </span>
+          )}
+        </div>
+      )}
     </button>
   );
 }
@@ -160,7 +176,7 @@ export function GlobalOverview() {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-40 bg-white border border-gray-200 rounded-xl animate-pulse"
+            className="h-40 bg-card border border-border rounded-xl animate-pulse"
           />
         ))}
       </div>
