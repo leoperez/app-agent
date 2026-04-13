@@ -26,6 +26,7 @@ import { FREE_TRIAL_DAYS, NEXT_PUBLIC_FREE_PLAN_ENABLED } from '@/lib/config';
 import { differenceInDays } from 'date-fns';
 import { NotificationBell } from '@/components/common/notification-bell';
 import { FeedbackButton } from '@/components/common/feedback-button';
+import { ThemeToggle } from '@/components/common/theme-toggle';
 
 const getTrialDaysRemaining = (createdAt: Date) => {
   const trialEndDate = new Date(
@@ -132,6 +133,7 @@ export default function DashboardLayout({
                 </DropdownMenu>
               )}
 
+              <ThemeToggle />
               <NotificationBell />
 
               <Button variant="ghost" size="icon" asChild>
