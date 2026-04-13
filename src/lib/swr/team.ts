@@ -195,3 +195,24 @@ export function useTeams() {
     error,
   };
 }
+
+export interface AutoReplyRule {
+  id: string;
+  appId: string | null;
+  minRating: number;
+  maxRating: number;
+  enabled: boolean;
+  createdAt: string;
+  template: { id: string; name: string; body: string };
+  app: { id: string; title: string | null } | null;
+}
+
+export function useGetAutoReplyRules() {
+  const teamInfo = useTeam();
+  const teamId = teamInfo?.currentTeam?.id;
+  const { data, error, isLoading, mutate } = useSWR<AutoReplyRule[]>(
+    teamId ? `/api/teams/${teamId}/auto-reply-rules` : null,
+    fetcher
+  );
+  return { rules: data ?? [], loading: isLoading, error, mutate };
+}

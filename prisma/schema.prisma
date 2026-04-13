@@ -101,6 +101,7 @@ model Team {
   notifications          Notification[]
   descriptionTemplates   DescriptionTemplate[]
   reviewTemplates        ReviewTemplate[]
+  autoReplyRules         ReviewAutoReplyRule[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -212,6 +213,7 @@ model App {
   ratingSnapshots     AppRatingSnapshot[]
   healthSnapshots     AsoHealthSnapshot[]
   reviews             AppReview[]
+  autoReplyRules      ReviewAutoReplyRule[]
   scheduledPublishes  ScheduledPublish[]
   searchAdsMetrics    SearchAdsMetric[]
 
@@ -400,6 +402,8 @@ model AppReview {
   locale     String?
   createdAt  DateTime @default(now())
 
+  autoRepliedAt DateTime? // set when an auto-reply rule fired
+
   @@unique([appId, storeId])
   @@index([appId, reviewedAt])
   @@index([appId, score])
@@ -520,13 +524,31 @@ model Notification {
 }
 
 model ReviewTemplate {
-  id        String   @id @default(cuid())
-  teamId    String
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  name      String
-  body      String   @db.Text
-  rating    Int?     // optional: associate template with a star rating (1-5)
-  createdAt DateTime @default(now())
+  id          String                @id @default(cuid())
+  teamId      String
+  team        Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name        String
+  body        String                @db.Text
+  rating      Int?                  // optional: associate template with a star rating (1-5)
+  createdAt   DateTime              @default(now())
+  autoReplyRules ReviewAutoReplyRule[]
+
+  @@index([teamId])
+}
+
+// Auto-reply rule: when a new review matches the rating range, reply with the template
+model ReviewAutoReplyRule {
+  id         String         @id @default(cuid())
+  teamId     String
+  team       Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  appId      String?        // null = all apps in team
+  app        App?           @relation(fields: [appId], references: [id], onDelete: Cascade)
+  minRating  Int            // 1-5
+  maxRating  Int            // 1-5
+  templateId String
+  template   ReviewTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  enabled    Boolean        @default(true)
+  createdAt  DateTime       @default(now())
 
   @@index([teamId])
 }

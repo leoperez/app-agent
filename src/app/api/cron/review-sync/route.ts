@@ -9,6 +9,13 @@ import { googlePlayToAppStore } from '@/lib/utils/locale';
 import { AppStoreLocaleCode } from '@/lib/utils/locale';
 import { Country } from 'app-store-client';
 import { logCron } from '@/lib/utils/log-cron';
+import { replyToReview as appStoreReply } from '@/lib/app-store-connect/reviews';
+import { replyToReview as googlePlayReply } from '@/lib/google-play/reviews';
+import { getGooglePlayKeyFromDB } from '@/lib/google-play/key';
+import {
+  generateJWT,
+  isAppStoreConnectJWTExpired,
+} from '@/lib/app-store-connect/auth';
 
 export const maxDuration = 120;
 
@@ -25,7 +32,22 @@ export async function GET(request: NextRequest) {
   }
 
   const apps = await prisma.app.findMany({
-    select: { id: true, storeAppId: true, store: true, primaryLocale: true },
+    select: {
+      id: true,
+      storeAppId: true,
+      store: true,
+      primaryLocale: true,
+      teamId: true,
+      team: {
+        select: {
+          appStoreConnectJWT: true,
+          appStoreConnectJWTExpiresAt: true,
+          appStoreConnectPrivateKey: true,
+          appStoreConnectKeyId: true,
+          appStoreConnectIssuerId: true,
+        },
+      },
+    },
   });
 
   let totalSaved = 0;
@@ -98,6 +120,82 @@ export async function GET(request: NextRequest) {
             },
           });
           totalSaved++;
+        }
+      }
+      // Auto-reply rules: find enabled rules for this app/team
+      const rules = await prisma.reviewAutoReplyRule.findMany({
+        where: {
+          teamId: app.teamId,
+          enabled: true,
+          OR: [{ appId: app.id }, { appId: null }],
+        },
+        include: { template: { select: { body: true } } },
+      });
+
+      if (rules.length > 0) {
+        // Find reviews not yet auto-replied
+        const pendingReviews = await prisma.appReview.findMany({
+          where: { appId: app.id, autoRepliedAt: null },
+          select: { id: true, storeId: true, score: true },
+        });
+
+        // Resolve JWT for App Store Connect replies
+        let jwt: string | null = null;
+        if (app.store === 'APPSTORE') {
+          const team = app.team;
+          if (
+            team.appStoreConnectJWT &&
+            team.appStoreConnectJWTExpiresAt &&
+            !isAppStoreConnectJWTExpired(team.appStoreConnectJWT)
+          ) {
+            jwt = team.appStoreConnectJWT;
+          } else if (
+            team.appStoreConnectPrivateKey &&
+            team.appStoreConnectKeyId &&
+            team.appStoreConnectIssuerId
+          ) {
+            jwt = await generateJWT(
+              team.appStoreConnectPrivateKey,
+              team.appStoreConnectKeyId,
+              team.appStoreConnectIssuerId
+            );
+          }
+        }
+
+        for (const review of pendingReviews) {
+          const matchingRule = rules.find(
+            (r) => review.score >= r.minRating && review.score <= r.maxRating
+          );
+          if (!matchingRule) continue;
+
+          try {
+            if (app.store === 'APPSTORE' && jwt) {
+              await appStoreReply(
+                jwt,
+                review.storeId,
+                matchingRule.template.body
+              );
+            } else if (app.store === 'GOOGLEPLAY') {
+              const key = await getGooglePlayKeyFromDB(app.teamId);
+              if (key) {
+                await googlePlayReply(
+                  key,
+                  app.storeAppId,
+                  review.storeId,
+                  matchingRule.template.body
+                );
+              }
+            }
+            await prisma.appReview.update({
+              where: { id: review.id },
+              data: { autoRepliedAt: new Date() },
+            });
+          } catch (replyErr) {
+            console.error(
+              `[review-sync] Auto-reply failed for review ${review.id}:`,
+              replyErr
+            );
+          }
         }
       }
     } catch (err) {

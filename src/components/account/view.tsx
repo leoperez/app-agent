@@ -5,6 +5,8 @@ import { TeamSettings } from '@/components/account/team-settings';
 import { BillingSettings } from '@/components/account/bill-settings';
 import { NotificationSettings } from '@/components/account/notification-settings';
 import { PublishApprovalQueue } from '@/components/account/publish-approval-queue';
+import { AutoReplyRules } from '@/components/aso/auto-reply-rules';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { DeleteAccount } from '@/components/account/delete-account';
 import { useTranslations } from 'next-intl';
@@ -30,6 +32,18 @@ export default function AccountSettingsView() {
         <PublishApprovalQueue />
         <BillingSettings />
         <NotificationSettings />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Card>
+            <CardHeader />
+            <CardContent>
+              <AutoReplyRules />
+            </CardContent>
+          </Card>
+        </motion.div>
         <DeleteAccount />
       </div>
     </div>
