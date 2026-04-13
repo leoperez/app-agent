@@ -9,6 +9,13 @@ export type LayoutId =
 
 export type ThemeId = 'midnight' | 'ivory' | 'violet' | 'ocean' | 'ember';
 
+/** Per-locale text overrides for a slide */
+export interface SlideLocaleText {
+  headline: string;
+  subtitle: string;
+  badge?: string;
+}
+
 export interface SlideData {
   headline: string;
   headlineFontSize: number; // px at export resolution
@@ -16,6 +23,23 @@ export interface SlideData {
   subtitleFontSize: number;
   badge?: string; // short pill text, e.g. "New" or "Pro"
   screenshotUrl?: string; // Vercel Blob public URL — persisted in DB
+  /** Per-locale text overrides. When present, takes precedence over headline/subtitle/badge */
+  localeTexts?: Record<string, SlideLocaleText>;
+}
+
+/** Resolve the effective text for a slide in a given locale */
+export function resolveSlideText(
+  slide: SlideData,
+  locale?: string
+): SlideLocaleText {
+  if (locale && slide.localeTexts?.[locale]) {
+    return slide.localeTexts[locale];
+  }
+  return {
+    headline: slide.headline,
+    subtitle: slide.subtitle,
+    badge: slide.badge,
+  };
 }
 
 export interface ScreenshotSetRecord {

@@ -8,6 +8,7 @@ import type {
   GradientBg,
   DecorationId,
 } from '@/types/screenshots';
+import { resolveSlideText } from '@/types/screenshots';
 import { PhoneFrame } from './phone-frame';
 import { bgToCss } from '@/lib/screenshot-templates';
 
@@ -19,6 +20,8 @@ interface SlideCanvasProps {
   decorationId?: DecorationId;
   /** Which device frame to render. Default: 'iphone' */
   deviceType?: 'iphone' | 'android';
+  /** Active locale for per-locale text resolution */
+  activeLocale?: string;
   /** CSS font-family string — defaults to system font */
   fontFamily?: string;
   /** Render at preview size (true) or export size (false). Default: true */
@@ -337,6 +340,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
       bgGradient,
       decorationId = 'none',
       deviceType = 'iphone',
+      activeLocale,
       fontFamily,
       preview = true,
       width = 300,
@@ -346,6 +350,9 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
     const ff =
       fontFamily ??
       '-apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif';
+    // Resolve locale-specific text or fall back to base slide text
+    const resolvedText = resolveSlideText(slide, activeLocale);
+    const resolvedSlide: SlideData = { ...slide, ...resolvedText };
     const screenshotDataUrl = slide.screenshotUrl;
     const bgCss = bgGradient ? bgToCss(bgGradient) : theme.bg;
     // Preview aspect ratio: iPhone-ish 9:19.5
@@ -386,7 +393,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             }}
           >
             <TextBlock
-              slide={slide}
+              slide={resolvedSlide}
               theme={theme}
               align="center"
               fontFamily={ff}
@@ -453,7 +460,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             }}
           >
             <TextBlock
-              slide={slide}
+              slide={resolvedSlide}
               theme={theme}
               align="center"
               fontFamily={ff}
@@ -490,7 +497,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             }}
           >
             <TextBlock
-              slide={slide}
+              slide={resolvedSlide}
               theme={theme}
               align="left"
               fontFamily={ff}
@@ -563,7 +570,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             }}
           >
             <TextBlock
-              slide={slide}
+              slide={resolvedSlide}
               theme={theme}
               align="left"
               fontFamily={ff}
@@ -593,9 +600,9 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             gap: pad * 0.75,
           }}
         >
-          {slide.badge && (
+          {resolvedSlide.badge && (
             <Badge
-              text={slide.badge}
+              text={resolvedSlide.badge}
               accent={theme.accent}
               textColor={theme.bg}
             />
@@ -612,7 +619,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               fontFamily: ff,
             }}
           >
-            {slide.headline}
+            {resolvedSlide.headline}
           </h2>
           <p
             style={{
@@ -624,7 +631,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               opacity: 0.9,
             }}
           >
-            {slide.subtitle}
+            {resolvedSlide.subtitle}
           </p>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
             <PhoneMockup

@@ -1,14 +1,19 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import type { SlideData } from '@/types/screenshots';
-import { MdUpload, MdDelete, MdLoop } from 'react-icons/md';
+import type { SlideData, SlideLocaleText } from '@/types/screenshots';
+import { resolveSlideText } from '@/types/screenshots';
+import { MdUpload, MdDelete, MdLoop, MdTranslate } from 'react-icons/md';
 import { useTeam } from '@/context/team';
 import { useApp } from '@/context/app';
 
 interface SlideEditorProps {
   slide: SlideData;
   onChange: (updated: SlideData) => void;
+  /** Currently active locale for text editing */
+  activeLocale?: string;
+  /** All available locales — shows locale tab bar when more than one */
+  availableLocales?: string[];
 }
 
 function Field({
@@ -28,14 +33,62 @@ function Field({
   );
 }
 
-export function SlideEditor({ slide, onChange }: SlideEditorProps) {
+export function SlideEditor({
+  slide,
+  onChange,
+  activeLocale,
+  availableLocales = [],
+}: SlideEditorProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [editingLocale, setEditingLocale] = useState<string | null>(
+    activeLocale ?? null
+  );
   const teamInfo = useTeam();
   const { currentApp } = useApp();
 
-  const set = <K extends keyof SlideData>(key: K, value: SlideData[K]) =>
+  // The locale whose text we are currently editing
+  // null = base (default) text; string = locale override
+  const currentEditLocale = editingLocale;
+
+  // Get the text values for the current edit target
+  const textValues: SlideLocaleText =
+    currentEditLocale && slide.localeTexts?.[currentEditLocale]
+      ? slide.localeTexts[currentEditLocale]
+      : resolveSlideText(slide, currentEditLocale ?? undefined);
+
+  const setBase = <K extends keyof SlideData>(key: K, value: SlideData[K]) =>
     onChange({ ...slide, [key]: value });
+
+  const setLocaleText = (field: keyof SlideLocaleText, value: string) => {
+    if (!currentEditLocale) {
+      // Editing base text
+      onChange({ ...slide, [field]: value });
+    } else {
+      // Editing locale override
+      const existing = slide.localeTexts ?? {};
+      const localeEntry = existing[currentEditLocale] ?? {
+        headline: slide.headline,
+        subtitle: slide.subtitle,
+        badge: slide.badge,
+      };
+      onChange({
+        ...slide,
+        localeTexts: {
+          ...existing,
+          [currentEditLocale]: { ...localeEntry, [field]: value },
+        },
+      });
+    }
+  };
+
+  const clearLocaleOverride = (loc: string) => {
+    const { [loc]: _removed, ...rest } = slide.localeTexts ?? {};
+    onChange({
+      ...slide,
+      localeTexts: Object.keys(rest).length ? rest : undefined,
+    });
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -61,23 +114,84 @@ export function SlideEditor({ slide, onChange }: SlideEditorProps) {
       }
 
       const { url } = await res.json();
-      set('screenshotUrl', url);
+      setBase('screenshotUrl', url);
     } catch (err) {
       alert((err as Error).message);
     } finally {
       setUploading(false);
-      // reset so same file can be re-selected
       if (fileRef.current) fileRef.current.value = '';
     }
   };
 
+  // Show locale tabs only when there are multiple locales
+  const showLocaleTabs = availableLocales.length > 1;
+  const hasOverride =
+    currentEditLocale != null && !!slide.localeTexts?.[currentEditLocale];
+
   return (
     <div className="space-y-4 p-4">
+      {/* Locale tab bar */}
+      {showLocaleTabs && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <MdTranslate className="h-3 w-3" />
+            <span>Editing locale</span>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            <button
+              onClick={() => setEditingLocale(null)}
+              className={`px-2 py-0.5 rounded text-[10px] border transition-colors ${
+                currentEditLocale === null
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'border-border text-muted-foreground hover:border-primary/50'
+              }`}
+            >
+              Base
+            </button>
+            {availableLocales.map((loc) => {
+              const isOverridden = !!slide.localeTexts?.[loc];
+              return (
+                <button
+                  key={loc}
+                  onClick={() => setEditingLocale(loc)}
+                  className={`px-2 py-0.5 rounded text-[10px] border transition-colors ${
+                    currentEditLocale === loc
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : isOverridden
+                        ? 'border-primary/40 text-primary bg-primary/5 hover:bg-primary/10'
+                        : 'border-border text-muted-foreground hover:border-primary/50'
+                  }`}
+                >
+                  {loc}
+                </button>
+              );
+            })}
+          </div>
+          {hasOverride && (
+            <button
+              onClick={() => clearLocaleOverride(currentEditLocale!)}
+              className="text-[10px] text-destructive hover:underline"
+            >
+              Clear {currentEditLocale} override → use base text
+            </button>
+          )}
+          {currentEditLocale && !hasOverride && (
+            <p className="text-[10px] text-muted-foreground">
+              Showing base text — edit to create a {currentEditLocale} override
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Headline */}
-      <Field label="Headline">
+      <Field
+        label={
+          currentEditLocale ? `Headline (${currentEditLocale})` : 'Headline'
+        }
+      >
         <textarea
-          value={slide.headline}
-          onChange={(e) => set('headline', e.target.value)}
+          value={textValues.headline}
+          onChange={(e) => setLocaleText('headline', e.target.value)}
           rows={2}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
           placeholder="Bold headline (≤5 words)"
@@ -89,7 +203,9 @@ export function SlideEditor({ slide, onChange }: SlideEditorProps) {
             min={24}
             max={80}
             value={slide.headlineFontSize}
-            onChange={(e) => set('headlineFontSize', Number(e.target.value))}
+            onChange={(e) =>
+              setBase('headlineFontSize', Number(e.target.value))
+            }
             className="flex-1 h-1 accent-primary"
           />
           <span className="text-xs w-8 text-right">
@@ -99,10 +215,14 @@ export function SlideEditor({ slide, onChange }: SlideEditorProps) {
       </Field>
 
       {/* Subtitle */}
-      <Field label="Subtitle">
+      <Field
+        label={
+          currentEditLocale ? `Subtitle (${currentEditLocale})` : 'Subtitle'
+        }
+      >
         <textarea
-          value={slide.subtitle}
-          onChange={(e) => set('subtitle', e.target.value)}
+          value={textValues.subtitle}
+          onChange={(e) => setLocaleText('subtitle', e.target.value)}
           rows={2}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
           placeholder="Supporting sentence (≤10 words)"
@@ -114,7 +234,9 @@ export function SlideEditor({ slide, onChange }: SlideEditorProps) {
             min={12}
             max={30}
             value={slide.subtitleFontSize}
-            onChange={(e) => set('subtitleFontSize', Number(e.target.value))}
+            onChange={(e) =>
+              setBase('subtitleFontSize', Number(e.target.value))
+            }
             className="flex-1 h-1 accent-primary"
           />
           <span className="text-xs w-8 text-right">
@@ -124,11 +246,17 @@ export function SlideEditor({ slide, onChange }: SlideEditorProps) {
       </Field>
 
       {/* Badge */}
-      <Field label="Badge (optional)">
+      <Field
+        label={
+          currentEditLocale
+            ? `Badge (${currentEditLocale})`
+            : 'Badge (optional)'
+        }
+      >
         <input
           type="text"
-          value={slide.badge ?? ''}
-          onChange={(e) => set('badge', e.target.value)}
+          value={textValues.badge ?? ''}
+          onChange={(e) => setLocaleText('badge', e.target.value)}
           maxLength={12}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           placeholder='e.g. "New" or "Free"'
@@ -162,7 +290,7 @@ export function SlideEditor({ slide, onChange }: SlideEditorProps) {
                 {uploading ? 'Uploading…' : 'Replace'}
               </button>
               <button
-                onClick={() => set('screenshotUrl', undefined)}
+                onClick={() => setBase('screenshotUrl', undefined)}
                 className="flex items-center gap-1 text-xs text-destructive hover:underline"
               >
                 <MdDelete className="h-3 w-3" />

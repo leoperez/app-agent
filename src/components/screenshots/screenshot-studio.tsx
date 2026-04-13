@@ -1147,6 +1147,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 bgGradient={bgMode === 'gradient' ? bgGradient : null}
                 decorationId={decorationId}
                 deviceType={exportTarget.deviceType}
+                activeLocale={locale}
                 fontFamily={resolveFont(fontId).family}
                 preview={true}
                 width={PREVIEW_W}
@@ -1169,6 +1170,8 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                   prev.map((s, i) => (i === activeSlide ? updated : s))
                 )
               }
+              activeLocale={locale}
+              availableLocales={locales}
             />
           </div>
         </div>
