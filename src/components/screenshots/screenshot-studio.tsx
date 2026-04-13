@@ -25,6 +25,7 @@ import {
   MdBookmark,
   MdBookmarkBorder,
   MdClose,
+  MdCloudUpload,
   MdDownload,
   MdEdit,
   MdExpandMore,
@@ -56,6 +57,7 @@ import {
   useGetScreenshotTemplates,
 } from '@/lib/swr/screenshots';
 import { useApp } from '@/context/app';
+import { useTeam } from '@/context/team';
 import { useGetAppLocalizations } from '@/lib/swr/app';
 import type {
   LayoutId,
@@ -78,6 +80,8 @@ interface ScreenshotStudioProps {
 
 export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const { currentApp } = useApp();
+  const teamInfo = useTeam();
+  const teamId = teamInfo?.currentTeam?.id ?? '';
   const { sets, loading, createSet, updateSet, deleteSet, generateTexts } =
     useGetScreenshotSets();
   const { templates, saveTemplate, deleteTemplate } =
@@ -426,6 +430,68 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     [exportTarget]
   );
 
+  // ── Push to App Store Connect ─────────────────────────────────────────────
+  const [pushingToAsc, setPushingToAsc] = useState(false);
+
+  const pushToAsc = useCallback(async () => {
+    if (currentApp?.store !== 'APPSTORE') {
+      toast.error('Push to ASC is only available for App Store apps');
+      return;
+    }
+    if (
+      !confirm(
+        `Push ${slides.length} slide(s) to App Store Connect?\n\nLocale: ${locale}\nTarget: ${exportTarget.label}\n\nThis will overwrite existing screenshots for this locale and display type.`
+      )
+    )
+      return;
+
+    setPushingToAsc(true);
+    try {
+      const pixelRatio = exportTarget.width / PREVIEW_W;
+      const slidePayloads: { dataUrl: string; fileName: string }[] = [];
+
+      for (let i = 0; i < slides.length; i++) {
+        const el = slideRefs.current[i];
+        if (!el) continue;
+        const dataUrl = await toPng(el, {
+          pixelRatio,
+          width: PREVIEW_W,
+          height: Math.round(PREVIEW_W * (19.5 / 9)),
+          style: { borderRadius: '0' },
+        });
+        slidePayloads.push({ dataUrl, fileName: `slide-${i + 1}.png` });
+      }
+
+      const res = await fetch(
+        `/api/teams/${teamId}/apps/${currentApp?.id}/screenshot-sets/push-to-asc`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            locale,
+            displayLabel: exportTarget.label,
+            slides: slidePayloads,
+          }),
+        }
+      );
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.error ?? 'Push failed');
+      }
+      toast.success(
+        `Uploaded ${result.uploaded}/${result.total} screenshots to App Store Connect!`
+      );
+      if (result.errors?.length) {
+        toast.error(`${result.errors.length} slide(s) failed — check console`);
+        console.error('ASC upload errors:', result.errors);
+      }
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setPushingToAsc(false);
+    }
+  }, [slides, locale, exportTarget, currentApp, teamId]);
+
   // ── LIST VIEW ─────────────────────────────────────────────────────────────
   if (view === 'list') {
     return (
@@ -737,6 +803,20 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           >
             <MdOpenInFull className="h-3.5 w-3.5" />
           </Button>
+
+          {/* Push to App Store Connect (App Store apps only) */}
+          {currentApp?.store === 'APPSTORE' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={pushToAsc}
+              disabled={pushingToAsc}
+              title="Upload screenshots directly to App Store Connect"
+            >
+              <MdCloudUpload className="h-3.5 w-3.5 mr-1" />
+              {pushingToAsc ? 'Uploading…' : 'Push to ASC'}
+            </Button>
+          )}
 
           {/* Export */}
           <div className="relative">
