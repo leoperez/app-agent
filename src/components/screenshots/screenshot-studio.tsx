@@ -30,10 +30,13 @@ import {
   MdExpandMore,
   MdDelete,
   MdLanguage,
+  MdOpenInFull,
   MdSave,
   MdFolderOpen,
   MdDragIndicator,
   MdCopyAll,
+  MdZoomIn,
+  MdZoomOut,
 } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import { SlideCanvas } from './slide-canvas';
@@ -133,6 +136,8 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showLayoutPicker, setShowLayoutPicker] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showExportPicker, setShowExportPicker] = useState(false);
+  const [showFullPreview, setShowFullPreview] = useState(false);
+  const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
 
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -559,8 +564,108 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     new Set(localizationEntries.map((l) => l.locale))
   ).filter(Boolean);
 
+  // Full-resolution preview dimensions
+  const fullW = Math.round((exportTarget.width * fullPreviewZoom) / 100);
+  const fullH = Math.round((exportTarget.height * fullPreviewZoom) / 100);
+
   return (
     <div className="flex flex-col h-full">
+      {/* Full preview modal */}
+      {showFullPreview && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex flex-col items-center justify-center gap-4 p-6"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowFullPreview(false);
+          }}
+        >
+          {/* Controls */}
+          <div className="flex items-center gap-3 bg-background/90 backdrop-blur rounded-xl px-4 py-2 shadow-lg">
+            <span className="text-xs text-muted-foreground font-medium">
+              {exportTarget.label} — {exportTarget.width}×{exportTarget.height}
+              px
+            </span>
+            <div className="w-px h-4 bg-border" />
+            <button
+              onClick={() => setFullPreviewZoom((z) => Math.max(15, z - 5))}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <MdZoomOut className="h-4 w-4" />
+            </button>
+            <input
+              type="range"
+              min={15}
+              max={80}
+              value={fullPreviewZoom}
+              onChange={(e) => setFullPreviewZoom(Number(e.target.value))}
+              className="w-28 accent-primary"
+            />
+            <button
+              onClick={() => setFullPreviewZoom((z) => Math.min(80, z + 5))}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <MdZoomIn className="h-4 w-4" />
+            </button>
+            <span className="text-xs text-muted-foreground w-10 text-right">
+              {fullPreviewZoom}%
+            </span>
+            <div className="w-px h-4 bg-border" />
+            <button
+              onClick={() => setShowFullPreview(false)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <MdClose className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Slide strip + preview */}
+          <div className="flex items-start gap-4 overflow-auto max-h-[80vh]">
+            {/* Slide strip */}
+            <div className="flex flex-col gap-2 flex-shrink-0">
+              {slides.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveSlide(i)}
+                  className={`rounded overflow-hidden transition-all ${i === activeSlide ? 'ring-2 ring-primary' : 'ring-1 ring-white/20 opacity-60 hover:opacity-100'}`}
+                >
+                  <SlideCanvas
+                    layout={layoutId}
+                    theme={theme}
+                    slide={s}
+                    bgGradient={bgMode === 'gradient' ? bgGradient : null}
+                    decorationId={decorationId}
+                    fontFamily={resolveFont(fontId).family}
+                    preview={false}
+                    width={60}
+                  />
+                </button>
+              ))}
+            </div>
+
+            {/* Main preview at scaled export size */}
+            <div
+              className="rounded-lg overflow-hidden shadow-2xl flex-shrink-0"
+              style={{ width: fullW, height: fullH }}
+            >
+              <SlideCanvas
+                layout={layoutId}
+                theme={theme}
+                slide={currentSlide}
+                bgGradient={bgMode === 'gradient' ? bgGradient : null}
+                decorationId={decorationId}
+                fontFamily={resolveFont(fontId).family}
+                preview={false}
+                width={fullW}
+              />
+            </div>
+          </div>
+
+          <p className="text-xs text-white/40">
+            Click outside to close · {fullW}×{fullH}px (scaled {fullPreviewZoom}
+            % of {exportTarget.width}×{exportTarget.height})
+          </p>
+        </div>
+      )}
+
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/80 backdrop-blur-sm">
         <div className="flex items-center gap-3">
@@ -619,6 +724,16 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             }}
           >
             <MdBookmarkBorder className="h-3.5 w-3.5" />
+          </Button>
+
+          {/* Full preview */}
+          <Button
+            variant="outline"
+            size="sm"
+            title="Preview at real export dimensions"
+            onClick={() => setShowFullPreview(true)}
+          >
+            <MdOpenInFull className="h-3.5 w-3.5" />
           </Button>
 
           {/* Export */}
