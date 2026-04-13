@@ -97,7 +97,7 @@ export function FeedbackButton() {
                     Thanks for your feedback!
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    We'll review it and get back to you if needed.
+                    We&apos;ll review it and get back to you if needed.
                   </p>
                 </motion.div>
               ) : (
