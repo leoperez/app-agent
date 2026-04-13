@@ -25,6 +25,7 @@ export interface ScreenshotSetRecord {
   name: string;
   layoutId: LayoutId;
   themeId: ThemeId;
+  fontId: FontId;
   customBg: string | null;
   customText: string | null;
   customAccent: string | null;
@@ -52,6 +53,16 @@ export interface GradientBg {
 }
 
 export type Background = string | GradientBg; // string = solid hex
+
+export type FontId =
+  | 'system'
+  | 'inter'
+  | 'sora'
+  | 'space-grotesk'
+  | 'playfair'
+  | 'dm-sans'
+  | 'raleway'
+  | 'bebas';
 
 // Target export dimensions
 export interface ExportTarget {

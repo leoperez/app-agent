@@ -15,6 +15,8 @@ interface SlideCanvasProps {
   theme: ResolvedTheme;
   slide: SlideData;
   bgGradient?: GradientBg | null;
+  /** CSS font-family string — defaults to system font */
+  fontFamily?: string;
   /** Render at preview size (true) or export size (false). Default: true */
   preview?: boolean;
   /** Width in px. Default: 300 */
@@ -74,11 +76,13 @@ function TextBlock({
   theme,
   align = 'center',
   width,
+  fontFamily,
 }: {
   slide: SlideData;
   theme: ResolvedTheme;
   align?: 'left' | 'center' | 'right';
   width?: number;
+  fontFamily: string;
 }) {
   return (
     <div
@@ -107,8 +111,7 @@ function TextBlock({
           color: theme.text,
           lineHeight: 1.1,
           letterSpacing: -1,
-          fontFamily:
-            '-apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif',
+          fontFamily,
         }}
       >
         {slide.headline}
@@ -119,8 +122,7 @@ function TextBlock({
           fontSize: slide.subtitleFontSize,
           color: theme.accent,
           lineHeight: 1.5,
-          fontFamily:
-            '-apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
+          fontFamily,
           fontWeight: 400,
           opacity: 0.9,
         }}
@@ -133,9 +135,20 @@ function TextBlock({
 
 export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
   function SlideCanvas(
-    { layout, theme, slide, bgGradient, preview = true, width = 300 },
+    {
+      layout,
+      theme,
+      slide,
+      bgGradient,
+      fontFamily,
+      preview = true,
+      width = 300,
+    },
     ref
   ) {
+    const ff =
+      fontFamily ??
+      '-apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif';
     const screenshotDataUrl = slide.screenshotUrl;
     const bgCss = bgGradient ? bgToCss(bgGradient) : theme.bg;
     // Preview aspect ratio: iPhone-ish 9:19.5
@@ -169,7 +182,12 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               gap: pad,
             }}
           >
-            <TextBlock slide={slide} theme={theme} align="center" />
+            <TextBlock
+              slide={slide}
+              theme={theme}
+              align="center"
+              fontFamily={ff}
+            />
             <div
               style={{
                 flex: 1,
@@ -223,7 +241,12 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               background: `linear-gradient(transparent, ${theme.bg} 40%)`,
             }}
           >
-            <TextBlock slide={slide} theme={theme} align="center" />
+            <TextBlock
+              slide={slide}
+              theme={theme}
+              align="center"
+              fontFamily={ff}
+            />
           </div>
         </div>
       );
@@ -249,7 +272,12 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               padding: pad,
             }}
           >
-            <TextBlock slide={slide} theme={theme} align="left" />
+            <TextBlock
+              slide={slide}
+              theme={theme}
+              align="left"
+              fontFamily={ff}
+            />
           </div>
           <div
             style={{
@@ -309,7 +337,12 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               padding: pad,
             }}
           >
-            <TextBlock slide={slide} theme={theme} align="left" />
+            <TextBlock
+              slide={slide}
+              theme={theme}
+              align="left"
+              fontFamily={ff}
+            />
           </div>
         </div>
       );
@@ -345,8 +378,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               lineHeight: 1.0,
               letterSpacing: -2,
               textAlign: 'center',
-              fontFamily:
-                '-apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif',
+              fontFamily: ff,
             }}
           >
             {slide.headline}
@@ -357,8 +389,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               fontSize: slide.subtitleFontSize,
               color: theme.accent,
               textAlign: 'center',
-              fontFamily:
-                '-apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
+              fontFamily: ff,
               opacity: 0.9,
             }}
           >

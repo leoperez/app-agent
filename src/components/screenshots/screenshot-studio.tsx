@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
 import { toast } from 'react-hot-toast';
@@ -38,7 +38,9 @@ import { SlideEditor } from './slide-editor';
 import {
   LAYOUTS,
   THEMES,
+  FONTS,
   resolveTheme,
+  resolveFont,
   defaultSlides,
   EXPORT_TARGETS,
 } from '@/lib/screenshot-templates';
@@ -48,6 +50,7 @@ import { useGetAppLocalizations } from '@/lib/swr/app';
 import type {
   LayoutId,
   ThemeId,
+  FontId,
   SlideData,
   ScreenshotSetRecord,
   ExportTarget,
@@ -86,6 +89,20 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [customAccent, setCustomAccent] = useState('');
   const [bgGradient, setBgGradient] = useState<GradientBg | null>(null);
   const [bgMode, setBgMode] = useState<'solid' | 'gradient'>('solid');
+  const [fontId, setFontId] = useState<FontId>('system');
+
+  // Load Google Font whenever fontId changes
+  useEffect(() => {
+    const def = resolveFont(fontId);
+    if (!def.googleUrl) return;
+    const existing = document.querySelector(`link[data-gf="${fontId}"]`);
+    if (existing) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = def.googleUrl;
+    link.setAttribute('data-gf', fontId);
+    document.head.appendChild(link);
+  }, [fontId]);
   const [slides, setSlides] = useState<SlideData[]>(defaultSlides());
   const [activeSlide, setActiveSlide] = useState(0);
   const [setName, setSetName] = useState('Untitled set');
@@ -147,6 +164,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     setCustomAccent(set.customAccent ?? '');
     setBgGradient(set.bgGradient ?? null);
     setBgMode(set.bgGradient ? 'gradient' : 'solid');
+    setFontId((set.fontId as FontId) ?? 'system');
     setSlides(set.slides as SlideData[]);
     setSetName(set.name);
     setLocale(set.locale);
@@ -164,6 +182,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     setCustomAccent('');
     setBgGradient(null);
     setBgMode('solid');
+    setFontId('system');
     setSlides(defaultSlides());
     setSetName('Untitled set');
     setLocale(currentApp?.primaryLocale ?? 'en-US');
@@ -180,6 +199,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
         locale,
         layoutId,
         themeId,
+        fontId,
         customBg: customBg || null,
         customText: customText || null,
         customAccent: customAccent || null,
@@ -666,6 +686,29 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             </div>
           </div>
 
+          {/* Font */}
+          <div className="p-3 border-b border-border">
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground block mb-1">
+              Font
+            </label>
+            <div className="space-y-0.5">
+              {FONTS.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setFontId(f.id)}
+                  className={`w-full text-left px-2 py-1 rounded text-xs transition-colors ${
+                    fontId === f.id
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'hover:bg-muted/50 text-muted-foreground'
+                  }`}
+                  style={{ fontFamily: f.family }}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Locale */}
           {locales.length > 1 && (
             <div className="p-3 border-b border-border">
@@ -731,6 +774,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                     layoutId={layoutId}
                     theme={theme}
                     bgGradient={bgMode === 'gradient' ? bgGradient : null}
+                    fontFamily={resolveFont(fontId).family}
                     slideRef={(el) => {
                       slideRefs.current[i] = el;
                     }}
@@ -762,6 +806,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 theme={theme}
                 slide={currentSlide}
                 bgGradient={bgMode === 'gradient' ? bgGradient : null}
+                fontFamily={resolveFont(fontId).family}
                 preview={true}
                 width={PREVIEW_W}
               />
@@ -801,6 +846,7 @@ function SortableSlide({
   layoutId,
   theme,
   bgGradient,
+  fontFamily,
   slideRef,
   onSelect,
   onExport,
@@ -814,6 +860,7 @@ function SortableSlide({
   layoutId: LayoutId;
   theme: ReturnType<typeof resolveTheme>;
   bgGradient: GradientBg | null;
+  fontFamily: string;
   slideRef: (el: HTMLDivElement | null) => void;
   onSelect: () => void;
   onExport: () => void;
@@ -859,6 +906,7 @@ function SortableSlide({
           theme={theme}
           slide={slide}
           bgGradient={bgGradient}
+          fontFamily={fontFamily}
           preview={true}
           width={100}
         />
@@ -923,6 +971,7 @@ function SetCard({
             theme={theme}
             slide={firstSlide ?? defaultSlides()[0]}
             bgGradient={set.bgGradient ?? null}
+            fontFamily={resolveFont((set.fontId as FontId) ?? 'system').family}
             preview={true}
             width={100}
           />

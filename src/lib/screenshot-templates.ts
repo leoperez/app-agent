@@ -1,11 +1,96 @@
 import type {
   LayoutId,
   ThemeId,
+  FontId,
   ResolvedTheme,
   ExportTarget,
   SlideData,
   GradientBg,
 } from '@/types/screenshots';
+
+// ─── Fonts ───────────────────────────────────────────────────────────────────
+
+export interface FontDefinition {
+  id: FontId;
+  label: string;
+  /** CSS font-family value */
+  family: string;
+  /** Google Fonts URL (null for system) */
+  googleUrl: string | null;
+  /** Weight options available */
+  weights: number[];
+}
+
+export const FONTS: FontDefinition[] = [
+  {
+    id: 'system',
+    label: 'System',
+    family:
+      '-apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif',
+    googleUrl: null,
+    weights: [400, 700, 800],
+  },
+  {
+    id: 'inter',
+    label: 'Inter',
+    family: '"Inter", sans-serif',
+    googleUrl:
+      'https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap',
+    weights: [400, 700, 800, 900],
+  },
+  {
+    id: 'sora',
+    label: 'Sora',
+    family: '"Sora", sans-serif',
+    googleUrl:
+      'https://fonts.googleapis.com/css2?family=Sora:wght@400;700;800&display=swap',
+    weights: [400, 700, 800],
+  },
+  {
+    id: 'space-grotesk',
+    label: 'Space Grotesk',
+    family: '"Space Grotesk", sans-serif',
+    googleUrl:
+      'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap',
+    weights: [400, 700],
+  },
+  {
+    id: 'playfair',
+    label: 'Playfair Display',
+    family: '"Playfair Display", serif',
+    googleUrl:
+      'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&display=swap',
+    weights: [400, 700, 900],
+  },
+  {
+    id: 'dm-sans',
+    label: 'DM Sans',
+    family: '"DM Sans", sans-serif',
+    googleUrl:
+      'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;800&display=swap',
+    weights: [400, 700, 800],
+  },
+  {
+    id: 'raleway',
+    label: 'Raleway',
+    family: '"Raleway", sans-serif',
+    googleUrl:
+      'https://fonts.googleapis.com/css2?family=Raleway:wght@400;700;900&display=swap',
+    weights: [400, 700, 900],
+  },
+  {
+    id: 'bebas',
+    label: 'Bebas Neue',
+    family: '"Bebas Neue", sans-serif',
+    googleUrl:
+      'https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap',
+    weights: [400],
+  },
+];
+
+export function resolveFont(fontId: FontId): FontDefinition {
+  return FONTS.find((f) => f.id === fontId) ?? FONTS[0];
+}
 
 /** Convert a solid hex or GradientBg to a CSS background value */
 export function bgToCss(bg: string | GradientBg): string {
