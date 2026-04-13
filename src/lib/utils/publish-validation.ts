@@ -14,6 +14,175 @@ export interface ValidationResult {
 
 const PLACEHOLDER_PATTERNS = [/lorem ipsum/i, /placeholder/i, /todo/i, /tbd/i];
 
+// Common App Store rejection patterns
+const IOS_CROSS_PLATFORM = [
+  /android/i,
+  /google play/i,
+  /play store/i,
+  /samsung/i,
+];
+const ANDROID_CROSS_PLATFORM = [
+  /app store/i,
+  /apple/i,
+  /iphone/i,
+  /ipad/i,
+  /ios/i,
+];
+const PRICING_PATTERNS = [
+  /\$\d/,
+  /\d+% off/i,
+  /limited time offer/i,
+  /buy now/i,
+  /subscribe.*\$\d/i,
+];
+
+export interface PreflightCheck {
+  id: string;
+  label: string;
+  description: string;
+  status: 'pass' | 'warn' | 'fail';
+}
+
+export interface AppMeta {
+  privacyPolicyUrl?: string | null;
+  developerWebsite?: string | null;
+  store: string;
+}
+
+export function runPreflightChecks(
+  localizations: AppLocalization[],
+  app: AppMeta
+): PreflightCheck[] {
+  const checks: PreflightCheck[] = [];
+  const isIOS = app.store !== 'GOOGLEPLAY';
+  const crossPlatformPatterns = isIOS
+    ? IOS_CROSS_PLATFORM
+    : ANDROID_CROSS_PLATFORM;
+  const platformName = isIOS ? 'Android/Google Play' : 'App Store/Apple';
+
+  // 1. Privacy policy URL
+  checks.push({
+    id: 'privacy-url',
+    label: 'Privacy policy URL',
+    description: app.privacyPolicyUrl
+      ? app.privacyPolicyUrl
+      : 'Required by both app stores. Add one in app settings.',
+    status: app.privacyPolicyUrl ? 'pass' : 'fail',
+  });
+
+  // 2. Support URL / developer website
+  checks.push({
+    id: 'support-url',
+    label: 'Support URL / developer website',
+    description: app.developerWebsite
+      ? app.developerWebsite
+      : 'A valid support URL is required for submission.',
+    status: app.developerWebsite ? 'pass' : 'warn',
+  });
+
+  // 3. Cross-platform mentions
+  const crossPlatformHits: string[] = [];
+  for (const loc of localizations) {
+    const texts = [
+      loc.title,
+      loc.description,
+      loc.shortDescription,
+      loc.fullDescription,
+      loc.subtitle,
+    ];
+    for (const text of texts) {
+      if (!text) continue;
+      for (const pattern of crossPlatformPatterns) {
+        if (pattern.test(text)) {
+          crossPlatformHits.push(loc.locale ?? '');
+          break;
+        }
+      }
+    }
+  }
+  checks.push({
+    id: 'cross-platform',
+    label: `No ${platformName} mentions`,
+    description:
+      crossPlatformHits.length === 0
+        ? 'No cross-platform references found.'
+        : `Mention of competitor platform detected in: ${Array.from(new Set(crossPlatformHits)).join(', ')}. This is a common rejection reason.`,
+    status: crossPlatformHits.length === 0 ? 'pass' : 'fail',
+  });
+
+  // 4. Pricing claims in metadata
+  const pricingHits: string[] = [];
+  for (const loc of localizations) {
+    const texts = [
+      loc.description,
+      loc.shortDescription,
+      loc.fullDescription,
+      loc.promotionalText,
+    ];
+    for (const text of texts) {
+      if (!text) continue;
+      for (const pattern of PRICING_PATTERNS) {
+        if (pattern.test(text)) {
+          pricingHits.push(loc.locale ?? '');
+          break;
+        }
+      }
+    }
+  }
+  checks.push({
+    id: 'pricing-claims',
+    label: 'No pricing in metadata',
+    description:
+      pricingHits.length === 0
+        ? 'No pricing claims in metadata.'
+        : `Possible pricing language found in: ${Array.from(new Set(pricingHits)).join(', ')}. Mentioning prices in metadata can cause rejection.`,
+    status: pricingHits.length === 0 ? 'pass' : 'warn',
+  });
+
+  // 5. Primary locale has content
+  const primaryLocale =
+    localizations.find((l) => l.locale === 'en-US') ?? localizations[0];
+  const hasPrimaryContent = !!(
+    primaryLocale?.title?.trim() && primaryLocale?.description?.trim()
+  );
+  checks.push({
+    id: 'primary-locale',
+    label: 'Primary locale has content',
+    description: hasPrimaryContent
+      ? `${primaryLocale?.locale ?? 'en-US'} has title and description.`
+      : 'Primary locale is missing title or description.',
+    status: hasPrimaryContent ? 'pass' : 'fail',
+  });
+
+  // 6. Placeholder text check
+  const placeholderHits: string[] = [];
+  for (const loc of localizations) {
+    const texts = [
+      loc.title,
+      loc.description,
+      loc.shortDescription,
+      loc.fullDescription,
+    ];
+    for (const text of texts) {
+      if (text && PLACEHOLDER_PATTERNS.some((p) => p.test(text))) {
+        placeholderHits.push(loc.locale ?? '');
+        break;
+      }
+    }
+  }
+  checks.push({
+    id: 'no-placeholder',
+    label: 'No placeholder text',
+    description:
+      placeholderHits.length === 0
+        ? 'No placeholder text detected.'
+        : `Possible placeholder text in: ${Array.from(new Set(placeholderHits)).join(', ')}.`,
+    status: placeholderHits.length === 0 ? 'pass' : 'warn',
+  });
+
+  return checks;
+}
+
 function isPlaceholder(text: string): boolean {
   return PLACEHOLDER_PATTERNS.some((p) => p.test(text));
 }

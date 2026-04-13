@@ -44,7 +44,11 @@ import { ReviewsPanel } from '@/components/app-store-connect/reviews-panel';
 import { ReviewReplyStats } from '@/components/app-store-connect/review-reply-stats';
 import { SchedulePublish } from '@/components/app-store-connect/schedule-publish';
 import { PublishValidation } from '@/components/app-store-connect/publish-validation';
-import { validateLocalizations } from '@/lib/utils/publish-validation';
+import { SubmissionPreflight } from '@/components/app-store-connect/submission-preflight';
+import {
+  validateLocalizations,
+  runPreflightChecks,
+} from '@/lib/utils/publish-validation';
 import {
   createNewVersion,
   pullLatestVersion,
@@ -804,7 +808,7 @@ export default function Home() {
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          {/* Pre-publish validation */}
+          {/* Pre-publish validation + pre-flight */}
           {(() => {
             const drafts = Object.values(workingLocalizations)
               .map((l) => l.draft)
@@ -813,7 +817,17 @@ export default function Home() {
               drafts,
               currentApp?.store ?? 'APPSTORE'
             );
-            return <PublishValidation result={result} />;
+            const preflightChecks = runPreflightChecks(drafts, {
+              privacyPolicyUrl: currentApp?.privacyPolicyUrl,
+              developerWebsite: currentApp?.developerWebsite,
+              store: currentApp?.store ?? 'APPSTORE',
+            });
+            return (
+              <div className="space-y-3">
+                <PublishValidation result={result} />
+                <SubmissionPreflight checks={preflightChecks} />
+              </div>
+            );
           })()}
 
           <AlertDialogFooter>
