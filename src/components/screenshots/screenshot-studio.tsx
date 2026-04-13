@@ -5,6 +5,21 @@ import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
 import { toast } from 'react-hot-toast';
 import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   MdAdd,
   MdAutoAwesome,
   MdClose,
@@ -14,6 +29,8 @@ import {
   MdDelete,
   MdSave,
   MdFolderOpen,
+  MdDragIndicator,
+  MdCopyAll,
 } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import { SlideCanvas } from './slide-canvas';
@@ -88,6 +105,31 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showExportPicker, setShowExportPicker] = useState(false);
 
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Drag-and-drop sensors — require 8px movement to start drag
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = slides.findIndex((_, i) => String(i) === active.id);
+    const newIdx = slides.findIndex((_, i) => String(i) === over.id);
+    if (oldIdx === -1 || newIdx === -1) return;
+    setSlides((prev) => arrayMove(prev, oldIdx, newIdx));
+    setActiveSlide(newIdx);
+  };
+
+  const duplicateSlide = (idx: number) => {
+    setSlides((prev) => {
+      const copy = { ...prev[idx] };
+      const next = [...prev];
+      next.splice(idx + 1, 0, copy);
+      return next;
+    });
+    setActiveSlide(idx + 1);
+  };
 
   const theme = resolveTheme(themeId, {
     bg: customBg || null,
@@ -668,60 +710,48 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
 
         {/* Center: slides strip + active slide editor */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Slides strip */}
-          <div className="w-36 border-r border-border overflow-y-auto bg-muted/5 py-3 space-y-3 flex flex-col items-center">
-            {slides.map((s, i) => (
-              <div
-                key={i}
-                className="relative group flex flex-col items-center"
+          {/* Slides strip — sortable */}
+          <div className="w-36 border-r border-border overflow-y-auto bg-muted/5 py-3 flex flex-col items-center gap-2">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={slides.map((_, i) => String(i))}
+                strategy={verticalListSortingStrategy}
               >
-                <button
-                  onClick={() => setActiveSlide(i)}
-                  className={`rounded-lg overflow-hidden transition-all ${
-                    activeSlide === i
-                      ? 'ring-2 ring-primary'
-                      : 'ring-1 ring-border/50 opacity-70 hover:opacity-100'
-                  }`}
-                >
-                  <SlideCanvas
-                    ref={(el) => {
+                {slides.map((s, i) => (
+                  <SortableSlide
+                    key={i}
+                    id={String(i)}
+                    index={i}
+                    slide={s}
+                    isActive={activeSlide === i}
+                    layoutId={layoutId}
+                    theme={theme}
+                    bgGradient={bgMode === 'gradient' ? bgGradient : null}
+                    slideRef={(el) => {
                       slideRefs.current[i] = el;
                     }}
-                    layout={layoutId}
-                    theme={theme}
-                    slide={s}
-                    bgGradient={bgMode === 'gradient' ? bgGradient : null}
-                    preview={true}
-                    width={100}
+                    onSelect={() => setActiveSlide(i)}
+                    onExport={() => exportSingle(i)}
+                    onDuplicate={() => duplicateSlide(i)}
+                    onDelete={
+                      slides.length > 1
+                        ? () => {
+                            setSlides((prev) =>
+                              prev.filter((_, idx) => idx !== i)
+                            );
+                            if (activeSlide >= i && activeSlide > 0)
+                              setActiveSlide((p) => p - 1);
+                          }
+                        : undefined
+                    }
                   />
-                </button>
-                <div className="flex items-center gap-1 mt-1">
-                  <span className="text-[10px] text-muted-foreground">
-                    {i + 1}
-                  </span>
-                  <button
-                    onClick={() => exportSingle(i)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Export this slide"
-                  >
-                    <MdDownload className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                  </button>
-                  {slides.length > 1 && (
-                    <button
-                      onClick={() => {
-                        setSlides((prev) => prev.filter((_, idx) => idx !== i));
-                        if (activeSlide >= i && activeSlide > 0)
-                          setActiveSlide((p) => p - 1);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Delete slide"
-                    >
-                      <MdDelete className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+                ))}
+              </SortableContext>
+            </DndContext>
           </div>
 
           {/* Active slide preview (large) */}
@@ -756,6 +786,111 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Sortable slide thumbnail ─────────────────────────────────────────────────
+
+function SortableSlide({
+  id,
+  index,
+  slide,
+  isActive,
+  layoutId,
+  theme,
+  bgGradient,
+  slideRef,
+  onSelect,
+  onExport,
+  onDuplicate,
+  onDelete,
+}: {
+  id: string;
+  index: number;
+  slide: SlideData;
+  isActive: boolean;
+  layoutId: LayoutId;
+  theme: ReturnType<typeof resolveTheme>;
+  bgGradient: GradientBg | null;
+  slideRef: (el: HTMLDivElement | null) => void;
+  onSelect: () => void;
+  onExport: () => void;
+  onDuplicate: () => void;
+  onDelete?: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`relative group flex flex-col items-center ${isDragging ? 'opacity-40' : ''}`}
+    >
+      {/* drag handle */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing absolute -top-0.5 left-1 z-10"
+        title="Drag to reorder"
+      >
+        <MdDragIndicator className="h-3.5 w-3.5 text-muted-foreground" />
+      </div>
+
+      <button
+        onClick={onSelect}
+        className={`rounded-lg overflow-hidden transition-all ${
+          isActive
+            ? 'ring-2 ring-primary'
+            : 'ring-1 ring-border/50 opacity-70 hover:opacity-100'
+        }`}
+      >
+        <SlideCanvas
+          ref={slideRef}
+          layout={layoutId}
+          theme={theme}
+          slide={slide}
+          bgGradient={bgGradient}
+          preview={true}
+          width={100}
+        />
+      </button>
+
+      <div className="flex items-center gap-0.5 mt-1">
+        <span className="text-[10px] text-muted-foreground w-3 text-center">
+          {index + 1}
+        </span>
+        <button
+          onClick={onExport}
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Export slide"
+        >
+          <MdDownload className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+        </button>
+        <button
+          onClick={onDuplicate}
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Duplicate slide"
+        >
+          <MdCopyAll className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+        </button>
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Delete slide"
+          >
+            <MdDelete className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+          </button>
+        )}
       </div>
     </div>
   );
