@@ -29,6 +29,7 @@ import {
   MdEdit,
   MdExpandMore,
   MdDelete,
+  MdLanguage,
   MdSave,
   MdFolderOpen,
   MdDragIndicator,
@@ -291,6 +292,79 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     }
   };
 
+  // ── Batch generate (all locales) ──────────────────────────────────────────
+  const [batchGenerating, setBatchGenerating] = useState(false);
+
+  const batchGenerate = async () => {
+    const localeList = Array.from(
+      new Set(localizationEntries.map((l) => l.locale))
+    ).filter(Boolean);
+    if (localeList.length === 0) {
+      toast.error('No localizations found for this app');
+      return;
+    }
+    if (
+      !confirm(
+        `Generate screenshot sets for ${localeList.length} locale(s)?\n\n${localeList.join(', ')}\n\nThis will create one set per locale with AI-generated texts.`
+      )
+    )
+      return;
+
+    setBatchGenerating(true);
+    let created = 0;
+    let failed = 0;
+
+    for (const loc of localeList) {
+      try {
+        const locEntry =
+          localizationEntries.find((l) => l.locale === loc) ?? {};
+        const texts = await generateTexts({
+          locale: loc,
+          count: 5,
+          description:
+            (locEntry as { description?: string; fullDescription?: string })
+              ?.description ??
+            (locEntry as { fullDescription?: string })?.fullDescription ??
+            '',
+          keywords: (locEntry as { keywords?: string })?.keywords ?? '',
+        });
+        const slideData = defaultSlides().map((s, i) =>
+          texts[i]
+            ? {
+                ...s,
+                headline: texts[i].headline,
+                subtitle: texts[i].subtitle,
+                badge: texts[i].badge ?? '',
+              }
+            : s
+        );
+        await createSet({
+          name: `${loc} screenshots`,
+          locale: loc,
+          layoutId,
+          themeId,
+          fontId,
+          decorationId,
+          customBg: customBg || null,
+          customText: customText || null,
+          customAccent: customAccent || null,
+          bgGradient: bgMode === 'gradient' ? bgGradient : null,
+          slides: slideData,
+        } as Parameters<typeof createSet>[0]);
+        created++;
+      } catch {
+        failed++;
+      }
+    }
+
+    setBatchGenerating(false);
+    if (failed === 0) {
+      toast.success(`Created ${created} set${created !== 1 ? 's' : ''}!`);
+    } else {
+      toast.error(`Created ${created}, failed ${failed}`);
+    }
+  };
+
   // ── Export ────────────────────────────────────────────────────────────────
   const exportAll = useCallback(async () => {
     setExporting(true);
@@ -360,6 +434,18 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {localizationEntries.length > 1 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={batchGenerate}
+                disabled={batchGenerating}
+                title="Generate one set per app locale using AI"
+              >
+                <MdLanguage className="h-4 w-4 mr-1" />
+                {batchGenerating ? 'Generating…' : 'Generate all locales'}
+              </Button>
+            )}
             <Button onClick={newSet} size="sm">
               <MdAdd className="h-4 w-4 mr-1" /> New set
             </Button>
