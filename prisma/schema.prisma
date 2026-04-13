@@ -102,6 +102,7 @@ model Team {
   descriptionTemplates   DescriptionTemplate[]
   reviewTemplates        ReviewTemplate[]
   autoReplyRules         ReviewAutoReplyRule[]
+  screenshotTemplates    ScreenshotTemplate[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -652,6 +653,27 @@ model UserFeedback {
 }
 
 // Screenshot Studio: saved sets of app store / google play screenshot designs
+model ScreenshotTemplate {
+  id           String @id @default(cuid())
+  teamId       String
+  team         Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name         String
+  layoutId     String
+  themeId      String
+  fontId       String @default("system")
+  decorationId String @default("none")
+  customBg     String?
+  customText   String?
+  customAccent String?
+  bgGradient   Json?
+  slides       Json   @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([teamId])
+}
+
 model ScreenshotSet {
   id       String @id @default(cuid())
   appId    String

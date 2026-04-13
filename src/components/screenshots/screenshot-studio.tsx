@@ -22,6 +22,8 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   MdAdd,
   MdAutoAwesome,
+  MdBookmark,
+  MdBookmarkBorder,
   MdClose,
   MdDownload,
   MdEdit,
@@ -45,7 +47,10 @@ import {
   defaultSlides,
   EXPORT_TARGETS,
 } from '@/lib/screenshot-templates';
-import { useGetScreenshotSets } from '@/lib/swr/screenshots';
+import {
+  useGetScreenshotSets,
+  useGetScreenshotTemplates,
+} from '@/lib/swr/screenshots';
 import { useApp } from '@/context/app';
 import { useGetAppLocalizations } from '@/lib/swr/app';
 import type {
@@ -55,6 +60,7 @@ import type {
   DecorationId,
   SlideData,
   ScreenshotSetRecord,
+  ScreenshotTemplateRecord,
   ExportTarget,
   GradientBg,
 } from '@/types/screenshots';
@@ -70,6 +76,8 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const { currentApp } = useApp();
   const { sets, loading, createSet, updateSet, deleteSet, generateTexts } =
     useGetScreenshotSets();
+  const { templates, saveTemplate, deleteTemplate } =
+    useGetScreenshotTemplates();
 
   // Localizations for AI context (shape: Record<locale, {public?, draft?}>)
   const { localizations: localizationsMap } = useGetAppLocalizations(
@@ -113,6 +121,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
 
   // ── UI state ─────────────────────────────────────────────────────────────
   const [view, setView] = useState<'list' | 'editor'>('list');
+  const [listTab, setListTab] = useState<'sets' | 'templates'>('sets');
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -190,6 +199,25 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     setDecorationId('none');
     setSlides(defaultSlides());
     setSetName('Untitled set');
+    setLocale(currentApp?.primaryLocale ?? 'en-US');
+    setActiveSlide(0);
+    setView('editor');
+  };
+
+  // ── Apply a template ──────────────────────────────────────────────────────
+  const applyTemplate = (tpl: ScreenshotTemplateRecord) => {
+    setActiveSet(null);
+    setLayoutId(tpl.layoutId as LayoutId);
+    setThemeId(tpl.themeId as ThemeId);
+    setCustomBg(tpl.customBg ?? '');
+    setCustomText(tpl.customText ?? '');
+    setCustomAccent(tpl.customAccent ?? '');
+    setBgGradient(tpl.bgGradient ?? null);
+    setBgMode(tpl.bgGradient ? 'gradient' : 'solid');
+    setFontId((tpl.fontId as FontId) ?? 'system');
+    setDecorationId((tpl.decorationId as DecorationId) ?? 'none');
+    setSlides(tpl.slides as SlideData[]);
+    setSetName(tpl.name);
     setLocale(currentApp?.primaryLocale ?? 'en-US');
     setActiveSlide(0);
     setView('editor');
@@ -344,41 +372,91 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           </div>
         </div>
 
-        {/* Sets grid */}
+        {/* Tabs */}
+        <div className="flex border-b border-border px-6">
+          <button
+            onClick={() => setListTab('sets')}
+            className={`text-sm px-1 py-2.5 mr-4 border-b-2 transition-colors ${listTab === 'sets' ? 'border-primary text-foreground font-medium' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+          >
+            My sets
+          </button>
+          <button
+            onClick={() => setListTab('templates')}
+            className={`text-sm px-1 py-2.5 border-b-2 transition-colors flex items-center gap-1 ${listTab === 'templates' ? 'border-primary text-foreground font-medium' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+          >
+            <MdBookmark className="h-3.5 w-3.5" /> Templates
+            {templates.length > 0 && (
+              <span className="text-[10px] bg-primary/10 text-primary rounded-full px-1.5">
+                {templates.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-48 rounded-xl bg-muted/30 animate-pulse"
-                />
-              ))}
-            </div>
-          ) : sets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
+          {listTab === 'sets' ? (
+            loading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-48 rounded-xl bg-muted/30 animate-pulse"
+                  />
+                ))}
+              </div>
+            ) : sets.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+                  <MdFolderOpen className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-medium">No screenshot sets yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Create your first set to get started
+                  </p>
+                </div>
+                <Button onClick={newSet}>
+                  <MdAdd className="h-4 w-4 mr-1" /> New set
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {sets.map((set) => (
+                  <SetCard
+                    key={set.id}
+                    set={set}
+                    onEdit={() => loadSet(set)}
+                    onDelete={() => {
+                      if (confirm('Delete this set?')) deleteSet(set.id);
+                    }}
+                  />
+                ))}
+              </div>
+            )
+          ) : templates.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
               <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
-                <MdFolderOpen className="h-8 w-8 text-muted-foreground" />
+                <MdBookmark className="h-8 w-8 text-muted-foreground" />
               </div>
               <div>
-                <p className="font-medium">No screenshot sets yet</p>
+                <p className="font-medium">No templates yet</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Create your first set to get started
+                  Open a set and click the bookmark icon to save it as a
+                  reusable template
                 </p>
               </div>
-              <Button onClick={newSet}>
-                <MdAdd className="h-4 w-4 mr-1" /> New set
-              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {sets.map((set) => (
-                <SetCard
-                  key={set.id}
-                  set={set}
-                  onEdit={() => loadSet(set)}
+              {templates.map((tpl) => (
+                <TemplateCard
+                  key={tpl.id}
+                  template={tpl}
+                  onApply={() => applyTemplate(tpl)}
                   onDelete={() => {
-                    if (confirm('Delete this set?')) deleteSet(set.id);
+                    if (confirm('Delete this template?'))
+                      deleteTemplate(tpl.id);
                   }}
                 />
               ))}
@@ -429,6 +507,32 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           <Button size="sm" onClick={save} disabled={saving}>
             <MdSave className="h-3.5 w-3.5 mr-1" />
             {saving ? 'Saving…' : 'Save'}
+          </Button>
+
+          {/* Save as template */}
+          <Button
+            variant="outline"
+            size="sm"
+            title="Save as reusable template"
+            onClick={async () => {
+              const tName = prompt('Template name:', setName);
+              if (!tName) return;
+              await saveTemplate({
+                name: tName,
+                layoutId,
+                themeId,
+                fontId,
+                decorationId,
+                customBg: customBg || null,
+                customText: customText || null,
+                customAccent: customAccent || null,
+                bgGradient: bgMode === 'gradient' ? bgGradient : null,
+                slides,
+              });
+              toast.success('Template saved!');
+            }}
+          >
+            <MdBookmarkBorder className="h-3.5 w-3.5" />
           </Button>
 
           {/* Export */}
@@ -1023,6 +1127,62 @@ function SetCard({
         onClick={onDelete}
         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/20"
         title="Delete set"
+      >
+        <MdDelete className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+// ── Template card (list view) ────────────────────────────────────────────────
+
+function TemplateCard({
+  template,
+  onApply,
+  onDelete,
+}: {
+  template: ScreenshotTemplateRecord;
+  onApply: () => void;
+  onDelete: () => void;
+}) {
+  const firstSlide = (template.slides as SlideData[])[0];
+  const theme = resolveTheme(template.themeId as ThemeId, {
+    bg: template.customBg,
+    text: template.customText,
+    accent: template.customAccent,
+  });
+
+  return (
+    <div className="group relative rounded-xl border border-border bg-card overflow-hidden hover:border-primary/50 transition-colors">
+      <button onClick={onApply} className="w-full">
+        <div className="flex justify-center pt-4 pb-2 bg-muted/20">
+          <SlideCanvas
+            layout={template.layoutId as LayoutId}
+            theme={theme}
+            slide={firstSlide ?? defaultSlides()[0]}
+            bgGradient={template.bgGradient ?? null}
+            decorationId={(template.decorationId as DecorationId) ?? 'none'}
+            fontFamily={
+              resolveFont((template.fontId as FontId) ?? 'system').family
+            }
+            preview={true}
+            width={100}
+          />
+        </div>
+        <div className="p-3 text-left">
+          <div className="flex items-center gap-1">
+            <MdBookmark className="h-3 w-3 text-primary flex-shrink-0" />
+            <p className="text-xs font-semibold truncate">{template.name}</p>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            {(template.slides as SlideData[]).length} slides · click to use
+          </p>
+        </div>
+      </button>
+      <button
+        onClick={onDelete}
+        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/20"
+        title="Delete template"
       >
         <MdDelete className="h-3.5 w-3.5" />
       </button>

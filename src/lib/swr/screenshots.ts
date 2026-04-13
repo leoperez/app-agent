@@ -4,7 +4,10 @@ import useSWR from 'swr';
 import { fetcher } from '@/lib/utils/fetcher';
 import { useTeam } from '@/context/team';
 import { useApp } from '@/context/app';
-import type { ScreenshotSetRecord } from '@/types/screenshots';
+import type {
+  ScreenshotSetRecord,
+  ScreenshotTemplateRecord,
+} from '@/types/screenshots';
 
 export function useGetScreenshotSets(locale?: string) {
   const teamInfo = useTeam();
@@ -91,5 +94,51 @@ export function useGetScreenshotSets(locale?: string) {
     updateSet,
     deleteSet,
     generateTexts,
+  };
+}
+
+export function useGetScreenshotTemplates() {
+  const teamInfo = useTeam();
+  const teamId = teamInfo?.currentTeam?.id;
+
+  const key = teamId ? `/api/teams/${teamId}/screenshot-templates` : null;
+
+  const { data, error, isLoading, mutate } = useSWR<ScreenshotTemplateRecord[]>(
+    key,
+    fetcher,
+    { dedupingInterval: 60000 }
+  );
+
+  const saveTemplate = async (
+    payload: Omit<
+      ScreenshotTemplateRecord,
+      'id' | 'teamId' | 'createdAt' | 'updatedAt'
+    >
+  ) => {
+    if (!teamId) return null;
+    const res = await fetch(`/api/teams/${teamId}/screenshot-templates`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const created = await res.json();
+    await mutate();
+    return created as ScreenshotTemplateRecord;
+  };
+
+  const deleteTemplate = async (templateId: string) => {
+    if (!teamId) return;
+    await fetch(`/api/teams/${teamId}/screenshot-templates/${templateId}`, {
+      method: 'DELETE',
+    });
+    await mutate();
+  };
+
+  return {
+    templates: data ?? [],
+    loading: isLoading,
+    error,
+    saveTemplate,
+    deleteTemplate,
   };
 }

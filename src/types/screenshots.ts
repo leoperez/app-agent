@@ -73,6 +73,23 @@ export type DecorationId =
   | 'diagonal-lines'
   | 'confetti';
 
+export interface ScreenshotTemplateRecord {
+  id: string;
+  teamId: string;
+  name: string;
+  layoutId: LayoutId;
+  themeId: ThemeId;
+  fontId: FontId;
+  decorationId: DecorationId;
+  customBg: string | null;
+  customText: string | null;
+  customAccent: string | null;
+  bgGradient: GradientBg | null;
+  slides: SlideData[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Target export dimensions
 export interface ExportTarget {
   label: string;
