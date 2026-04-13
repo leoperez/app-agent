@@ -8,7 +8,7 @@ import type {
   GradientBg,
   DecorationId,
 } from '@/types/screenshots';
-import { IPhoneFrame } from './phone-frame';
+import { PhoneFrame } from './phone-frame';
 import { bgToCss } from '@/lib/screenshot-templates';
 
 interface SlideCanvasProps {
@@ -17,6 +17,8 @@ interface SlideCanvasProps {
   slide: SlideData;
   bgGradient?: GradientBg | null;
   decorationId?: DecorationId;
+  /** Which device frame to render. Default: 'iphone' */
+  deviceType?: 'iphone' | 'android';
   /** CSS font-family string — defaults to system font */
   fontFamily?: string;
   /** Render at preview size (true) or export size (false). Default: true */
@@ -218,17 +220,20 @@ function PhoneMockup({
   screenshot,
   screenColor,
   width,
+  deviceType = 'iphone',
 }: {
   screenshot?: string;
   screenColor: string;
   borderColor: string; // kept for API compat, ignored — SVG frame has own gradient
   width: number;
+  deviceType?: 'iphone' | 'android';
 }) {
   return (
-    <IPhoneFrame
+    <PhoneFrame
       width={width}
       screenshotUrl={screenshot}
       screenFallbackColor={screenColor}
+      deviceType={deviceType}
     />
   );
 }
@@ -331,6 +336,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
       slide,
       bgGradient,
       decorationId = 'none',
+      deviceType = 'iphone',
       fontFamily,
       preview = true,
       width = 300,
@@ -397,6 +403,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                 screenshot={screenshotDataUrl}
                 screenColor={theme.phoneScreen}
                 borderColor={theme.phoneBorder}
+                deviceType={deviceType}
                 width={phonePreviewW}
               />
             </div>
@@ -429,6 +436,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               screenshot={screenshotDataUrl}
               screenColor={theme.phoneScreen}
               borderColor={theme.phoneBorder}
+              deviceType={deviceType}
               width={phonePreviewW * 1.15}
             />
           </div>
@@ -502,6 +510,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               screenshot={screenshotDataUrl}
               screenColor={theme.phoneScreen}
               borderColor={theme.phoneBorder}
+              deviceType={deviceType}
               width={phonePreviewW * 0.85}
             />
           </div>
@@ -540,6 +549,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               screenshot={screenshotDataUrl}
               screenColor={theme.phoneScreen}
               borderColor={theme.phoneBorder}
+              deviceType={deviceType}
               width={phonePreviewW * 0.85}
             />
           </div>
@@ -621,6 +631,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               screenshot={screenshotDataUrl}
               screenColor={theme.phoneScreen}
               borderColor={theme.phoneBorder}
+              deviceType={deviceType}
               width={phonePreviewW * 0.7}
             />
           </div>

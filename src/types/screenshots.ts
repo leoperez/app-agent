@@ -94,6 +94,7 @@ export interface ScreenshotTemplateRecord {
 export interface ExportTarget {
   label: string;
   store: 'APPSTORE' | 'GOOGLEPLAY';
+  deviceType: 'iphone' | 'android';
   width: number;
   height: number;
 }

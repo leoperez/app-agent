@@ -633,6 +633,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                     slide={s}
                     bgGradient={bgMode === 'gradient' ? bgGradient : null}
                     decorationId={decorationId}
+                    deviceType={exportTarget.deviceType}
                     fontFamily={resolveFont(fontId).family}
                     preview={false}
                     width={60}
@@ -652,6 +653,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 slide={currentSlide}
                 bgGradient={bgMode === 'gradient' ? bgGradient : null}
                 decorationId={decorationId}
+                deviceType={exportTarget.deviceType}
                 fontFamily={resolveFont(fontId).family}
                 preview={false}
                 width={fullW}
@@ -1110,6 +1112,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                     theme={theme}
                     bgGradient={bgMode === 'gradient' ? bgGradient : null}
                     decorationId={decorationId}
+                    deviceType={exportTarget.deviceType}
                     fontFamily={resolveFont(fontId).family}
                     slideRef={(el) => {
                       slideRefs.current[i] = el;
@@ -1143,6 +1146,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 slide={currentSlide}
                 bgGradient={bgMode === 'gradient' ? bgGradient : null}
                 decorationId={decorationId}
+                deviceType={exportTarget.deviceType}
                 fontFamily={resolveFont(fontId).family}
                 preview={true}
                 width={PREVIEW_W}
@@ -1184,6 +1188,7 @@ function SortableSlide({
   theme,
   bgGradient,
   decorationId,
+  deviceType,
   fontFamily,
   slideRef,
   onSelect,
@@ -1199,6 +1204,7 @@ function SortableSlide({
   theme: ReturnType<typeof resolveTheme>;
   bgGradient: GradientBg | null;
   decorationId: DecorationId;
+  deviceType: 'iphone' | 'android';
   fontFamily: string;
   slideRef: (el: HTMLDivElement | null) => void;
   onSelect: () => void;
@@ -1246,6 +1252,7 @@ function SortableSlide({
           slide={slide}
           bgGradient={bgGradient}
           decorationId={decorationId}
+          deviceType={deviceType}
           fontFamily={fontFamily}
           preview={true}
           width={100}

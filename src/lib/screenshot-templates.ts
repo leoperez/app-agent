@@ -224,24 +224,28 @@ export const EXPORT_TARGETS: ExportTarget[] = [
   {
     label: 'iPhone 6.9"',
     store: 'APPSTORE',
+    deviceType: 'iphone',
     width: 1320,
     height: 2868,
   },
   {
     label: 'iPhone 6.7"',
     store: 'APPSTORE',
+    deviceType: 'iphone',
     width: 1290,
     height: 2796,
   },
   {
     label: 'iPad 13"',
     store: 'APPSTORE',
+    deviceType: 'iphone',
     width: 2064,
     height: 2752,
   },
   {
     label: 'Google Play phone',
     store: 'GOOGLEPLAY',
+    deviceType: 'android',
     width: 1080,
     height: 1920,
   },
