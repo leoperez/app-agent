@@ -4,7 +4,14 @@ import type {
   ResolvedTheme,
   ExportTarget,
   SlideData,
+  GradientBg,
 } from '@/types/screenshots';
+
+/** Convert a solid hex or GradientBg to a CSS background value */
+export function bgToCss(bg: string | GradientBg): string {
+  if (typeof bg === 'string') return bg;
+  return `linear-gradient(${bg.angle}deg, ${bg.color1}, ${bg.color2})`;
+}
 
 // ─── Layouts ────────────────────────────────────────────────────────────────
 

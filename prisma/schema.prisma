@@ -664,7 +664,9 @@ model ScreenshotSet {
   customBg      String?
   customText    String?
   customAccent  String?
-  // slides: array of SlideData (texts + badge, no images — images are client-side only)
+  // gradient background: {type:"gradient",color1,color2,angle} or null for solid
+  bgGradient    Json?
+  // slides: array of SlideData (texts + badge + screenshotUrl)
   slides   Json   @default("[]")
 
   createdAt DateTime @default(now())

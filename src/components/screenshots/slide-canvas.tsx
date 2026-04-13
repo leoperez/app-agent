@@ -1,13 +1,20 @@
 'use client';
 
 import React from 'react';
-import type { LayoutId, SlideData, ResolvedTheme } from '@/types/screenshots';
+import type {
+  LayoutId,
+  SlideData,
+  ResolvedTheme,
+  GradientBg,
+} from '@/types/screenshots';
 import { IPhoneFrame } from './phone-frame';
+import { bgToCss } from '@/lib/screenshot-templates';
 
 interface SlideCanvasProps {
   layout: LayoutId;
   theme: ResolvedTheme;
   slide: SlideData;
+  bgGradient?: GradientBg | null;
   /** Render at preview size (true) or export size (false). Default: true */
   preview?: boolean;
   /** Width in px. Default: 300 */
@@ -126,10 +133,11 @@ function TextBlock({
 
 export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
   function SlideCanvas(
-    { layout, theme, slide, preview = true, width = 300 },
+    { layout, theme, slide, bgGradient, preview = true, width = 300 },
     ref
   ) {
     const screenshotDataUrl = slide.screenshotUrl;
+    const bgCss = bgGradient ? bgToCss(bgGradient) : theme.bg;
     // Preview aspect ratio: iPhone-ish 9:19.5
     const height = Math.round(width * (19.5 / 9));
     const pad = Math.round(width * 0.08);
@@ -138,7 +146,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
     const containerStyle: React.CSSProperties = {
       width,
       height,
-      backgroundColor: theme.bg,
+      background: bgCss,
       position: 'relative',
       overflow: 'hidden',
       display: 'flex',

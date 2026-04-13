@@ -28,6 +28,7 @@ export interface ScreenshotSetRecord {
   customBg: string | null;
   customText: string | null;
   customAccent: string | null;
+  bgGradient: GradientBg | null;
   slides: SlideData[];
   createdAt: string;
   updatedAt: string;
@@ -41,6 +42,16 @@ export interface ResolvedTheme {
   phoneBorder: string;
   phoneScreen: string; // colour shown inside phone when no screenshot
 }
+
+// Gradient background definition (stored in ScreenshotSetRecord)
+export interface GradientBg {
+  type: 'gradient';
+  color1: string;
+  color2: string;
+  angle: number; // 0–360 degrees
+}
+
+export type Background = string | GradientBg; // string = solid hex
 
 // Target export dimensions
 export interface ExportTarget {

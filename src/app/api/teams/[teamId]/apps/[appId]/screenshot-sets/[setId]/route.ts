@@ -46,6 +46,7 @@ export async function PUT(
       customBg,
       customText,
       customAccent,
+      bgGradient,
       slides,
     } = body;
 
@@ -56,6 +57,7 @@ export async function PUT(
     if ('customBg' in body) data.customBg = customBg ?? null;
     if ('customText' in body) data.customText = customText ?? null;
     if ('customAccent' in body) data.customAccent = customAccent ?? null;
+    if ('bgGradient' in body) data.bgGradient = bgGradient ?? null;
     if (slides !== undefined) data.slides = slides;
 
     const updated = await prisma.screenshotSet.updateMany({

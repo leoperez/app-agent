@@ -34,6 +34,7 @@ import type {
   SlideData,
   ScreenshotSetRecord,
   ExportTarget,
+  GradientBg,
 } from '@/types/screenshots';
 
 // Preview width in the editor
@@ -66,6 +67,8 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [customBg, setCustomBg] = useState('');
   const [customText, setCustomText] = useState('');
   const [customAccent, setCustomAccent] = useState('');
+  const [bgGradient, setBgGradient] = useState<GradientBg | null>(null);
+  const [bgMode, setBgMode] = useState<'solid' | 'gradient'>('solid');
   const [slides, setSlides] = useState<SlideData[]>(defaultSlides());
   const [activeSlide, setActiveSlide] = useState(0);
   const [setName, setSetName] = useState('Untitled set');
@@ -100,6 +103,8 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     setCustomBg(set.customBg ?? '');
     setCustomText(set.customText ?? '');
     setCustomAccent(set.customAccent ?? '');
+    setBgGradient(set.bgGradient ?? null);
+    setBgMode(set.bgGradient ? 'gradient' : 'solid');
     setSlides(set.slides as SlideData[]);
     setSetName(set.name);
     setLocale(set.locale);
@@ -115,6 +120,8 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     setCustomBg('');
     setCustomText('');
     setCustomAccent('');
+    setBgGradient(null);
+    setBgMode('solid');
     setSlides(defaultSlides());
     setSetName('Untitled set');
     setLocale(currentApp?.primaryLocale ?? 'en-US');
@@ -134,6 +141,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
         customBg: customBg || null,
         customText: customText || null,
         customAccent: customAccent || null,
+        bgGradient: bgMode === 'gradient' ? bgGradient : null,
         slides,
       };
       if (activeSet) {
@@ -472,27 +480,112 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           {/* Custom colours */}
           <div className="p-3 border-b border-border space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Custom colours
+              Background
             </p>
-            <div className="flex items-center gap-2">
-              <label className="text-xs w-14 text-muted-foreground">
-                Background
-              </label>
-              <input
-                type="color"
-                value={customBg || theme.bg}
-                onChange={(e) => setCustomBg(e.target.value)}
-                className="w-7 h-7 rounded cursor-pointer border border-border"
-              />
-              {customBg && (
+            {/* Solid / Gradient toggle */}
+            <div className="flex rounded-md overflow-hidden border border-border text-xs">
+              {(['solid', 'gradient'] as const).map((m) => (
                 <button
-                  onClick={() => setCustomBg('')}
-                  className="text-xs text-muted-foreground hover:text-foreground"
+                  key={m}
+                  onClick={() => setBgMode(m)}
+                  className={`flex-1 py-1 capitalize transition-colors ${
+                    bgMode === m
+                      ? 'bg-primary text-primary-foreground font-medium'
+                      : 'hover:bg-muted/50 text-muted-foreground'
+                  }`}
                 >
-                  ✕
+                  {m}
                 </button>
-              )}
+              ))}
             </div>
+
+            {bgMode === 'solid' ? (
+              <div className="flex items-center gap-2">
+                <label className="text-xs w-14 text-muted-foreground">
+                  Colour
+                </label>
+                <input
+                  type="color"
+                  value={customBg || theme.bg}
+                  onChange={(e) => setCustomBg(e.target.value)}
+                  className="w-7 h-7 rounded cursor-pointer border border-border"
+                />
+                {customBg && (
+                  <button
+                    onClick={() => setCustomBg('')}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs w-12 text-muted-foreground">
+                    From
+                  </label>
+                  <input
+                    type="color"
+                    value={bgGradient?.color1 ?? theme.bg}
+                    onChange={(e) =>
+                      setBgGradient((g) => ({
+                        type: 'gradient',
+                        color1: e.target.value,
+                        color2: g?.color2 ?? theme.accent,
+                        angle: g?.angle ?? 135,
+                      }))
+                    }
+                    className="w-7 h-7 rounded cursor-pointer border border-border"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs w-12 text-muted-foreground">
+                    To
+                  </label>
+                  <input
+                    type="color"
+                    value={bgGradient?.color2 ?? theme.accent}
+                    onChange={(e) =>
+                      setBgGradient((g) => ({
+                        type: 'gradient',
+                        color1: g?.color1 ?? theme.bg,
+                        color2: e.target.value,
+                        angle: g?.angle ?? 135,
+                      }))
+                    }
+                    className="w-7 h-7 rounded cursor-pointer border border-border"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs w-12 text-muted-foreground">
+                    Angle
+                  </label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={360}
+                    value={bgGradient?.angle ?? 135}
+                    onChange={(e) =>
+                      setBgGradient((g) => ({
+                        type: 'gradient',
+                        color1: g?.color1 ?? theme.bg,
+                        color2: g?.color2 ?? theme.accent,
+                        angle: Number(e.target.value),
+                      }))
+                    }
+                    className="flex-1 h-1 accent-primary"
+                  />
+                  <span className="text-xs w-8 text-right">
+                    {bgGradient?.angle ?? 135}°
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-2">
+              Text colours
+            </p>
             <div className="flex items-center gap-2">
               <label className="text-xs w-14 text-muted-foreground">Text</label>
               <input
@@ -597,6 +690,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                     layout={layoutId}
                     theme={theme}
                     slide={s}
+                    bgGradient={bgMode === 'gradient' ? bgGradient : null}
                     preview={true}
                     width={100}
                   />
@@ -637,6 +731,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 layout={layoutId}
                 theme={theme}
                 slide={currentSlide}
+                bgGradient={bgMode === 'gradient' ? bgGradient : null}
                 preview={true}
                 width={PREVIEW_W}
               />
@@ -692,6 +787,7 @@ function SetCard({
             layout={set.layoutId as LayoutId}
             theme={theme}
             slide={firstSlide ?? defaultSlides()[0]}
+            bgGradient={set.bgGradient ?? null}
             preview={true}
             width={100}
           />
