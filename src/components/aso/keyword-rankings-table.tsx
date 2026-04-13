@@ -3,7 +3,14 @@
 import { useState } from 'react';
 import { AsoKeyword } from '@/types/aso';
 import KeywordSparkline from './keyword-sparkline';
-import { MdArrowUpward, MdArrowDownward, MdRemove } from 'react-icons/md';
+import {
+  MdArrowUpward,
+  MdArrowDownward,
+  MdRemove,
+  MdNotifications,
+  MdNotificationsOff,
+} from 'react-icons/md';
+import { toast } from 'react-hot-toast';
 
 type SortKey = 'keyword' | 'position' | 'velocity' | 'score';
 type SortDir = 'asc' | 'desc';
@@ -16,6 +23,10 @@ interface RankPoint {
 interface KeywordRankingsTableProps {
   keywords: AsoKeyword[];
   rankings: Record<string, RankPoint[]> | undefined;
+  teamId?: string;
+  appId?: string;
+  locale?: string;
+  onKeywordUpdated?: () => void;
 }
 
 function computeVelocity(history: RankPoint[] | undefined): number | null {
@@ -58,9 +69,43 @@ function VelocityCell({ delta }: { delta: number | null }) {
 export function KeywordRankingsTable({
   keywords,
   rankings,
+  teamId,
+  appId,
+  locale,
+  onKeywordUpdated,
 }: KeywordRankingsTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('position');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [editingThreshold, setEditingThreshold] = useState<string | null>(null);
+  const [thresholdInput, setThresholdInput] = useState('');
+
+  const saveThreshold = async (kw: AsoKeyword) => {
+    if (!teamId || !appId || !locale) return;
+    const val = thresholdInput.trim();
+    const threshold = val === '' ? null : parseInt(val, 10);
+    if (val !== '' && (isNaN(threshold!) || threshold! < 1)) {
+      toast.error('Enter a valid rank (e.g. 10)');
+      return;
+    }
+    try {
+      await fetch(
+        `/api/teams/${teamId}/apps/${appId}/localizations/${locale}/keyword/${kw.id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ positionAlertThreshold: threshold }),
+        }
+      );
+      toast.success(
+        threshold ? `Alert set: rank >${threshold}` : 'Alert removed'
+      );
+      onKeywordUpdated?.();
+    } catch {
+      toast.error('Failed to save alert');
+    } finally {
+      setEditingThreshold(null);
+    }
+  };
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -138,6 +183,14 @@ export function KeywordRankingsTable({
             >
               Score <SortIndicator col="score" />
             </th>
+            {teamId && (
+              <th
+                className="text-center px-2 py-2 font-medium"
+                title="Alert when rank drops below this position"
+              >
+                Alert
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -166,6 +219,59 @@ export function KeywordRankingsTable({
                   <span className="text-muted-foreground">—</span>
                 )}
               </td>
+              {teamId && (
+                <td className="px-2 py-2 text-center">
+                  {editingThreshold === kw.id ? (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        saveThreshold(kw);
+                      }}
+                      className="flex items-center gap-1 justify-center"
+                    >
+                      <input
+                        autoFocus
+                        type="number"
+                        min={1}
+                        placeholder="rank"
+                        value={thresholdInput}
+                        onChange={(e) => setThresholdInput(e.target.value)}
+                        className="w-14 rounded border border-input bg-background px-1 py-0.5 text-xs text-center"
+                        onKeyDown={(e) =>
+                          e.key === 'Escape' && setEditingThreshold(null)
+                        }
+                      />
+                      <button type="submit" className="text-primary text-xs">
+                        ✓
+                      </button>
+                    </form>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setEditingThreshold(kw.id);
+                        setThresholdInput(
+                          kw.positionAlertThreshold?.toString() ?? ''
+                        );
+                      }}
+                      title={
+                        kw.positionAlertThreshold
+                          ? `Alert if rank >${kw.positionAlertThreshold}`
+                          : 'Set position alert'
+                      }
+                      className="flex items-center justify-center w-full"
+                    >
+                      {kw.positionAlertThreshold ? (
+                        <span className="flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
+                          <MdNotifications className="h-3 w-3" />
+                          {kw.positionAlertThreshold}
+                        </span>
+                      ) : (
+                        <MdNotificationsOff className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                      )}
+                    </button>
+                  )}
+                </td>
+              )}
               <td className="px-2 py-2 text-center">
                 {kw.overall !== null ? (
                   <span

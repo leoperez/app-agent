@@ -445,14 +445,15 @@ model AsoKeyword {
   store           Store
   platform        Platform
   locale          String
-  keyword         String
-  trafficScore    Float?
-  difficultyScore Float?
-  position        Int?
-  overall         Float?
-  lastCheckedAt   DateTime  @default(now())
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  keyword                String
+  trafficScore           Float?
+  difficultyScore        Float?
+  position               Int?
+  overall                Float?
+  positionAlertThreshold Int?    // alert when position drops below this rank (e.g. 10 = alert if >10)
+  lastCheckedAt          DateTime  @default(now())
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   @@unique([appId, store, platform, locale, keyword])
   @@index([appId])

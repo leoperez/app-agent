@@ -42,12 +42,14 @@ export async function GET(request: NextRequest) {
     // Fetch all keywords with current position and team members
     const keywords = await prisma.asoKeyword.findMany({
       select: {
+        id: true,
         appId: true,
         store: true,
         platform: true,
         locale: true,
         keyword: true,
         position: true, // previous position — used for drop detection
+        positionAlertThreshold: true, // per-keyword custom alert threshold
         app: {
           select: {
             storeAppId: true,
@@ -152,11 +154,18 @@ export async function GET(request: NextRequest) {
               },
             });
 
-            // Detect significant drops
+            // Detect significant drops (global threshold or per-keyword threshold)
+            const customThreshold = kw.positionAlertThreshold;
+            const crossedCustomThreshold =
+              customThreshold != null &&
+              prevPosition != null &&
+              prevPosition <= customThreshold &&
+              (newPosition === null || newPosition > customThreshold);
             const isSignificantDrop =
-              prevPosition != null && // was ranked before
-              (newPosition === null || // dropped out of top 100
-                newPosition - prevPosition >= DROP_THRESHOLD); // fell ≥ threshold
+              crossedCustomThreshold ||
+              (prevPosition != null && // was ranked before
+                (newPosition === null || // dropped out of top 100
+                  newPosition - prevPosition >= DROP_THRESHOLD)); // fell ≥ threshold
 
             // Detect significant rise: ≥RISE_THRESHOLD improvement OR top-10 entry
             const isSignificantRise =

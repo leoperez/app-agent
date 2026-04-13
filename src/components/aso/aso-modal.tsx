@@ -366,6 +366,7 @@ export function ASOModal({
       trafficScore: null,
       difficultyScore: null,
       position: null,
+      positionAlertThreshold: null,
       lastCheckedAt: new Date(),
     };
 

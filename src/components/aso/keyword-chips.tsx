@@ -951,6 +951,10 @@ export default function KeywordChips({
               <KeywordRankingsTable
                 keywords={filteredKeywords}
                 rankings={rankings}
+                teamId={teamInfo?.currentTeam?.id}
+                appId={appInfo?.currentApp?.id}
+                locale={locale}
+                onKeywordUpdated={undefined}
               />
             </div>
           </motion.div>
