@@ -1,0 +1,436 @@
+'use client';
+
+import React from 'react';
+import type { LayoutId, SlideData, ResolvedTheme } from '@/types/screenshots';
+
+interface SlideCanvasProps {
+  layout: LayoutId;
+  theme: ResolvedTheme;
+  slide: SlideData;
+  screenshotDataUrl?: string; // optional user-uploaded image
+  /** Render at preview size (true) or export size (false). Default: true */
+  preview?: boolean;
+  /** Width in px. Default: 300 */
+  width?: number;
+}
+
+// Pure CSS phone mockup — no external assets needed
+function PhoneMockup({
+  screenshot,
+  screenColor,
+  borderColor,
+  width,
+}: {
+  screenshot?: string;
+  screenColor: string;
+  borderColor: string;
+  width: number;
+}) {
+  const phoneW = width;
+  const phoneH = Math.round(width * 2.05);
+  const bezel = Math.round(width * 0.04);
+  const radius = Math.round(width * 0.12);
+  const screenRadius = Math.round(width * 0.09);
+  const notchW = Math.round(width * 0.28);
+  const notchH = Math.round(width * 0.035);
+
+  return (
+    <div
+      style={{
+        width: phoneW,
+        height: phoneH,
+        borderRadius: radius,
+        border: `${bezel}px solid ${borderColor}`,
+        backgroundColor: borderColor,
+        position: 'relative',
+        overflow: 'hidden',
+        flexShrink: 0,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+      }}
+    >
+      {/* screen */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: bezel * 0.5,
+          borderRadius: screenRadius,
+          backgroundColor: screenColor,
+          overflow: 'hidden',
+        }}
+      >
+        {screenshot ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={screenshot}
+            alt="App screenshot"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: 0.3,
+            }}
+          >
+            <svg width="40%" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+            </svg>
+          </div>
+        )}
+      </div>
+      {/* dynamic island / notch */}
+      <div
+        style={{
+          position: 'absolute',
+          top: bezel * 1.5,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: notchW,
+          height: notchH,
+          borderRadius: notchH / 2,
+          backgroundColor: borderColor,
+          zIndex: 10,
+        }}
+      />
+    </div>
+  );
+}
+
+function Badge({
+  text,
+  accent,
+  textColor,
+}: {
+  text: string;
+  accent: string;
+  textColor: string;
+}) {
+  return (
+    <div
+      style={{
+        display: 'inline-block',
+        padding: '4px 12px',
+        borderRadius: 999,
+        backgroundColor: accent,
+        color: textColor,
+        fontWeight: 700,
+        fontSize: 13,
+        letterSpacing: 0.5,
+        opacity: 0.95,
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+function TextBlock({
+  slide,
+  theme,
+  align = 'center',
+  width,
+}: {
+  slide: SlideData;
+  theme: ResolvedTheme;
+  align?: 'left' | 'center' | 'right';
+  width?: number;
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+        textAlign: align,
+        alignItems:
+          align === 'center'
+            ? 'center'
+            : align === 'left'
+              ? 'flex-start'
+              : 'flex-end',
+        maxWidth: width ?? '100%',
+      }}
+    >
+      {slide.badge && (
+        <Badge text={slide.badge} accent={theme.accent} textColor={theme.bg} />
+      )}
+      <h2
+        style={{
+          margin: 0,
+          fontSize: slide.headlineFontSize,
+          fontWeight: 800,
+          color: theme.text,
+          lineHeight: 1.1,
+          letterSpacing: -1,
+          fontFamily:
+            '-apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif',
+        }}
+      >
+        {slide.headline}
+      </h2>
+      <p
+        style={{
+          margin: 0,
+          fontSize: slide.subtitleFontSize,
+          color: theme.accent,
+          lineHeight: 1.5,
+          fontFamily:
+            '-apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
+          fontWeight: 400,
+          opacity: 0.9,
+        }}
+      >
+        {slide.subtitle}
+      </p>
+    </div>
+  );
+}
+
+export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
+  function SlideCanvas(
+    { layout, theme, slide, screenshotDataUrl, preview = true, width = 300 },
+    ref
+  ) {
+    // Preview aspect ratio: iPhone-ish 9:19.5
+    const height = Math.round(width * (19.5 / 9));
+    const pad = Math.round(width * 0.08);
+    const phonePreviewW = Math.round(width * 0.52);
+
+    const containerStyle: React.CSSProperties = {
+      width,
+      height,
+      backgroundColor: theme.bg,
+      position: 'relative',
+      overflow: 'hidden',
+      display: 'flex',
+      borderRadius: preview ? 12 : 0,
+    };
+
+    // ── centered: text top, phone bottom ─────────────────────────────────────
+    if (layout === 'centered') {
+      return (
+        <div ref={ref} style={containerStyle}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              width: '100%',
+              height: '100%',
+              padding: pad,
+              paddingBottom: 0,
+              gap: pad,
+            }}
+          >
+            <TextBlock slide={slide} theme={theme} align="center" />
+            <div
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+              }}
+            >
+              <PhoneMockup
+                screenshot={screenshotDataUrl}
+                screenColor={theme.phoneScreen}
+                borderColor={theme.phoneBorder}
+                width={phonePreviewW}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ── bottom-caption: phone fills frame, caption at bottom ─────────────────
+    if (layout === 'bottom-caption') {
+      return (
+        <div ref={ref} style={containerStyle}>
+          {/* phone fills top 75% */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: phonePreviewW * 1.15,
+            }}
+          >
+            <PhoneMockup
+              screenshot={screenshotDataUrl}
+              screenColor={theme.phoneScreen}
+              borderColor={theme.phoneBorder}
+              width={phonePreviewW * 1.15}
+            />
+          </div>
+          {/* caption at bottom */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              padding: pad,
+              paddingTop: pad * 0.5,
+              background: `linear-gradient(transparent, ${theme.bg} 40%)`,
+            }}
+          >
+            <TextBlock slide={slide} theme={theme} align="center" />
+          </div>
+        </div>
+      );
+    }
+
+    // ── split-left: text left, phone right ───────────────────────────────────
+    if (layout === 'split-left') {
+      return (
+        <div
+          ref={ref}
+          style={{
+            ...containerStyle,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              padding: pad,
+            }}
+          >
+            <TextBlock slide={slide} theme={theme} align="left" />
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingRight: pad * 0.5,
+              paddingTop: pad,
+              paddingBottom: pad,
+            }}
+          >
+            <PhoneMockup
+              screenshot={screenshotDataUrl}
+              screenColor={theme.phoneScreen}
+              borderColor={theme.phoneBorder}
+              width={phonePreviewW * 0.85}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // ── split-right: phone left, text right ──────────────────────────────────
+    if (layout === 'split-right') {
+      return (
+        <div
+          ref={ref}
+          style={{
+            ...containerStyle,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingLeft: pad * 0.5,
+              paddingTop: pad,
+              paddingBottom: pad,
+            }}
+          >
+            <PhoneMockup
+              screenshot={screenshotDataUrl}
+              screenColor={theme.phoneScreen}
+              borderColor={theme.phoneBorder}
+              width={phonePreviewW * 0.85}
+            />
+          </div>
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              padding: pad,
+            }}
+          >
+            <TextBlock slide={slide} theme={theme} align="left" />
+          </div>
+        </div>
+      );
+    }
+
+    // ── hero: big headline, small phone ──────────────────────────────────────
+    return (
+      <div ref={ref} style={containerStyle}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            width: '100%',
+            height: '100%',
+            padding: pad,
+            gap: pad * 0.75,
+          }}
+        >
+          {slide.badge && (
+            <Badge
+              text={slide.badge}
+              accent={theme.accent}
+              textColor={theme.bg}
+            />
+          )}
+          <h2
+            style={{
+              margin: 0,
+              fontSize: slide.headlineFontSize * 1.3,
+              fontWeight: 900,
+              color: theme.text,
+              lineHeight: 1.0,
+              letterSpacing: -2,
+              textAlign: 'center',
+              fontFamily:
+                '-apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif',
+            }}
+          >
+            {slide.headline}
+          </h2>
+          <p
+            style={{
+              margin: 0,
+              fontSize: slide.subtitleFontSize,
+              color: theme.accent,
+              textAlign: 'center',
+              fontFamily:
+                '-apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
+              opacity: 0.9,
+            }}
+          >
+            {slide.subtitle}
+          </p>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+            <PhoneMockup
+              screenshot={screenshotDataUrl}
+              screenColor={theme.phoneScreen}
+              borderColor={theme.phoneBorder}
+              width={phonePreviewW * 0.7}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+);

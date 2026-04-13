@@ -10,6 +10,7 @@ import {
   MdOutlineRocketLaunch,
   MdOutlineFileDownload,
   MdOutlineFileUpload,
+  MdPhotoLibrary,
 } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import {
@@ -75,6 +76,7 @@ import { useTranslations } from 'next-intl';
 import { useAnalytics } from '@/lib/analytics';
 import { GlobalOverview } from '@/components/dashboard/global-overview';
 import { RankingsCompare } from '@/components/dashboard/rankings-compare';
+import { ScreenshotStudio } from '@/components/screenshots/screenshot-studio';
 import { useGetTeamOverview } from '@/lib/swr/team';
 import { CustomProductPages } from '@/components/aso/custom-product-pages';
 import { StoreExperiments } from '@/components/aso/store-experiments';
@@ -131,6 +133,7 @@ export default function Home() {
   const [showPullDialog, setShowPullDialog] = useState(false);
   const [showPushDialog, setShowPushDialog] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [showScreenshotStudio, setShowScreenshotStudio] = useState(false);
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [approvalNote, setApprovalNote] = useState('');
   const [isRequestingApproval, setIsRequestingApproval] = useState(false);
@@ -491,6 +494,22 @@ export default function Home() {
 
         {versionStatus?.upToDate && (
           <div className="flex items-center space-x-2">
+            {/* Screenshot Studio */}
+            <div>
+              <Button
+                variant="outline"
+                onClick={() => setShowScreenshotStudio(true)}
+                className="flex items-center gap-1"
+                data-tooltip-id="screenshots-tooltip"
+              >
+                <MdPhotoLibrary className="w-5 h-5" />
+                Screenshots
+              </Button>
+              <Tooltip id="screenshots-tooltip" place="top">
+                Create App Store screenshots with AI
+              </Tooltip>
+            </div>
+
             <div>
               <Button
                 variant="outline"
@@ -880,6 +899,13 @@ export default function Home() {
           appId={currentApp?.id || ''}
           versionId={versionStatus?.localVersion?.id || ''}
         />
+      )}
+
+      {/* Screenshot Studio — full-screen overlay */}
+      {showScreenshotStudio && (
+        <div className="fixed inset-0 z-50 bg-background flex flex-col">
+          <ScreenshotStudio onClose={() => setShowScreenshotStudio(false)} />
+        </div>
       )}
     </div>
   );
