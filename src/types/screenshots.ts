@@ -26,6 +26,7 @@ export interface ScreenshotSetRecord {
   layoutId: LayoutId;
   themeId: ThemeId;
   fontId: FontId;
+  decorationId: DecorationId;
   customBg: string | null;
   customText: string | null;
   customAccent: string | null;
@@ -63,6 +64,14 @@ export type FontId =
   | 'dm-sans'
   | 'raleway'
   | 'bebas';
+
+export type DecorationId =
+  | 'none'
+  | 'circles'
+  | 'blob'
+  | 'dots'
+  | 'diagonal-lines'
+  | 'confetti';
 
 // Target export dimensions
 export interface ExportTarget {

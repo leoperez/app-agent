@@ -660,7 +660,8 @@ model ScreenshotSet {
   name     String @default("Untitled set")
   layoutId String // "centered" | "bottom-caption" | "split-left" | "split-right" | "hero"
   themeId  String // "midnight" | "ivory" | "violet" | "ocean" | "ember"
-  fontId   String @default("system") // see FontId type
+  fontId       String @default("system") // see FontId type
+  decorationId String @default("none")   // see DecorationId type
   // custom color overrides (optional)
   customBg      String?
   customText    String?

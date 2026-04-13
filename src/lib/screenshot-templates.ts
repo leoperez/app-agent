@@ -2,6 +2,7 @@ import type {
   LayoutId,
   ThemeId,
   FontId,
+  DecorationId,
   ResolvedTheme,
   ExportTarget,
   SlideData,
@@ -244,6 +245,23 @@ export const EXPORT_TARGETS: ExportTarget[] = [
     width: 1080,
     height: 1920,
   },
+];
+
+// ─── Decorations ─────────────────────────────────────────────────────────────
+
+export interface DecorationDefinition {
+  id: DecorationId;
+  label: string;
+  emoji: string;
+}
+
+export const DECORATIONS: DecorationDefinition[] = [
+  { id: 'none', label: 'None', emoji: '—' },
+  { id: 'circles', label: 'Circles', emoji: '○' },
+  { id: 'blob', label: 'Blob', emoji: '◕' },
+  { id: 'dots', label: 'Dot grid', emoji: '⠿' },
+  { id: 'diagonal-lines', label: 'Lines', emoji: '╱' },
+  { id: 'confetti', label: 'Confetti', emoji: '✦' },
 ];
 
 // ─── Default slides ──────────────────────────────────────────────────────────

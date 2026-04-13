@@ -39,6 +39,7 @@ import {
   LAYOUTS,
   THEMES,
   FONTS,
+  DECORATIONS,
   resolveTheme,
   resolveFont,
   defaultSlides,
@@ -51,6 +52,7 @@ import type {
   LayoutId,
   ThemeId,
   FontId,
+  DecorationId,
   SlideData,
   ScreenshotSetRecord,
   ExportTarget,
@@ -90,6 +92,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [bgGradient, setBgGradient] = useState<GradientBg | null>(null);
   const [bgMode, setBgMode] = useState<'solid' | 'gradient'>('solid');
   const [fontId, setFontId] = useState<FontId>('system');
+  const [decorationId, setDecorationId] = useState<DecorationId>('none');
 
   // Load Google Font whenever fontId changes
   useEffect(() => {
@@ -165,6 +168,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     setBgGradient(set.bgGradient ?? null);
     setBgMode(set.bgGradient ? 'gradient' : 'solid');
     setFontId((set.fontId as FontId) ?? 'system');
+    setDecorationId((set.decorationId as DecorationId) ?? 'none');
     setSlides(set.slides as SlideData[]);
     setSetName(set.name);
     setLocale(set.locale);
@@ -183,6 +187,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     setBgGradient(null);
     setBgMode('solid');
     setFontId('system');
+    setDecorationId('none');
     setSlides(defaultSlides());
     setSetName('Untitled set');
     setLocale(currentApp?.primaryLocale ?? 'en-US');
@@ -200,6 +205,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
         layoutId,
         themeId,
         fontId,
+        decorationId,
         customBg: customBg || null,
         customText: customText || null,
         customAccent: customAccent || null,
@@ -709,6 +715,30 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             </div>
           </div>
 
+          {/* Decoration */}
+          <div className="p-3 border-b border-border">
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground block mb-1">
+              Decoration
+            </label>
+            <div className="grid grid-cols-3 gap-1">
+              {DECORATIONS.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => setDecorationId(d.id)}
+                  title={d.label}
+                  className={`flex flex-col items-center gap-0.5 px-1 py-1.5 rounded text-[10px] transition-colors ${
+                    decorationId === d.id
+                      ? 'bg-primary/10 text-primary font-medium ring-1 ring-primary/40'
+                      : 'hover:bg-muted/50 text-muted-foreground'
+                  }`}
+                >
+                  <span className="text-base leading-none">{d.emoji}</span>
+                  <span>{d.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Locale */}
           {locales.length > 1 && (
             <div className="p-3 border-b border-border">
@@ -774,6 +804,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                     layoutId={layoutId}
                     theme={theme}
                     bgGradient={bgMode === 'gradient' ? bgGradient : null}
+                    decorationId={decorationId}
                     fontFamily={resolveFont(fontId).family}
                     slideRef={(el) => {
                       slideRefs.current[i] = el;
@@ -806,6 +837,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 theme={theme}
                 slide={currentSlide}
                 bgGradient={bgMode === 'gradient' ? bgGradient : null}
+                decorationId={decorationId}
                 fontFamily={resolveFont(fontId).family}
                 preview={true}
                 width={PREVIEW_W}
@@ -846,6 +878,7 @@ function SortableSlide({
   layoutId,
   theme,
   bgGradient,
+  decorationId,
   fontFamily,
   slideRef,
   onSelect,
@@ -860,6 +893,7 @@ function SortableSlide({
   layoutId: LayoutId;
   theme: ReturnType<typeof resolveTheme>;
   bgGradient: GradientBg | null;
+  decorationId: DecorationId;
   fontFamily: string;
   slideRef: (el: HTMLDivElement | null) => void;
   onSelect: () => void;
@@ -906,6 +940,7 @@ function SortableSlide({
           theme={theme}
           slide={slide}
           bgGradient={bgGradient}
+          decorationId={decorationId}
           fontFamily={fontFamily}
           preview={true}
           width={100}
@@ -971,6 +1006,7 @@ function SetCard({
             theme={theme}
             slide={firstSlide ?? defaultSlides()[0]}
             bgGradient={set.bgGradient ?? null}
+            decorationId={(set.decorationId as DecorationId) ?? 'none'}
             fontFamily={resolveFont((set.fontId as FontId) ?? 'system').family}
             preview={true}
             width={100}

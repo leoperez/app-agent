@@ -44,6 +44,7 @@ export async function PUT(
       layoutId,
       themeId,
       fontId,
+      decorationId,
       customBg,
       customText,
       customAccent,
@@ -56,6 +57,7 @@ export async function PUT(
     if (layoutId !== undefined) data.layoutId = layoutId;
     if (themeId !== undefined) data.themeId = themeId;
     if (fontId !== undefined) data.fontId = fontId;
+    if (decorationId !== undefined) data.decorationId = decorationId;
     if ('customBg' in body) data.customBg = customBg ?? null;
     if ('customText' in body) data.customText = customText ?? null;
     if ('customAccent' in body) data.customAccent = customAccent ?? null;

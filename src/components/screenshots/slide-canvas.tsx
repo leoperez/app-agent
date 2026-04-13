@@ -6,6 +6,7 @@ import type {
   SlideData,
   ResolvedTheme,
   GradientBg,
+  DecorationId,
 } from '@/types/screenshots';
 import { IPhoneFrame } from './phone-frame';
 import { bgToCss } from '@/lib/screenshot-templates';
@@ -15,12 +16,201 @@ interface SlideCanvasProps {
   theme: ResolvedTheme;
   slide: SlideData;
   bgGradient?: GradientBg | null;
+  decorationId?: DecorationId;
   /** CSS font-family string — defaults to system font */
   fontFamily?: string;
   /** Render at preview size (true) or export size (false). Default: true */
   preview?: boolean;
   /** Width in px. Default: 300 */
   width?: number;
+}
+
+// ── Decoration overlay SVG ────────────────────────────────────────────────────
+function DecorationOverlay({
+  id,
+  width,
+  height,
+  accent,
+}: {
+  id: DecorationId;
+  width: number;
+  height: number;
+  accent: string;
+}) {
+  if (id === 'none') return null;
+
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    inset: 0,
+    width,
+    height,
+    pointerEvents: 'none',
+    overflow: 'hidden',
+  };
+
+  if (id === 'circles') {
+    return (
+      <svg
+        style={style}
+        viewBox={`0 0 ${width} ${height}`}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle
+          cx={width * 0.85}
+          cy={height * 0.12}
+          r={width * 0.35}
+          fill={accent}
+          fillOpacity={0.08}
+        />
+        <circle
+          cx={width * 0.1}
+          cy={height * 0.78}
+          r={width * 0.28}
+          fill={accent}
+          fillOpacity={0.07}
+        />
+        <circle
+          cx={width * 0.5}
+          cy={height * 0.5}
+          r={width * 0.18}
+          fill={accent}
+          fillOpacity={0.04}
+        />
+      </svg>
+    );
+  }
+
+  if (id === 'blob') {
+    // Organic blob shapes using ellipses + rotation
+    return (
+      <svg
+        style={style}
+        viewBox={`0 0 ${width} ${height}`}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <ellipse
+          cx={width * 0.8}
+          cy={height * 0.18}
+          rx={width * 0.45}
+          ry={width * 0.3}
+          fill={accent}
+          fillOpacity={0.09}
+          transform={`rotate(-30 ${width * 0.8} ${height * 0.18})`}
+        />
+        <ellipse
+          cx={width * 0.2}
+          cy={height * 0.82}
+          rx={width * 0.38}
+          ry={width * 0.25}
+          fill={accent}
+          fillOpacity={0.07}
+          transform={`rotate(20 ${width * 0.2} ${height * 0.82})`}
+        />
+      </svg>
+    );
+  }
+
+  if (id === 'dots') {
+    const spacing = width * 0.12;
+    const dotR = spacing * 0.08;
+    const dots: React.ReactNode[] = [];
+    for (let x = spacing; x < width; x += spacing) {
+      for (let y = spacing; y < height; y += spacing) {
+        dots.push(
+          <circle
+            key={`${x}-${y}`}
+            cx={x}
+            cy={y}
+            r={dotR}
+            fill={accent}
+            fillOpacity={0.18}
+          />
+        );
+      }
+    }
+    return (
+      <svg
+        style={style}
+        viewBox={`0 0 ${width} ${height}`}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {dots}
+      </svg>
+    );
+  }
+
+  if (id === 'diagonal-lines') {
+    const gap = width * 0.1;
+    const lines: React.ReactNode[] = [];
+    for (let i = -height; i < width + height; i += gap) {
+      lines.push(
+        <line
+          key={i}
+          x1={i}
+          y1={0}
+          x2={i + height}
+          y2={height}
+          stroke={accent}
+          strokeOpacity={0.1}
+          strokeWidth={width * 0.015}
+        />
+      );
+    }
+    return (
+      <svg
+        style={style}
+        viewBox={`0 0 ${width} ${height}`}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {lines}
+      </svg>
+    );
+  }
+
+  if (id === 'confetti') {
+    const items = [
+      { x: 0.12, y: 0.08, r: 3, rot: 25 },
+      { x: 0.82, y: 0.05, r: 2.5, rot: -15 },
+      { x: 0.07, y: 0.45, r: 4, rot: 40 },
+      { x: 0.9, y: 0.35, r: 2, rot: 60 },
+      { x: 0.15, y: 0.85, r: 3.5, rot: -30 },
+      { x: 0.75, y: 0.88, r: 2.5, rot: 10 },
+      { x: 0.45, y: 0.04, r: 2, rot: 55 },
+      { x: 0.6, y: 0.92, r: 3, rot: -45 },
+      { x: 0.93, y: 0.65, r: 4, rot: 20 },
+      { x: 0.05, y: 0.65, r: 2, rot: -60 },
+      { x: 0.35, y: 0.95, r: 3, rot: 35 },
+      { x: 0.7, y: 0.15, r: 2.5, rot: -20 },
+    ];
+    return (
+      <svg
+        style={style}
+        viewBox={`0 0 ${width} ${height}`}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {items.map((item, i) => {
+          const cx = item.x * width;
+          const cy = item.y * height;
+          const size = (item.r / 100) * width * 8;
+          return (
+            <rect
+              key={i}
+              x={cx - size / 2}
+              y={cy - size / 2}
+              width={size}
+              height={size * 0.6}
+              rx={size * 0.15}
+              fill={accent}
+              fillOpacity={0.22}
+              transform={`rotate(${item.rot} ${cx} ${cy})`}
+            />
+          );
+        })}
+      </svg>
+    );
+  }
+
+  return null;
 }
 
 // Thin wrapper so call sites stay the same
@@ -140,6 +330,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
       theme,
       slide,
       bgGradient,
+      decorationId = 'none',
       fontFamily,
       preview = true,
       width = 300,
@@ -170,6 +361,12 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
     if (layout === 'centered') {
       return (
         <div ref={ref} style={containerStyle}>
+          <DecorationOverlay
+            id={decorationId}
+            width={width}
+            height={height}
+            accent={theme.accent}
+          />
           <div
             style={{
               display: 'flex',
@@ -212,6 +409,12 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
     if (layout === 'bottom-caption') {
       return (
         <div ref={ref} style={containerStyle}>
+          <DecorationOverlay
+            id={decorationId}
+            width={width}
+            height={height}
+            accent={theme.accent}
+          />
           {/* phone fills top 75% */}
           <div
             style={{
@@ -263,6 +466,12 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             alignItems: 'center',
           }}
         >
+          <DecorationOverlay
+            id={decorationId}
+            width={width}
+            height={height}
+            accent={theme.accent}
+          />
           <div
             style={{
               flex: 1,
@@ -311,6 +520,12 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             alignItems: 'center',
           }}
         >
+          <DecorationOverlay
+            id={decorationId}
+            width={width}
+            height={height}
+            accent={theme.accent}
+          />
           <div
             style={{
               display: 'flex',
@@ -351,6 +566,12 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
     // ── hero: big headline, small phone ──────────────────────────────────────
     return (
       <div ref={ref} style={containerStyle}>
+        <DecorationOverlay
+          id={decorationId}
+          width={width}
+          height={height}
+          accent={theme.accent}
+        />
         <div
           style={{
             display: 'flex',
