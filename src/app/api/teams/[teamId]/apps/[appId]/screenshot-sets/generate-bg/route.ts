@@ -42,7 +42,7 @@ export async function POST(
       response_format: 'url',
     });
 
-    const imageUrl = response.data[0]?.url;
+    const imageUrl = response.data?.[0]?.url;
     if (!imageUrl) {
       return NextResponse.json(
         { error: 'Image generation failed' },
