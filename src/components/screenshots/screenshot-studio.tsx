@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useUndoRedo } from '@/hooks/use-undo-redo';
 import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
 import { toast } from 'react-hot-toast';
@@ -40,6 +41,8 @@ import {
   MdDragIndicator,
   MdCopyAll,
   MdScience,
+  MdUndo,
+  MdRedo,
   MdZoomIn,
   MdZoomOut,
 } from 'react-icons/md';
@@ -175,6 +178,133 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
 
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
 
+  // ── Undo / Redo ───────────────────────────────────────────────────────────
+  type DesignSnapshot = {
+    slides: SlideData[];
+    layoutId: LayoutId;
+    themeId: ThemeId;
+    fontId: FontId;
+    decorationId: DecorationId;
+    customBg: string;
+    customText: string;
+    customAccent: string;
+    bgGradient: GradientBg | null;
+    bgMode: 'solid' | 'gradient';
+  };
+
+  const {
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    reset: resetHistory,
+    present: _histPresent,
+    setPresent: pushHistory,
+  } = useUndoRedo<DesignSnapshot>({
+    slides,
+    layoutId,
+    themeId,
+    fontId,
+    decorationId,
+    customBg,
+    customText,
+    customAccent,
+    bgGradient,
+    bgMode,
+  });
+
+  // Debounce: push to history 600ms after the last design change
+  const histDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isRestoring = useRef(false);
+
+  useEffect(() => {
+    if (isRestoring.current) return;
+    if (histDebounce.current) clearTimeout(histDebounce.current);
+    histDebounce.current = setTimeout(() => {
+      pushHistory({
+        slides,
+        layoutId,
+        themeId,
+        fontId,
+        decorationId,
+        customBg,
+        customText,
+        customAccent,
+        bgGradient,
+        bgMode,
+      });
+    }, 600);
+    return () => {
+      if (histDebounce.current) clearTimeout(histDebounce.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    slides,
+    layoutId,
+    themeId,
+    fontId,
+    decorationId,
+    customBg,
+    customText,
+    customAccent,
+    bgGradient,
+    bgMode,
+  ]);
+
+  const applySnapshot = useCallback((snap: DesignSnapshot) => {
+    isRestoring.current = true;
+    setSlides(snap.slides);
+    setLayoutId(snap.layoutId);
+    setThemeId(snap.themeId);
+    setFontId(snap.fontId);
+    setDecorationId(snap.decorationId);
+    setCustomBg(snap.customBg);
+    setCustomText(snap.customText);
+    setCustomAccent(snap.customAccent);
+    setBgGradient(snap.bgGradient);
+    setBgMode(snap.bgMode);
+    // Allow effects to settle before accepting new history entries
+    requestAnimationFrame(() => {
+      isRestoring.current = false;
+    });
+  }, []);
+
+  const handleUndo = useCallback(() => {
+    // We need to get the snapshot from the undo stack directly
+    // Since canUndo is true, undo() will update `present`
+    // We use a ref-based approach: call undo then apply via useEffect
+    undo();
+  }, [undo]);
+
+  const handleRedo = useCallback(() => {
+    redo();
+  }, [redo]);
+
+  // Apply the present snapshot when it changes due to undo/redo
+  const prevPresent = useRef(_histPresent);
+  useEffect(() => {
+    if (_histPresent !== prevPresent.current) {
+      prevPresent.current = _histPresent;
+      applySnapshot(_histPresent);
+    }
+  }, [_histPresent, applySnapshot]);
+
+  // Keyboard shortcut: Cmd/Ctrl+Z and Cmd/Ctrl+Shift+Z
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      if (e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (canUndo) handleUndo();
+      } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
+        e.preventDefault();
+        if (canRedo) handleRedo();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [canUndo, canRedo, handleUndo, handleRedo]);
+
   // Drag-and-drop sensors — require 8px movement to start drag
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -223,6 +353,19 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     setLocale(set.locale);
     setActiveSlide(0);
     setView('editor');
+    // Clear undo history for the freshly loaded set
+    resetHistory({
+      slides: set.slides as SlideData[],
+      layoutId: set.layoutId as LayoutId,
+      themeId: set.themeId as ThemeId,
+      fontId: (set.fontId as FontId) ?? 'system',
+      decorationId: (set.decorationId as DecorationId) ?? 'none',
+      customBg: set.customBg ?? '',
+      customText: set.customText ?? '',
+      customAccent: set.customAccent ?? '',
+      bgGradient: set.bgGradient ?? null,
+      bgMode: set.bgGradient ? 'gradient' : 'solid',
+    });
   };
 
   // ── Start a new set ───────────────────────────────────────────────────────
@@ -242,6 +385,18 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     setLocale(currentApp?.primaryLocale ?? 'en-US');
     setActiveSlide(0);
     setView('editor');
+    resetHistory({
+      slides: defaultSlides(),
+      layoutId: 'centered',
+      themeId: 'midnight',
+      fontId: 'system',
+      decorationId: 'none',
+      customBg: '',
+      customText: '',
+      customAccent: '',
+      bgGradient: null,
+      bgMode: 'solid',
+    });
   };
 
   // ── Apply a template ──────────────────────────────────────────────────────
@@ -868,6 +1023,26 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           >
             <MdAutoAwesome className="h-3.5 w-3.5 mr-1" />
             {generating ? 'Generating…' : 'AI texts'}
+          </Button>
+
+          {/* Undo / Redo */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleUndo}
+            disabled={!canUndo}
+            title="Undo (⌘Z)"
+          >
+            <MdUndo className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRedo}
+            disabled={!canRedo}
+            title="Redo (⌘⇧Z)"
+          >
+            <MdRedo className="h-3.5 w-3.5" />
           </Button>
 
           {/* Save */}
