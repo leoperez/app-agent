@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { AsoKeyword } from '@/types/aso';
 import KeywordSparkline from './keyword-sparkline';
+import { KeywordHistoryChart } from './keyword-history-chart';
 import {
   MdArrowUpward,
   MdArrowDownward,
@@ -78,6 +79,7 @@ export function KeywordRankingsTable({
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [editingThreshold, setEditingThreshold] = useState<string | null>(null);
   const [thresholdInput, setThresholdInput] = useState('');
+  const [chartKeyword, setChartKeyword] = useState<string | null>(null);
 
   const saveThreshold = async (kw: AsoKeyword) => {
     if (!teamId || !appId || !locale) return;
@@ -154,145 +156,167 @@ export function KeywordRankingsTable({
   if (keywords.length === 0) return null;
 
   return (
-    <div className="overflow-x-auto rounded-md border border-border">
-      <table className="w-full text-xs">
-        <thead>
-          <tr className="border-b border-border bg-muted/30 text-muted-foreground">
-            <th
-              className="text-left px-3 py-2 font-medium cursor-pointer select-none hover:text-foreground"
-              onClick={() => toggleSort('keyword')}
-            >
-              Keyword <SortIndicator col="keyword" />
-            </th>
-            <th
-              className="text-center px-2 py-2 font-medium cursor-pointer select-none hover:text-foreground"
-              onClick={() => toggleSort('position')}
-            >
-              Rank <SortIndicator col="position" />
-            </th>
-            <th
-              className="text-center px-2 py-2 font-medium cursor-pointer select-none hover:text-foreground"
-              onClick={() => toggleSort('velocity')}
-            >
-              7d <SortIndicator col="velocity" />
-            </th>
-            <th className="text-center px-2 py-2 font-medium">30d trend</th>
-            <th
-              className="text-center px-2 py-2 font-medium cursor-pointer select-none hover:text-foreground"
-              onClick={() => toggleSort('score')}
-            >
-              Score <SortIndicator col="score" />
-            </th>
-            {teamId && (
+    <>
+      <div className="overflow-x-auto rounded-md border border-border">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-border bg-muted/30 text-muted-foreground">
               <th
-                className="text-center px-2 py-2 font-medium"
-                title="Alert when rank drops below this position"
+                className="text-left px-3 py-2 font-medium cursor-pointer select-none hover:text-foreground"
+                onClick={() => toggleSort('keyword')}
               >
-                Alert
+                Keyword <SortIndicator col="keyword" />
               </th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map(({ kw, position, velocity, history }) => (
-            <tr
-              key={kw.keyword}
-              className="border-b border-border/40 last:border-0 hover:bg-muted/20"
-            >
-              <td className="px-3 py-2 font-medium max-w-[160px] truncate">
-                {kw.keyword}
-              </td>
-              <td className="px-2 py-2 text-center">
-                {position !== null && position >= 0 ? (
-                  <span className="font-semibold">#{position}</span>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-              </td>
-              <td className="px-2 py-2 text-center">
-                <VelocityCell delta={velocity} />
-              </td>
-              <td className="px-2 py-2 flex justify-center">
-                {history && history.length >= 2 ? (
-                  <KeywordSparkline data={history} width={72} height={24} />
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-              </td>
+              <th
+                className="text-center px-2 py-2 font-medium cursor-pointer select-none hover:text-foreground"
+                onClick={() => toggleSort('position')}
+              >
+                Rank <SortIndicator col="position" />
+              </th>
+              <th
+                className="text-center px-2 py-2 font-medium cursor-pointer select-none hover:text-foreground"
+                onClick={() => toggleSort('velocity')}
+              >
+                7d <SortIndicator col="velocity" />
+              </th>
+              <th className="text-center px-2 py-2 font-medium">30d trend</th>
+              <th
+                className="text-center px-2 py-2 font-medium cursor-pointer select-none hover:text-foreground"
+                onClick={() => toggleSort('score')}
+              >
+                Score <SortIndicator col="score" />
+              </th>
               {teamId && (
+                <th
+                  className="text-center px-2 py-2 font-medium"
+                  title="Alert when rank drops below this position"
+                >
+                  Alert
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map(({ kw, position, velocity, history }) => (
+              <tr
+                key={kw.keyword}
+                className="border-b border-border/40 last:border-0 hover:bg-muted/20"
+              >
+                <td className="px-3 py-2 font-medium max-w-[160px] truncate">
+                  <button
+                    className="hover:text-primary hover:underline underline-offset-2 text-left truncate w-full"
+                    onClick={() => setChartKeyword(kw.keyword)}
+                    title="View rank history"
+                  >
+                    {kw.keyword}
+                  </button>
+                </td>
                 <td className="px-2 py-2 text-center">
-                  {editingThreshold === kw.id ? (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        saveThreshold(kw);
-                      }}
-                      className="flex items-center gap-1 justify-center"
-                    >
-                      <input
-                        autoFocus
-                        type="number"
-                        min={1}
-                        placeholder="rank"
-                        value={thresholdInput}
-                        onChange={(e) => setThresholdInput(e.target.value)}
-                        className="w-14 rounded border border-input bg-background px-1 py-0.5 text-xs text-center"
-                        onKeyDown={(e) =>
-                          e.key === 'Escape' && setEditingThreshold(null)
-                        }
-                      />
-                      <button type="submit" className="text-primary text-xs">
-                        ✓
-                      </button>
-                    </form>
+                  {position !== null && position >= 0 ? (
+                    <span className="font-semibold">#{position}</span>
                   ) : (
-                    <button
-                      onClick={() => {
-                        setEditingThreshold(kw.id);
-                        setThresholdInput(
-                          kw.positionAlertThreshold?.toString() ?? ''
-                        );
-                      }}
-                      title={
-                        kw.positionAlertThreshold
-                          ? `Alert if rank >${kw.positionAlertThreshold}`
-                          : 'Set position alert'
-                      }
-                      className="flex items-center justify-center w-full"
-                    >
-                      {kw.positionAlertThreshold ? (
-                        <span className="flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
-                          <MdNotifications className="h-3 w-3" />
-                          {kw.positionAlertThreshold}
-                        </span>
-                      ) : (
-                        <MdNotificationsOff className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                      )}
-                    </button>
+                    <span className="text-muted-foreground">—</span>
                   )}
                 </td>
-              )}
-              <td className="px-2 py-2 text-center">
-                {kw.overall !== null ? (
-                  <span
-                    className={`font-semibold ${
-                      kw.overall >= 7
-                        ? 'text-green-600'
-                        : kw.overall >= 4
-                          ? 'text-amber-600'
-                          : 'text-red-600'
-                    }`}
-                  >
-                    {kw.overall}
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
+                <td className="px-2 py-2 text-center">
+                  <VelocityCell delta={velocity} />
+                </td>
+                <td className="px-2 py-2 flex justify-center">
+                  {history && history.length >= 2 ? (
+                    <button
+                      className="hover:opacity-70 transition-opacity"
+                      onClick={() => setChartKeyword(kw.keyword)}
+                      title="View full rank history"
+                    >
+                      <KeywordSparkline data={history} width={72} height={24} />
+                    </button>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+                {teamId && (
+                  <td className="px-2 py-2 text-center">
+                    {editingThreshold === kw.id ? (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          saveThreshold(kw);
+                        }}
+                        className="flex items-center gap-1 justify-center"
+                      >
+                        <input
+                          autoFocus
+                          type="number"
+                          min={1}
+                          placeholder="rank"
+                          value={thresholdInput}
+                          onChange={(e) => setThresholdInput(e.target.value)}
+                          className="w-14 rounded border border-input bg-background px-1 py-0.5 text-xs text-center"
+                          onKeyDown={(e) =>
+                            e.key === 'Escape' && setEditingThreshold(null)
+                          }
+                        />
+                        <button type="submit" className="text-primary text-xs">
+                          ✓
+                        </button>
+                      </form>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setEditingThreshold(kw.id);
+                          setThresholdInput(
+                            kw.positionAlertThreshold?.toString() ?? ''
+                          );
+                        }}
+                        title={
+                          kw.positionAlertThreshold
+                            ? `Alert if rank >${kw.positionAlertThreshold}`
+                            : 'Set position alert'
+                        }
+                        className="flex items-center justify-center w-full"
+                      >
+                        {kw.positionAlertThreshold ? (
+                          <span className="flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
+                            <MdNotifications className="h-3 w-3" />
+                            {kw.positionAlertThreshold}
+                          </span>
+                        ) : (
+                          <MdNotificationsOff className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                        )}
+                      </button>
+                    )}
+                  </td>
                 )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                <td className="px-2 py-2 text-center">
+                  {kw.overall !== null ? (
+                    <span
+                      className={`font-semibold ${
+                        kw.overall >= 7
+                          ? 'text-green-600'
+                          : kw.overall >= 4
+                            ? 'text-amber-600'
+                            : 'text-red-600'
+                      }`}
+                    >
+                      {kw.overall}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {chartKeyword && rankings?.[chartKeyword] && (
+        <KeywordHistoryChart
+          keyword={chartKeyword}
+          history={rankings[chartKeyword]}
+          onClose={() => setChartKeyword(null)}
+        />
+      )}
+    </>
   );
 }

@@ -23,6 +23,7 @@ export async function POST(
       reviewBody,
       reviewRating,
       locale = 'en',
+      tone = 'professional',
     } = await request.json();
 
     if (!reviewBody) {
@@ -51,10 +52,20 @@ export async function POST(
           ? 'neutral'
           : 'positive';
 
-    const systemPrompt = `You are a professional customer support representative for a mobile app called "${app.title ?? 'this app'}".
-Your job is to write a concise, empathetic, and professional reply to a user review.
+    const toneGuidelines: Record<string, string> = {
+      professional:
+        '- Tone: clear, concise, and professional. Polite but not overly effusive.',
+      friendly:
+        '- Tone: warm, casual, and conversational — like talking to a friend. Use contractions, be upbeat.',
+      apologetic:
+        '- Tone: extra empathetic and sincere. Lead with acknowledgement, apologise genuinely, focus on resolution and making the user feel heard.',
+    };
+
+    const systemPrompt = `You are a customer support representative for a mobile app called "${app.title ?? 'this app'}".
+Your job is to write a concise, empathetic reply to a user review.
 
 Guidelines:
+${toneGuidelines[tone] ?? toneGuidelines.professional}
 - For negative reviews (1-2 stars): acknowledge the frustration, apologise, and offer to help
 - For neutral reviews (3 stars): thank the user, address concerns if any, mention ongoing improvements
 - For positive reviews (4-5 stars): thank the user warmly and encourage them to keep using the app

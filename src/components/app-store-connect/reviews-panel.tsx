@@ -11,7 +11,16 @@ import {
   MdEdit,
   MdOutlineFileDownload,
   MdAutoAwesome,
+  MdBolt,
 } from 'react-icons/md';
+
+type ReplyTone = 'professional' | 'friendly' | 'apologetic';
+
+const TONE_LABELS: Record<ReplyTone, string> = {
+  professional: 'Pro',
+  friendly: 'Friendly',
+  apologetic: 'Apologetic',
+};
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { StoreReview, useGetStoreReviews } from '@/lib/swr/app';
@@ -33,11 +42,13 @@ function ReviewCard({
   teamId,
   appId,
   onReplied,
+  defaultTone = 'professional',
 }: {
   review: StoreReview;
   teamId: string;
   appId: string;
   onReplied: () => void;
+  defaultTone?: ReplyTone;
 }) {
   const t = useTranslations('reviews-panel');
   const [editing, setEditing] = useState(false);
@@ -45,6 +56,7 @@ function ReviewCard({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
+  const [tone, setTone] = useState<ReplyTone>(defaultTone);
   const hasReply = !!review.responseBody;
 
   const handleSave = async () => {
@@ -73,7 +85,7 @@ function ReviewCard({
     }
   };
 
-  const handleAIReply = async () => {
+  const handleAIReply = async (overrideTone?: ReplyTone) => {
     setGeneratingAI(true);
     try {
       const res = await fetch(
@@ -86,6 +98,7 @@ function ReviewCard({
             reviewBody: review.body,
             reviewRating: review.rating,
             locale: review.territory,
+            tone: overrideTone ?? tone,
           }),
         }
       );
@@ -223,6 +236,25 @@ function ReviewCard({
                 onApply={(text) => setReplyText(text)}
                 currentText={replyText}
               />
+              {/* Tone selector */}
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-muted-foreground mr-0.5">
+                  Tone:
+                </span>
+                {(Object.keys(TONE_LABELS) as ReplyTone[]).map((toneOpt) => (
+                  <button
+                    key={toneOpt}
+                    onClick={() => setTone(toneOpt)}
+                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                      tone === toneOpt
+                        ? 'bg-violet-100 border-violet-400 text-violet-700'
+                        : 'border-border text-muted-foreground hover:border-violet-300'
+                    }`}
+                  >
+                    {TONE_LABELS[toneOpt]}
+                  </button>
+                ))}
+              </div>
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={handleSave}
@@ -232,7 +264,7 @@ function ReviewCard({
                   {saving ? t('sending') : hasReply ? t('update') : t('send')}
                 </button>
                 <button
-                  onClick={handleAIReply}
+                  onClick={() => handleAIReply()}
                   disabled={generatingAI}
                   className="text-xs px-3 py-1.5 border border-violet-300 text-violet-700 bg-violet-50 rounded-md disabled:opacity-50 hover:bg-violet-100 transition-colors flex items-center gap-1"
                   title={t('ai-reply')}
@@ -267,6 +299,8 @@ export function ReviewsPanel() {
   const [open, setOpen] = useState(false);
   const [filterRating, setFilterRating] = useState<number | 'all'>('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [bulkTone, setBulkTone] = useState<ReplyTone>('professional');
+  const [bulkReplying, setBulkReplying] = useState(false);
 
   const { reviews, loading, mutate } = useGetStoreReviews(
     teamInfo?.currentTeam?.id || '',
@@ -281,7 +315,61 @@ export function ReviewsPanel() {
   const visible = filtered.slice(0, visibleCount);
   const hasMore = filtered.length > visibleCount;
 
-  const unreplied = reviews.filter((r) => !r.responseBody).length;
+  const unrepliedReviews = reviews.filter((r) => !r.responseBody);
+  const unreplied = unrepliedReviews.length;
+
+  const handleBulkAIReply = async () => {
+    if (!teamInfo?.currentTeam?.id || !appInfo?.currentApp?.id) return;
+    const teamId = teamInfo.currentTeam.id;
+    const appId = appInfo.currentApp.id;
+    setBulkReplying(true);
+    let succeeded = 0;
+    let failed = 0;
+    for (const review of unrepliedReviews) {
+      try {
+        const aiRes = await fetch(
+          `/api/teams/${teamId}/apps/${appId}/reviews/ai-reply`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              reviewTitle: review.title,
+              reviewBody: review.body,
+              reviewRating: review.rating,
+              locale: review.territory,
+              tone: bulkTone,
+            }),
+          }
+        );
+        if (!aiRes.ok) throw new Error();
+        const { reply } = await aiRes.json();
+        if (!reply) throw new Error();
+        const replyRes = await fetch(
+          `/api/teams/${teamId}/apps/${appId}/reviews/${review.id}/reply`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              body: reply,
+              responseId: review.responseId,
+            }),
+          }
+        );
+        if (!replyRes.ok) throw new Error();
+        succeeded++;
+      } catch {
+        failed++;
+      }
+    }
+    setBulkReplying(false);
+    if (succeeded > 0)
+      toast.success(
+        `Replied to ${succeeded} review${succeeded > 1 ? 's' : ''}`
+      );
+    if (failed > 0)
+      toast.error(`${failed} reply${failed > 1 ? 's' : ''} failed`);
+    mutate();
+  };
 
   return (
     <div className="rounded-xl border border-border bg-background">
@@ -304,6 +392,28 @@ export function ReviewsPanel() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {teamInfo?.currentTeam?.id &&
+            appInfo?.currentApp?.id &&
+            unreplied > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (
+                    !confirm(
+                      `Send AI replies to all ${unreplied} unreplied review${unreplied > 1 ? 's' : ''}?`
+                    )
+                  )
+                    return;
+                  handleBulkAIReply();
+                }}
+                disabled={bulkReplying}
+                className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-violet-300 text-violet-700 bg-violet-50 hover:bg-violet-100 disabled:opacity-50 transition-colors"
+                title="AI-reply all unreplied reviews"
+              >
+                <MdBolt className="h-3 w-3" />
+                {bulkReplying ? 'Replying…' : `AI reply all (${unreplied})`}
+              </button>
+            )}
           {teamInfo?.currentTeam?.id && appInfo?.currentApp?.id && (
             <button
               onClick={(e) => {
@@ -335,6 +445,25 @@ export function ReviewsPanel() {
             className="overflow-hidden"
           >
             <div className="border-t border-border px-4 pb-4 pt-3 space-y-3">
+              {/* Tone + rating filter row */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-muted-foreground">Tone:</span>
+                  {(Object.keys(TONE_LABELS) as ReplyTone[]).map((toneOpt) => (
+                    <button
+                      key={toneOpt}
+                      onClick={() => setBulkTone(toneOpt)}
+                      className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                        bulkTone === toneOpt
+                          ? 'bg-violet-100 border-violet-400 text-violet-700'
+                          : 'border-border text-muted-foreground hover:border-violet-300'
+                      }`}
+                    >
+                      {TONE_LABELS[toneOpt]}
+                    </button>
+                  ))}
+                </div>
+              </div>
               {/* Rating filter */}
               <div className="flex flex-wrap gap-1.5">
                 {(['all', 5, 4, 3, 2, 1] as const).map((r) => (
@@ -373,6 +502,7 @@ export function ReviewsPanel() {
                         teamId={teamInfo?.currentTeam?.id || ''}
                         appId={appInfo?.currentApp?.id || ''}
                         onReplied={() => mutate()}
+                        defaultTone={bulkTone}
                       />
                     ))}
                   </div>
