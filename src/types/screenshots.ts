@@ -24,6 +24,10 @@ export interface SlideData {
   subtitleFontSize: number;
   badge?: string; // short pill text, e.g. "New" or "Pro"
   screenshotUrl?: string; // Vercel Blob public URL — persisted in DB
+  /** Vertical offset for screenshot image inside phone frame, -50 to +50 (percent). 0 = center */
+  imageOffsetY?: number;
+  /** Show app icon overlay in the corner of the slide */
+  showAppIcon?: boolean;
   /** Per-locale text overrides. When present, takes precedence over headline/subtitle/badge */
   localeTexts?: Record<string, SlideLocaleText>;
 }

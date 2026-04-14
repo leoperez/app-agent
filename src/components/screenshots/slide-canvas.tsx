@@ -28,6 +28,8 @@ interface SlideCanvasProps {
   preview?: boolean;
   /** Width in px. Default: 300 */
   width?: number;
+  /** App icon URL for overlay — shown when slide.showAppIcon is true */
+  appIconUrl?: string;
 }
 
 // ── Decoration overlay SVG ────────────────────────────────────────────────────
@@ -224,12 +226,14 @@ function PhoneMockup({
   screenColor,
   width,
   deviceType = 'iphone',
+  imageOffsetY = 0,
 }: {
   screenshot?: string;
   screenColor: string;
   borderColor: string; // kept for API compat, ignored — SVG frame has own gradient
   width: number;
   deviceType?: 'iphone' | 'android' | 'ipad';
+  imageOffsetY?: number;
 }) {
   return (
     <PhoneFrame
@@ -237,6 +241,7 @@ function PhoneMockup({
       screenshotUrl={screenshot}
       screenFallbackColor={screenColor}
       deviceType={deviceType}
+      imageOffsetY={imageOffsetY}
     />
   );
 }
@@ -344,6 +349,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
       fontFamily,
       preview = true,
       width = 300,
+      appIconUrl,
     },
     ref
   ) {
@@ -375,6 +381,29 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
       borderRadius: preview ? 12 : 0,
     };
 
+    // App icon overlay — rendered as absolute element inside each layout
+    const iconSize = Math.round(width * 0.14);
+    const iconMargin = Math.round(width * 0.04);
+    const appIconOverlay =
+      slide.showAppIcon && appIconUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={appIconUrl}
+          alt=""
+          style={{
+            position: 'absolute',
+            bottom: iconMargin,
+            left: iconMargin,
+            width: iconSize,
+            height: iconSize,
+            borderRadius: Math.round(iconSize * 0.22),
+            boxShadow: `0 ${Math.round(iconSize * 0.06)}px ${Math.round(iconSize * 0.18)}px rgba(0,0,0,0.4)`,
+            pointerEvents: 'none',
+            zIndex: 10,
+          }}
+        />
+      ) : null;
+
     // ── centered: text top, phone bottom ─────────────────────────────────────
     if (layout === 'centered') {
       return (
@@ -385,6 +414,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             height={height}
             accent={theme.accent}
           />
+          {appIconOverlay}
           <div
             style={{
               display: 'flex',
@@ -417,6 +447,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                 borderColor={theme.phoneBorder}
                 deviceType={deviceType}
                 width={phonePreviewW}
+                imageOffsetY={slide.imageOffsetY ?? 0}
               />
             </div>
           </div>
@@ -434,6 +465,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             height={height}
             accent={theme.accent}
           />
+          {appIconOverlay}
           {/* phone fills top 75% */}
           <div
             style={{
@@ -450,6 +482,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               borderColor={theme.phoneBorder}
               deviceType={deviceType}
               width={phonePreviewW * 1.15}
+              imageOffsetY={slide.imageOffsetY ?? 0}
             />
           </div>
           {/* caption at bottom */}
@@ -492,6 +525,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             height={height}
             accent={theme.accent}
           />
+          {appIconOverlay}
           <div
             style={{
               flex: 1,
@@ -524,6 +558,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               borderColor={theme.phoneBorder}
               deviceType={deviceType}
               width={phonePreviewW * 0.85}
+              imageOffsetY={slide.imageOffsetY ?? 0}
             />
           </div>
         </div>
@@ -547,6 +582,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             height={height}
             accent={theme.accent}
           />
+          {appIconOverlay}
           <div
             style={{
               display: 'flex',
@@ -563,6 +599,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               borderColor={theme.phoneBorder}
               deviceType={deviceType}
               width={phonePreviewW * 0.85}
+              imageOffsetY={slide.imageOffsetY ?? 0}
             />
           </div>
           <div
@@ -604,6 +641,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             height={height}
             accent={theme.accent}
           />
+          {appIconOverlay}
           {/* Text column — left 55% */}
           <div
             style={{
@@ -711,6 +749,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
           height={height}
           accent={theme.accent}
         />
+        {appIconOverlay}
         <div
           style={{
             display: 'flex',
@@ -762,6 +801,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               borderColor={theme.phoneBorder}
               deviceType={deviceType}
               width={phonePreviewW * 0.7}
+              imageOffsetY={slide.imageOffsetY ?? 0}
             />
           </div>
         </div>

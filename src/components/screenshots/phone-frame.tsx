@@ -11,10 +11,13 @@ export function IPhoneFrame({
   width,
   screenshotUrl,
   screenFallbackColor,
+  imageOffsetY = 0,
 }: {
   width: number;
   screenshotUrl?: string;
   screenFallbackColor: string;
+  /** Vertical shift as % of screen height, -50 to +50. 0 = center. */
+  imageOffsetY?: number;
 }) {
   // iPhone 15 Pro natural ratio: 393 × 852 logical px  → 1:2.168
   const h = Math.round(width * 2.168);
@@ -122,6 +125,7 @@ export function IPhoneFrame({
           height={sh}
           clipPath={`url(#${id})`}
           preserveAspectRatio="xMidYMid slice"
+          transform={`translate(0, ${Math.round((imageOffsetY / 100) * sh)})`}
         />
       )}
 
@@ -213,10 +217,12 @@ export function AndroidFrame({
   width,
   screenshotUrl,
   screenFallbackColor,
+  imageOffsetY = 0,
 }: {
   width: number;
   screenshotUrl?: string;
   screenFallbackColor: string;
+  imageOffsetY?: number;
 }) {
   const h = Math.round(width * 2.165);
   const id = `android-clip-${width}`;
@@ -314,6 +320,7 @@ export function AndroidFrame({
           height={sh}
           clipPath={`url(#${id})`}
           preserveAspectRatio="xMidYMid slice"
+          transform={`translate(0, ${Math.round((imageOffsetY / 100) * sh)})`}
         />
       )}
 
@@ -402,10 +409,12 @@ export function IPadFrame({
   width,
   screenshotUrl,
   screenFallbackColor,
+  imageOffsetY = 0,
 }: {
   width: number;
   screenshotUrl?: string;
   screenFallbackColor: string;
+  imageOffsetY?: number;
 }) {
   const h = Math.round(width * (2752 / 2064)); // ≈ 1.334
   const id = `ipad-clip-${width}`;
@@ -506,6 +515,7 @@ export function IPadFrame({
           height={sh}
           clipPath={`url(#${id})`}
           preserveAspectRatio="xMidYMid slice"
+          transform={`translate(0, ${Math.round((imageOffsetY / 100) * sh)})`}
         />
       )}
 
@@ -589,11 +599,13 @@ export function PhoneFrame({
   screenshotUrl,
   screenFallbackColor,
   deviceType = 'iphone',
+  imageOffsetY = 0,
 }: {
   width: number;
   screenshotUrl?: string;
   screenFallbackColor: string;
   deviceType?: 'iphone' | 'android' | 'ipad';
+  imageOffsetY?: number;
 }) {
   if (deviceType === 'android') {
     return (
@@ -601,6 +613,7 @@ export function PhoneFrame({
         width={width}
         screenshotUrl={screenshotUrl}
         screenFallbackColor={screenFallbackColor}
+        imageOffsetY={imageOffsetY}
       />
     );
   }
@@ -610,6 +623,7 @@ export function PhoneFrame({
         width={width}
         screenshotUrl={screenshotUrl}
         screenFallbackColor={screenFallbackColor}
+        imageOffsetY={imageOffsetY}
       />
     );
   }
@@ -618,6 +632,7 @@ export function PhoneFrame({
       width={width}
       screenshotUrl={screenshotUrl}
       screenFallbackColor={screenFallbackColor}
+      imageOffsetY={imageOffsetY}
     />
   );
 }

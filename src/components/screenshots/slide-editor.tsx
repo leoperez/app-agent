@@ -14,6 +14,8 @@ interface SlideEditorProps {
   activeLocale?: string;
   /** All available locales — shows locale tab bar when more than one */
   availableLocales?: string[];
+  /** Whether the app has an icon URL — shows the icon overlay toggle when true */
+  hasAppIcon?: boolean;
 }
 
 function Field({
@@ -38,6 +40,7 @@ export function SlideEditor({
   onChange,
   activeLocale,
   availableLocales = [],
+  hasAppIcon = false,
 }: SlideEditorProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -319,6 +322,56 @@ export function SlideEditor({
           Uploaded to Vercel Blob and saved with the set.
         </p>
       </Field>
+
+      {/* Image vertical offset — only visible when a screenshot is loaded */}
+      {slide.screenshotUrl && (
+        <Field label="Image position">
+          <div className="flex items-center gap-3">
+            <input
+              type="range"
+              min={-50}
+              max={50}
+              step={1}
+              value={slide.imageOffsetY ?? 0}
+              onChange={(e) =>
+                onChange({ ...slide, imageOffsetY: Number(e.target.value) })
+              }
+              className="flex-1 accent-primary"
+            />
+            <button
+              onClick={() => onChange({ ...slide, imageOffsetY: 0 })}
+              className="text-[10px] text-muted-foreground hover:text-foreground border border-border rounded px-1.5 py-0.5 shrink-0"
+              title="Reset to center"
+            >
+              {slide.imageOffsetY
+                ? `${slide.imageOffsetY > 0 ? '+' : ''}${slide.imageOffsetY}%`
+                : 'center'}
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Shift screenshot up or down inside the phone frame.
+          </p>
+        </Field>
+      )}
+
+      {/* App icon overlay — only when app has an icon */}
+      {hasAppIcon && (
+        <Field label="App icon overlay">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={slide.showAppIcon ?? false}
+              onChange={(e) =>
+                onChange({ ...slide, showAppIcon: e.target.checked })
+              }
+              className="accent-primary"
+            />
+            <span className="text-xs text-muted-foreground">
+              Show app icon in corner of slide
+            </span>
+          </label>
+        </Field>
+      )}
     </div>
   );
 }

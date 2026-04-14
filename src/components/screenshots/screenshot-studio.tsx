@@ -945,6 +945,11 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const fullW = Math.round((exportTarget.width * fullPreviewZoom) / 100);
   const fullH = Math.round((exportTarget.height * fullPreviewZoom) / 100);
 
+  // Slide count limits per store
+  const slideLimit = exportTarget.store === 'GOOGLEPLAY' ? 8 : 10;
+  const atSlideLimit = slides.length >= slideLimit;
+  const overSlideLimit = slides.length > slideLimit;
+
   // Warn when layout and export target aspect ratios are mismatched
   const isFeatureGraphicLayout = layoutId === 'feature-graphic';
   const isFeatureGraphicTarget = exportTarget.label === 'Feature Graphic';
@@ -952,6 +957,37 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Hidden export canvases — rendered at PREVIEW_W so pixelRatio scaling is correct */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          left: -9999,
+          top: -9999,
+          pointerEvents: 'none',
+          opacity: 0,
+        }}
+      >
+        {slides.map((s, i) => (
+          <SlideCanvas
+            key={i}
+            ref={(el) => {
+              slideRefs.current[i] = el;
+            }}
+            layout={layoutId}
+            theme={theme}
+            slide={s}
+            bgGradient={bgMode === 'gradient' ? bgGradient : null}
+            decorationId={decorationId}
+            deviceType={exportTarget.deviceType}
+            fontFamily={resolveFont(fontId).family}
+            preview={false}
+            width={PREVIEW_W}
+            appIconUrl={currentApp?.iconUrl ?? undefined}
+          />
+        ))}
+      </div>
+
       {/* ASO Score panel */}
       {showAsoScore && (
         <AsoScorePanel
@@ -1133,6 +1169,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                     fontFamily={resolveFont(fontId).family}
                     preview={false}
                     width={60}
+                    appIconUrl={currentApp?.iconUrl ?? undefined}
                   />
                 </button>
               ))}
@@ -1153,6 +1190,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 fontFamily={resolveFont(fontId).family}
                 preview={false}
                 width={fullW}
+                appIconUrl={currentApp?.iconUrl ?? undefined}
               />
             </div>
           </div>
@@ -1774,9 +1812,10 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           )}
 
           {/* Add slide */}
-          <div className="p-3">
+          <div className="p-3 space-y-1">
             <button
-              onClick={() =>
+              onClick={() => {
+                if (atSlideLimit) return;
                 setSlides((prev) => [
                   ...prev,
                   {
@@ -1786,12 +1825,27 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                     subtitleFontSize: 18,
                     badge: '',
                   },
-                ])
+                ]);
+              }}
+              disabled={atSlideLimit}
+              className="w-full text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              title={
+                atSlideLimit
+                  ? `Max ${slideLimit} slides for ${exportTarget.store === 'GOOGLEPLAY' ? 'Google Play' : 'App Store'}`
+                  : undefined
               }
-              className="w-full text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 py-1"
             >
               <MdAdd className="h-3.5 w-3.5" /> Add slide
             </button>
+            {/* Slide count indicator */}
+            <div
+              className={`text-[10px] text-center font-medium ${overSlideLimit ? 'text-amber-500' : atSlideLimit ? 'text-muted-foreground' : 'text-muted-foreground/60'}`}
+            >
+              {overSlideLimit && (
+                <MdWarning className="h-2.5 w-2.5 inline mr-0.5" />
+              )}
+              {slides.length}/{slideLimit}
+            </div>
           </div>
         </div>
 
@@ -1821,9 +1875,6 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                     decorationId={decorationId}
                     deviceType={exportTarget.deviceType}
                     fontFamily={resolveFont(fontId).family}
-                    slideRef={(el) => {
-                      slideRefs.current[i] = el;
-                    }}
                     onSelect={() => setActiveSlide(i)}
                     onExport={() => exportSingle(i)}
                     onDuplicate={() => duplicateSlide(i)}
@@ -1923,6 +1974,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                   fontFamily={resolveFont(fontId).family}
                   preview={true}
                   width={previewW}
+                  appIconUrl={currentApp?.iconUrl ?? undefined}
                 />
               </div>
             </div>
@@ -1945,6 +1997,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
               }
               activeLocale={locale}
               availableLocales={locales}
+              hasAppIcon={!!currentApp?.iconUrl}
             />
           </div>
         </div>
@@ -1966,7 +2019,6 @@ function SortableSlide({
   decorationId,
   deviceType,
   fontFamily,
-  slideRef,
   onSelect,
   onExport,
   onDuplicate,
@@ -1982,7 +2034,6 @@ function SortableSlide({
   decorationId: DecorationId;
   deviceType: 'iphone' | 'android' | 'ipad';
   fontFamily: string;
-  slideRef: (el: HTMLDivElement | null) => void;
   onSelect: () => void;
   onExport: () => void;
   onDuplicate: () => void;
@@ -2022,7 +2073,6 @@ function SortableSlide({
         }`}
       >
         <SlideCanvas
-          ref={slideRef}
           layout={layoutId}
           theme={theme}
           slide={slide}
