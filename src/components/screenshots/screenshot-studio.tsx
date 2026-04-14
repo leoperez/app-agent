@@ -718,6 +718,60 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     }
   }, [slides, locale, exportTarget, currentApp, teamId]);
 
+  // ── Push to Google Play ───────────────────────────────────────────────────
+  const [pushingToGP, setPushingToGP] = useState(false);
+
+  const pushToGooglePlay = useCallback(async () => {
+    if (currentApp?.store !== 'GOOGLEPLAY') {
+      toast.error('Push to Google Play is only available for Google Play apps');
+      return;
+    }
+    if (
+      !confirm(
+        `Push ${slides.length} image(s) to Google Play Console?\n\nLocale: ${locale}\nTarget: ${exportTarget.label}\n\nThis will replace all existing images for this locale and image type.`
+      )
+    )
+      return;
+
+    setPushingToGP(true);
+    try {
+      const pixelRatio = exportTarget.width / PREVIEW_W;
+      const slidePayloads: { dataUrl: string; fileName: string }[] = [];
+
+      for (let i = 0; i < slides.length; i++) {
+        const el = slideRefs.current[i];
+        if (!el) continue;
+        const dataUrl = await toPng(el, {
+          pixelRatio,
+          style: { borderRadius: '0' },
+        });
+        slidePayloads.push({ dataUrl, fileName: `slide-${i + 1}.png` });
+      }
+
+      const res = await fetch(
+        `/api/teams/${teamId}/apps/${currentApp?.id}/screenshot-sets/push-to-google-play`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            locale,
+            displayLabel: exportTarget.label,
+            slides: slidePayloads,
+          }),
+        }
+      );
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error ?? 'Push failed');
+      toast.success(
+        `Uploaded ${result.uploaded}/${result.total} image(s) to Google Play!`
+      );
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setPushingToGP(false);
+    }
+  }, [slides, locale, exportTarget, currentApp, teamId]);
+
   // ── LIST VIEW ─────────────────────────────────────────────────────────────
   if (view === 'list') {
     return (
@@ -1305,6 +1359,20 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             >
               <MdCloudUpload className="h-3.5 w-3.5 mr-1" />
               {pushingToAsc ? 'Uploading…' : 'Push to ASC'}
+            </Button>
+          )}
+
+          {/* Push to Google Play (Google Play apps only) */}
+          {currentApp?.store === 'GOOGLEPLAY' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={pushToGooglePlay}
+              disabled={pushingToGP}
+              title="Upload screenshots directly to Google Play Console"
+            >
+              <MdCloudUpload className="h-3.5 w-3.5 mr-1" />
+              {pushingToGP ? 'Uploading…' : 'Push to Google Play'}
             </Button>
           )}
 
