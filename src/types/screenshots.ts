@@ -114,6 +114,22 @@ export interface ScreenshotTemplateRecord {
   updatedAt: string;
 }
 
+export interface ScreenshotSetSnapshotRecord {
+  id: string;
+  setId: string;
+  label: string;
+  layoutId: LayoutId;
+  themeId: ThemeId;
+  fontId: FontId;
+  decorationId: DecorationId;
+  customBg: string | null;
+  customText: string | null;
+  customAccent: string | null;
+  bgGradient: GradientBg | null;
+  slides: SlideData[];
+  createdAt: string;
+}
+
 // ASO scoring
 export interface SlideScore {
   slideIndex: number;

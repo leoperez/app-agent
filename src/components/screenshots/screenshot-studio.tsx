@@ -30,6 +30,7 @@ import {
   MdEdit,
   MdExpandMore,
   MdDelete,
+  MdHistory,
   MdInsights,
   MdLanguage,
   MdOpenInFull,
@@ -44,6 +45,7 @@ import { Button } from '@/components/ui/button';
 import { SlideCanvas } from './slide-canvas';
 import { SlideEditor } from './slide-editor';
 import { AsoScorePanel } from './aso-score-panel';
+import { HistoryPanel } from './history-panel';
 import {
   LAYOUTS,
   THEMES,
@@ -92,6 +94,10 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     deleteSet,
     generateTexts,
     scoreSlides,
+    listSnapshots,
+    saveSnapshot,
+    restoreSnapshot,
+    deleteSnapshot,
   } = useGetScreenshotSets();
   const { templates, saveTemplate, deleteTemplate } =
     useGetScreenshotTemplates();
@@ -151,6 +157,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showExportPicker, setShowExportPicker] = useState(false);
   const [showFullPreview, setShowFullPreview] = useState(false);
   const [showAsoScore, setShowAsoScore] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
 
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -261,6 +268,8 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
         slides,
       };
       if (activeSet) {
+        // Save snapshot of the CURRENT state before overwriting
+        await saveSnapshot(activeSet.id);
         await updateSet(activeSet.id, payload);
         toast.success('Set saved');
       } else {
@@ -656,6 +665,25 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
         />
       )}
 
+      {/* Version history panel */}
+      {showHistory && activeSet && (
+        <HistoryPanel
+          setId={activeSet.id}
+          listSnapshots={listSnapshots}
+          deleteSnapshot={deleteSnapshot}
+          onRestore={async (snapshotId) => {
+            const updated = await restoreSnapshot(activeSet.id, snapshotId);
+            if (updated) {
+              loadSet(updated);
+              toast.success('Version restored');
+            } else {
+              toast.error('Failed to restore version');
+            }
+          }}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
+
       {/* Full preview modal */}
       {showFullPreview && (
         <div
@@ -824,6 +852,18 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             <MdInsights className="h-3.5 w-3.5 mr-1" />
             Score
           </Button>
+
+          {/* Version History (only for saved sets) */}
+          {activeSet && (
+            <Button
+              variant="outline"
+              size="sm"
+              title="View version history"
+              onClick={() => setShowHistory(true)}
+            >
+              <MdHistory className="h-3.5 w-3.5" />
+            </Button>
+          )}
 
           {/* Full preview */}
           <Button

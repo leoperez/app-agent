@@ -693,9 +693,31 @@ model ScreenshotSet {
   // slides: array of SlideData (texts + badge + screenshotUrl)
   slides   Json   @default("[]")
 
+  snapshots ScreenshotSetSnapshot[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([appId])
   @@index([appId, locale])
+}
+
+model ScreenshotSetSnapshot {
+  id          String        @id @default(cuid())
+  setId       String
+  set         ScreenshotSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  label       String        @default("") // optional user label or auto-generated
+  layoutId    String
+  themeId     String
+  fontId      String        @default("system")
+  decorationId String       @default("none")
+  customBg    String?
+  customText  String?
+  customAccent String?
+  bgGradient  Json?
+  slides      Json          @default("[]")
+
+  createdAt DateTime @default(now())
+
+  @@index([setId])
 }

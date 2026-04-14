@@ -6,6 +6,7 @@ import { useTeam } from '@/context/team';
 import { useApp } from '@/context/app';
 import type {
   ScreenshotSetRecord,
+  ScreenshotSetSnapshotRecord,
   ScreenshotTemplateRecord,
   AsoScoreResult,
 } from '@/types/screenshots';
@@ -103,6 +104,59 @@ export function useGetScreenshotSets(locale?: string) {
     return res.json();
   };
 
+  const listSnapshots = async (
+    setId: string
+  ): Promise<ScreenshotSetSnapshotRecord[]> => {
+    if (!teamId || !appId) return [];
+    const res = await fetch(
+      `/api/teams/${teamId}/apps/${appId}/screenshot-sets/${setId}/snapshots`
+    );
+    if (!res.ok) return [];
+    return res.json();
+  };
+
+  const saveSnapshot = async (
+    setId: string,
+    label?: string
+  ): Promise<boolean> => {
+    if (!teamId || !appId) return false;
+    const res = await fetch(
+      `/api/teams/${teamId}/apps/${appId}/screenshot-sets/${setId}/snapshots`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: label ?? '' }),
+      }
+    );
+    return res.ok;
+  };
+
+  const restoreSnapshot = async (
+    setId: string,
+    snapshotId: string
+  ): Promise<ScreenshotSetRecord | null> => {
+    if (!teamId || !appId) return null;
+    const res = await fetch(
+      `/api/teams/${teamId}/apps/${appId}/screenshot-sets/${setId}/snapshots/${snapshotId}`,
+      { method: 'POST' }
+    );
+    if (!res.ok) return null;
+    const updated = await res.json();
+    await mutate();
+    return updated as ScreenshotSetRecord;
+  };
+
+  const deleteSnapshot = async (
+    setId: string,
+    snapshotId: string
+  ): Promise<void> => {
+    if (!teamId || !appId) return;
+    await fetch(
+      `/api/teams/${teamId}/apps/${appId}/screenshot-sets/${setId}/snapshots/${snapshotId}`,
+      { method: 'DELETE' }
+    );
+  };
+
   return {
     sets: data ?? [],
     loading: isLoading,
@@ -113,6 +167,10 @@ export function useGetScreenshotSets(locale?: string) {
     deleteSet,
     generateTexts,
     scoreSlides,
+    listSnapshots,
+    saveSnapshot,
+    restoreSnapshot,
+    deleteSnapshot,
   };
 }
 
