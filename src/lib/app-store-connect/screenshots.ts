@@ -217,6 +217,78 @@ export async function uploadScreenshot(
   };
 }
 
+// ─── List screenshots from an existing screenshot set ────────────────────────
+
+export interface AscScreenshot {
+  id: string;
+  fileName: string;
+  imageUrl: string | null;
+  width: number;
+  height: number;
+  displayType: string;
+  uploadState: string;
+}
+
+/** List all screenshots for a given appScreenshotSetId */
+export async function listScreenshotsInSet(
+  token: string,
+  screenshotSetId: string
+): Promise<AscScreenshot[]> {
+  const res = await fetch(
+    `${ASC}/appScreenshotSets/${screenshotSetId}/appScreenshots?limit=30`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  if (!res.ok) return [];
+  const { data } = await res.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map((d) => ({
+    id: d.id,
+    fileName: d.attributes?.fileName ?? '',
+    imageUrl:
+      d.attributes?.imageAsset?.templateUrl
+        ?.replace('{w}', '375')
+        .replace('{h}', '812')
+        .replace('{f}', 'jpg') ?? null,
+    width: d.attributes?.imageAsset?.width ?? 0,
+    height: d.attributes?.imageAsset?.height ?? 0,
+    displayType: '',
+    uploadState: d.attributes?.assetDeliveryState?.state ?? '',
+  }));
+}
+
+/** List all screenshot sets for a localization and return sets with their screenshots */
+export async function listScreenshotSetsForLocalization(
+  token: string,
+  localizationId: string
+): Promise<
+  Array<{ displayType: string; setId: string; screenshots: AscScreenshot[] }>
+> {
+  const res = await fetch(
+    `${ASC}/appStoreVersionLocalizations/${localizationId}/appScreenshotSets`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!res.ok) return [];
+  const { data } = await res.json();
+
+  const result = await Promise.all(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (data as any[]).map(async (set) => {
+      const screenshots = await listScreenshotsInSet(token, set.id);
+      return {
+        displayType: set.attributes?.screenshotDisplayType ?? '',
+        setId: set.id,
+        screenshots: screenshots.map((s) => ({
+          ...s,
+          displayType: set.attributes?.screenshotDisplayType ?? '',
+        })),
+      };
+    })
+  );
+  return result;
+}
+
 // ─── Find editable app version ────────────────────────────────────────────────
 
 export async function findEditableVersion(

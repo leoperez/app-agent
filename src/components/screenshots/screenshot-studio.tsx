@@ -26,6 +26,7 @@ import {
   MdBookmark,
   MdBookmarkBorder,
   MdClose,
+  MdCloudDownload,
   MdCloudUpload,
   MdCompare,
   MdDownload,
@@ -54,6 +55,7 @@ import { HistoryPanel } from './history-panel';
 import { CompetitorPanel } from './competitor-panel';
 import { AbTestPanel } from './ab-test-panel';
 import { PaletteSwatches } from './icon-palette';
+import { AscImportPanel } from './asc-import-panel';
 import {
   LAYOUTS,
   THEMES,
@@ -173,6 +175,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [showCompetitor, setShowCompetitor] = useState(false);
   const [showAbTest, setShowAbTest] = useState(false);
+  const [showAscImport, setShowAscImport] = useState(false);
   const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
   const [previewW, setPreviewW] = useState(PREVIEW_W); // editor canvas width (px)
 
@@ -869,6 +872,18 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
         />
       )}
 
+      {/* Import from ASC panel */}
+      {showAscImport && currentApp?.store === 'APPSTORE' && (
+        <AscImportPanel
+          teamId={teamId}
+          appId={currentApp.id}
+          locale={locale}
+          slides={slides}
+          onImport={(updated) => setSlides(updated)}
+          onClose={() => setShowAscImport(false)}
+        />
+      )}
+
       {/* Competitor comparison panel */}
       {showCompetitor && (
         <CompetitorPanel
@@ -1131,6 +1146,19 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           >
             <MdOpenInFull className="h-3.5 w-3.5" />
           </Button>
+
+          {/* Import from App Store Connect */}
+          {currentApp?.store === 'APPSTORE' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAscImport(true)}
+              title="Import screenshots from App Store Connect"
+            >
+              <MdCloudDownload className="h-3.5 w-3.5 mr-1" />
+              Import ASC
+            </Button>
+          )}
 
           {/* Push to App Store Connect (App Store apps only) */}
           {currentApp?.store === 'APPSTORE' && (
