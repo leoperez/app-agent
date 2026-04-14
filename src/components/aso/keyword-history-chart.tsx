@@ -120,8 +120,8 @@ export function KeywordHistoryChart({
       const y = point.position !== null ? toY(point.position) + PAD.top : -999;
       setTooltip({ x, y, point });
     },
-    [sliced]
-  ); // eslint-disable-line react-hooks/exhaustive-deps
+    [sliced, toX, toY] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   return (
     <div
@@ -135,7 +135,9 @@ export function KeywordHistoryChart({
         <div className="flex items-center justify-between px-5 py-3 border-b border-border">
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm">"{keyword}"</span>
+              <span className="font-semibold text-sm">
+                &quot;{keyword}&quot;
+              </span>
               {velocity !== null && (
                 <span
                   className={`flex items-center gap-0.5 text-xs font-medium ${
