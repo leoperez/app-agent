@@ -53,6 +53,7 @@ import {
   MdPhoneAndroid,
   MdAnimation,
   MdSelectAll,
+  MdVideocam,
 } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import { SlideCanvas } from './slide-canvas';
@@ -67,6 +68,7 @@ import { TranslatePanel } from './translate-panel';
 import { SharePanel } from './share-panel';
 import { HelpTooltip } from '@/components/common/help-tooltip';
 import { StoreListingPreview } from './store-listing-preview';
+import { VideoExportPanel } from './video-export-panel';
 import { encodeGif } from '@/lib/gif-encoder';
 import {
   LAYOUTS,
@@ -195,6 +197,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showShare, setShowShare] = useState(false);
   const [showDuplicateLocales, setShowDuplicateLocales] = useState(false);
   const [showStoreListing, setShowStoreListing] = useState(false);
+  const [showVideoPanel, setShowVideoPanel] = useState(false);
   const [exportingGif, setExportingGif] = useState(false);
   const [canvasDragOver, setCanvasDragOver] = useState(false);
   const [canvasUploading, setCanvasUploading] = useState(false);
@@ -1105,6 +1108,23 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
         />
       )}
 
+      {/* Video export panel */}
+      {showVideoPanel && (
+        <VideoExportPanel
+          slides={slides}
+          layoutId={layoutId}
+          theme={theme}
+          bgGradient={bgMode === 'gradient' ? bgGradient : null}
+          decorationId={decorationId}
+          deviceType={exportTarget.deviceType}
+          fontFamily={resolveFont(fontId).family}
+          appIconUrl={currentApp?.iconUrl ?? undefined}
+          canvasWidth={exportTarget.width}
+          canvasHeight={exportTarget.height}
+          onClose={() => setShowVideoPanel(false)}
+        />
+      )}
+
       {/* Duplicate to locales panel */}
       {showDuplicateLocales && (
         <DuplicateToLocalesPanel
@@ -1534,6 +1554,17 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           >
             <MdAnimation className="h-3.5 w-3.5 mr-1" />
             {exportingGif ? 'Making GIF…' : 'GIF'}
+          </Button>
+
+          {/* Video export */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowVideoPanel(true)}
+            title="Export slides as video"
+          >
+            <MdVideocam className="h-3.5 w-3.5 mr-1" />
+            Video
           </Button>
 
           {/* Export */}

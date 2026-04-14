@@ -1947,6 +1947,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@remotion/player@npm:^4.0.448":
+  version: 4.0.448
+  resolution: "@remotion/player@npm:4.0.448"
+  dependencies:
+    remotion: "npm:4.0.448"
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: 10c0/e196fac84e7573c3c73346998f5853e0c93f8c0f3add6957886989ec821b8a201cec23a4cc77901c79683a9b9f1865407c8372b4c23fbdebc0853baa2ab10a9f
+  languageName: node
+  linkType: hard
+
 "@rtsao/scc@npm:^1.1.0":
   version: 1.1.0
   resolution: "@rtsao/scc@npm:1.1.0"
@@ -2745,6 +2757,7 @@ __metadata:
     "@radix-ui/react-slot": "npm:^1.1.0"
     "@radix-ui/react-tooltip": "npm:^1.1.4"
     "@react-email/components": "npm:0.0.25"
+    "@remotion/player": "npm:^4.0.448"
     "@stripe/stripe-js": "npm:^5.3.0"
     "@types/gif.js": "npm:^0"
     "@types/mdx": "npm:^2.0.13"
@@ -2797,6 +2810,7 @@ __metadata:
     react-loading-skeleton: "npm:^3.5.0"
     react-tooltip: "npm:^5.28.0"
     remark-gfm: "npm:^4.0.0"
+    remotion: "npm:^4.0.448"
     resend: "npm:^4.0.0"
     sharp: "npm:^0.33.5"
     stripe: "npm:^17.4.0"
@@ -8388,6 +8402,16 @@ __metadata:
     mdast-util-to-markdown: "npm:^2.0.0"
     unified: "npm:^11.0.0"
   checksum: 10c0/0cdb37ce1217578f6f847c7ec9f50cbab35df5b9e3903d543e74b405404e67c07defcb23cd260a567b41b769400f6de03c2c3d9cd6ae7a6707d5c8d89ead489f
+  languageName: node
+  linkType: hard
+
+"remotion@npm:4.0.448, remotion@npm:^4.0.448":
+  version: 4.0.448
+  resolution: "remotion@npm:4.0.448"
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: 10c0/6f113dd4d64b64d544b1271096ca126ac5786275f858c7f1c5d6c4730084eecea2ad64f0463be010a64c7afcb7680870d469c72be5d6f936b222bd00780ffda1
   languageName: node
   linkType: hard
 
