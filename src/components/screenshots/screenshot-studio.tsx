@@ -170,6 +170,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showCompetitor, setShowCompetitor] = useState(false);
   const [showAbTest, setShowAbTest] = useState(false);
   const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
+  const [previewW, setPreviewW] = useState(PREVIEW_W); // editor canvas width (px)
 
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -1369,20 +1370,52 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           </div>
 
           {/* Active slide preview (large) */}
-          <div className="flex-1 flex items-center justify-center bg-muted/20 overflow-auto p-6">
-            <div className="shadow-2xl">
-              <SlideCanvas
-                layout={layoutId}
-                theme={theme}
-                slide={currentSlide}
-                bgGradient={bgMode === 'gradient' ? bgGradient : null}
-                decorationId={decorationId}
-                deviceType={exportTarget.deviceType}
-                activeLocale={locale}
-                fontFamily={resolveFont(fontId).family}
-                preview={true}
-                width={PREVIEW_W}
+          <div className="flex-1 flex flex-col bg-muted/20 overflow-hidden">
+            {/* Zoom controls */}
+            <div className="flex items-center justify-end gap-2 px-4 py-1.5 border-b border-border bg-background/60 backdrop-blur">
+              <button
+                onClick={() => setPreviewW((w) => Math.max(160, w - 20))}
+                className="text-muted-foreground hover:text-foreground"
+                title="Zoom out"
+              >
+                <MdZoomOut className="h-4 w-4" />
+              </button>
+              <input
+                type="range"
+                min={160}
+                max={400}
+                step={10}
+                value={previewW}
+                onChange={(e) => setPreviewW(Number(e.target.value))}
+                className="w-24 accent-primary"
+                title={`Preview size: ${previewW}px`}
               />
+              <button
+                onClick={() => setPreviewW((w) => Math.min(400, w + 20))}
+                className="text-muted-foreground hover:text-foreground"
+                title="Zoom in"
+              >
+                <MdZoomIn className="h-4 w-4" />
+              </button>
+              <span className="text-xs text-muted-foreground w-10 text-right">
+                {Math.round((previewW / PREVIEW_W) * 100)}%
+              </span>
+            </div>
+            <div className="flex-1 flex items-center justify-center overflow-auto p-6">
+              <div className="shadow-2xl">
+                <SlideCanvas
+                  layout={layoutId}
+                  theme={theme}
+                  slide={currentSlide}
+                  bgGradient={bgMode === 'gradient' ? bgGradient : null}
+                  decorationId={decorationId}
+                  deviceType={exportTarget.deviceType}
+                  activeLocale={locale}
+                  fontFamily={resolveFont(fontId).family}
+                  preview={true}
+                  width={previewW}
+                />
+              </div>
             </div>
           </div>
 
