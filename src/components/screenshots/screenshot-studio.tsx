@@ -176,6 +176,8 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showCompetitor, setShowCompetitor] = useState(false);
   const [showAbTest, setShowAbTest] = useState(false);
   const [showAscImport, setShowAscImport] = useState(false);
+  const [canvasDragOver, setCanvasDragOver] = useState(false);
+  const [canvasUploading, setCanvasUploading] = useState(false);
   const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
   const [previewW, setPreviewW] = useState(PREVIEW_W); // editor canvas width (px)
 
@@ -619,6 +621,32 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     },
     [exportTarget]
   );
+
+  // ── Canvas drag-and-drop image upload ────────────────────────────────────
+  const uploadSlideImage = async (file: File) => {
+    if (!teamId || !currentApp?.id) return;
+    setCanvasUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(
+        `/api/teams/${teamId}/apps/${currentApp.id}/screenshot-sets/upload-image`,
+        { method: 'POST', body: formData }
+      );
+      if (!res.ok) throw new Error('Upload failed');
+      const { url } = await res.json();
+      setSlides((prev) =>
+        prev.map((s, i) =>
+          i === activeSlide ? { ...s, screenshotUrl: url } : s
+        )
+      );
+      toast.success('Image uploaded');
+    } catch {
+      toast.error('Failed to upload image');
+    } finally {
+      setCanvasUploading(false);
+    }
+  };
 
   // ── Push to App Store Connect ─────────────────────────────────────────────
   const [pushingToAsc, setPushingToAsc] = useState(false);
@@ -1594,7 +1622,10 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           {/* Active slide preview (large) */}
           <div className="flex-1 flex flex-col bg-muted/20 overflow-hidden">
             {/* Zoom controls */}
-            <div className="flex items-center justify-end gap-2 px-4 py-1.5 border-b border-border bg-background/60 backdrop-blur">
+            <div className="flex items-center justify-between gap-2 px-4 py-1.5 border-b border-border bg-background/60 backdrop-blur">
+              <span className="text-[10px] text-muted-foreground select-none">
+                Drop image to set screenshot
+              </span>
               <button
                 onClick={() => setPreviewW((w) => Math.max(160, w - 20))}
                 className="text-muted-foreground hover:text-foreground"
@@ -1623,7 +1654,38 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 {Math.round((previewW / PREVIEW_W) * 100)}%
               </span>
             </div>
-            <div className="flex-1 flex items-center justify-center overflow-auto p-6">
+            <div
+              className={`flex-1 flex items-center justify-center overflow-auto p-6 relative transition-colors ${canvasDragOver ? 'bg-primary/10' : ''}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (e.dataTransfer.types.includes('Files'))
+                  setCanvasDragOver(true);
+              }}
+              onDragLeave={() => setCanvasDragOver(false)}
+              onDrop={async (e) => {
+                e.preventDefault();
+                setCanvasDragOver(false);
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                  await uploadSlideImage(file);
+                }
+              }}
+            >
+              {/* Drag overlay hint */}
+              {canvasDragOver && (
+                <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                  <div className="bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-medium shadow-lg">
+                    Drop image for slide {activeSlide + 1}
+                  </div>
+                </div>
+              )}
+              {canvasUploading && (
+                <div className="absolute inset-0 flex items-center justify-center z-10 bg-background/40 backdrop-blur-sm">
+                  <p className="text-sm text-foreground font-medium">
+                    Uploading…
+                  </p>
+                </div>
+              )}
               <div className="shadow-2xl">
                 <SlideCanvas
                   layout={layoutId}
