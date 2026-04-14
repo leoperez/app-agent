@@ -26,6 +26,7 @@ import {
   MdBookmarkBorder,
   MdClose,
   MdCloudUpload,
+  MdCompare,
   MdDownload,
   MdEdit,
   MdExpandMore,
@@ -46,6 +47,7 @@ import { SlideCanvas } from './slide-canvas';
 import { SlideEditor } from './slide-editor';
 import { AsoScorePanel } from './aso-score-panel';
 import { HistoryPanel } from './history-panel';
+import { CompetitorPanel } from './competitor-panel';
 import {
   LAYOUTS,
   THEMES,
@@ -158,6 +160,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showFullPreview, setShowFullPreview] = useState(false);
   const [showAsoScore, setShowAsoScore] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showCompetitor, setShowCompetitor] = useState(false);
   const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
 
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -665,6 +668,17 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
         />
       )}
 
+      {/* Competitor comparison panel */}
+      {showCompetitor && (
+        <CompetitorPanel
+          slides={slides}
+          locale={locale}
+          teamId={teamId}
+          appId={currentApp?.id ?? ''}
+          onClose={() => setShowCompetitor(false)}
+        />
+      )}
+
       {/* Version history panel */}
       {showHistory && activeSet && (
         <HistoryPanel
@@ -862,6 +876,18 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
               onClick={() => setShowHistory(true)}
             >
               <MdHistory className="h-3.5 w-3.5" />
+            </Button>
+          )}
+
+          {/* Competitor comparison (App Store only) */}
+          {currentApp?.store === 'APPSTORE' && (
+            <Button
+              variant="outline"
+              size="sm"
+              title="Compare with competitor screenshots"
+              onClick={() => setShowCompetitor(true)}
+            >
+              <MdCompare className="h-3.5 w-3.5" />
             </Button>
           )}
 
