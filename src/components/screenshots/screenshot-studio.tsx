@@ -42,6 +42,7 @@ import {
   MdDragIndicator,
   MdCopyAll,
   MdScience,
+  MdTranslate,
   MdUndo,
   MdRedo,
   MdZoomIn,
@@ -56,6 +57,7 @@ import { CompetitorPanel } from './competitor-panel';
 import { AbTestPanel } from './ab-test-panel';
 import { PaletteSwatches } from './icon-palette';
 import { AscImportPanel } from './asc-import-panel';
+import { TranslatePanel } from './translate-panel';
 import {
   LAYOUTS,
   THEMES,
@@ -103,6 +105,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     updateSet,
     deleteSet,
     generateTexts,
+    translateSlides,
     scoreSlides,
     listSnapshots,
     saveSnapshot,
@@ -176,6 +179,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showCompetitor, setShowCompetitor] = useState(false);
   const [showAbTest, setShowAbTest] = useState(false);
   const [showAscImport, setShowAscImport] = useState(false);
+  const [showTranslate, setShowTranslate] = useState(false);
   const [canvasDragOver, setCanvasDragOver] = useState(false);
   const [canvasUploading, setCanvasUploading] = useState(false);
   const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
@@ -900,6 +904,22 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
         />
       )}
 
+      {/* Translate panel */}
+      {showTranslate && (
+        <TranslatePanel
+          slides={slides}
+          sourceLocale={locale}
+          availableLocales={locales}
+          translateSlides={translateSlides}
+          onApply={(updated) => {
+            setSlides(updated);
+            setShowTranslate(false);
+            toast.success('Translations applied');
+          }}
+          onClose={() => setShowTranslate(false)}
+        />
+      )}
+
       {/* Import from ASC panel */}
       {showAscImport && currentApp?.store === 'APPSTORE' && (
         <AscImportPanel
@@ -1067,6 +1087,19 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             <MdAutoAwesome className="h-3.5 w-3.5 mr-1" />
             {generating ? 'Generating…' : 'AI texts'}
           </Button>
+
+          {/* Translate — only when there are other locales */}
+          {locales.length > 1 && (
+            <Button
+              variant="outline"
+              size="sm"
+              title="Translate slide texts to other locales"
+              onClick={() => setShowTranslate(true)}
+            >
+              <MdTranslate className="h-3.5 w-3.5 mr-1" />
+              Translate
+            </Button>
+          )}
 
           {/* Undo / Redo */}
           <Button

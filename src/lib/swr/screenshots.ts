@@ -88,6 +88,29 @@ export function useGetScreenshotSets(locale?: string) {
     return res.json();
   };
 
+  const translateSlides = async (opts: {
+    slides: Array<{ headline: string; subtitle: string; badge?: string }>;
+    targetLocales: string[];
+    sourceLocale?: string;
+  }): Promise<
+    Array<{
+      locale: string;
+      slides: Array<{ headline: string; subtitle: string; badge?: string }>;
+    }>
+  > => {
+    if (!teamId || !appId) return [];
+    const res = await fetch(
+      `/api/teams/${teamId}/apps/${appId}/screenshot-sets/translate`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(opts),
+      }
+    );
+    if (!res.ok) return [];
+    return res.json();
+  };
+
   const scoreSlides = async (opts: {
     slides: Array<{ headline: string; subtitle: string; badge?: string }>;
     locale?: string;
@@ -202,6 +225,7 @@ export function useGetScreenshotSets(locale?: string) {
     updateSet,
     deleteSet,
     generateTexts,
+    translateSlides,
     scoreSlides,
     listSnapshots,
     saveSnapshot,
