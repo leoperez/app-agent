@@ -7,6 +7,7 @@ import { useApp } from '@/context/app';
 import type {
   ScreenshotSetRecord,
   ScreenshotTemplateRecord,
+  AsoScoreResult,
 } from '@/types/screenshots';
 
 export function useGetScreenshotSets(locale?: string) {
@@ -85,6 +86,23 @@ export function useGetScreenshotSets(locale?: string) {
     return res.json();
   };
 
+  const scoreSlides = async (opts: {
+    slides: Array<{ headline: string; subtitle: string; badge?: string }>;
+    locale?: string;
+  }): Promise<AsoScoreResult | null> => {
+    if (!teamId || !appId) return null;
+    const res = await fetch(
+      `/api/teams/${teamId}/apps/${appId}/screenshot-sets/score`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(opts),
+      }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  };
+
   return {
     sets: data ?? [],
     loading: isLoading,
@@ -94,6 +112,7 @@ export function useGetScreenshotSets(locale?: string) {
     updateSet,
     deleteSet,
     generateTexts,
+    scoreSlides,
   };
 }
 

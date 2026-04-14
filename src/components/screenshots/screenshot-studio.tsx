@@ -30,6 +30,7 @@ import {
   MdEdit,
   MdExpandMore,
   MdDelete,
+  MdInsights,
   MdLanguage,
   MdOpenInFull,
   MdSave,
@@ -42,6 +43,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { SlideCanvas } from './slide-canvas';
 import { SlideEditor } from './slide-editor';
+import { AsoScorePanel } from './aso-score-panel';
 import {
   LAYOUTS,
   THEMES,
@@ -82,8 +84,15 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const { currentApp } = useApp();
   const teamInfo = useTeam();
   const teamId = teamInfo?.currentTeam?.id ?? '';
-  const { sets, loading, createSet, updateSet, deleteSet, generateTexts } =
-    useGetScreenshotSets();
+  const {
+    sets,
+    loading,
+    createSet,
+    updateSet,
+    deleteSet,
+    generateTexts,
+    scoreSlides,
+  } = useGetScreenshotSets();
   const { templates, saveTemplate, deleteTemplate } =
     useGetScreenshotTemplates();
 
@@ -141,6 +150,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [showExportPicker, setShowExportPicker] = useState(false);
   const [showFullPreview, setShowFullPreview] = useState(false);
+  const [showAsoScore, setShowAsoScore] = useState(false);
   const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
 
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -636,6 +646,16 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* ASO Score panel */}
+      {showAsoScore && (
+        <AsoScorePanel
+          slides={slides}
+          locale={locale}
+          onScore={async (s, l) => scoreSlides({ slides: s, locale: l })}
+          onClose={() => setShowAsoScore(false)}
+        />
+      )}
+
       {/* Full preview modal */}
       {showFullPreview && (
         <div
@@ -792,6 +812,17 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             }}
           >
             <MdBookmarkBorder className="h-3.5 w-3.5" />
+          </Button>
+
+          {/* ASO Score */}
+          <Button
+            variant="outline"
+            size="sm"
+            title="Score your screenshot texts with AI"
+            onClick={() => setShowAsoScore(true)}
+          >
+            <MdInsights className="h-3.5 w-3.5 mr-1" />
+            Score
           </Button>
 
           {/* Full preview */}

@@ -114,6 +114,22 @@ export interface ScreenshotTemplateRecord {
   updatedAt: string;
 }
 
+// ASO scoring
+export interface SlideScore {
+  slideIndex: number;
+  score: number; // 0–100
+  issues: string[];
+  suggestions: string[];
+}
+
+export interface AsoScoreResult {
+  overallScore: number;
+  overallSummary: string;
+  slides: SlideScore[];
+  topStrengths: string[];
+  topImprovements: string[];
+}
+
 // Target export dimensions
 export interface ExportTarget {
   label: string;
