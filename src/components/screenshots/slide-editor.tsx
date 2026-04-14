@@ -1,7 +1,11 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import type { SlideData, SlideLocaleText } from '@/types/screenshots';
+import type {
+  SlideData,
+  SlideLocaleText,
+  AppIconPosition,
+} from '@/types/screenshots';
 import { resolveSlideText } from '@/types/screenshots';
 import { MdUpload, MdDelete, MdLoop, MdTranslate } from 'react-icons/md';
 import { useTeam } from '@/context/team';
@@ -43,7 +47,9 @@ export function SlideEditor({
   hasAppIcon = false,
 }: SlideEditorProps) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const bgFileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [bgUploading, setBgUploading] = useState(false);
   const [editingLocale, setEditingLocale] = useState<string | null>(
     activeLocale ?? null
   );
@@ -123,6 +129,34 @@ export function SlideEditor({
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const handleBgFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const teamId = teamInfo?.currentTeam?.id;
+    const appId = currentApp?.id;
+    if (!teamId || !appId) return;
+    setBgUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(
+        `/api/teams/${teamId}/apps/${appId}/screenshot-sets/upload-image`,
+        { method: 'POST', body: formData }
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? 'Upload failed');
+      }
+      const { url } = await res.json();
+      setBase('bgImageUrl', url);
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setBgUploading(false);
+      if (bgFileRef.current) bgFileRef.current.value = '';
     }
   };
 
@@ -323,41 +357,170 @@ export function SlideEditor({
         </p>
       </Field>
 
-      {/* Image vertical offset — only visible when a screenshot is loaded */}
+      {/* Screenshot image controls — only when a screenshot is loaded */}
       {slide.screenshotUrl && (
-        <Field label="Image position">
-          <div className="flex items-center gap-3">
-            <input
-              type="range"
-              min={-50}
-              max={50}
-              step={1}
-              value={slide.imageOffsetY ?? 0}
-              onChange={(e) =>
-                onChange({ ...slide, imageOffsetY: Number(e.target.value) })
-              }
-              className="flex-1 accent-primary"
-            />
-            <button
-              onClick={() => onChange({ ...slide, imageOffsetY: 0 })}
-              className="text-[10px] text-muted-foreground hover:text-foreground border border-border rounded px-1.5 py-0.5 shrink-0"
-              title="Reset to center"
-            >
-              {slide.imageOffsetY
-                ? `${slide.imageOffsetY > 0 ? '+' : ''}${slide.imageOffsetY}%`
-                : 'center'}
-            </button>
-          </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Shift screenshot up or down inside the phone frame.
-          </p>
-        </Field>
+        <>
+          <Field label="Vertical position">
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={-50}
+                max={50}
+                step={1}
+                value={slide.imageOffsetY ?? 0}
+                onChange={(e) =>
+                  onChange({ ...slide, imageOffsetY: Number(e.target.value) })
+                }
+                className="flex-1 accent-primary"
+              />
+              <button
+                onClick={() => onChange({ ...slide, imageOffsetY: 0 })}
+                className="text-[10px] text-muted-foreground hover:text-foreground border border-border rounded px-1.5 py-0.5 shrink-0 w-12 text-center"
+              >
+                {slide.imageOffsetY
+                  ? `${slide.imageOffsetY > 0 ? '+' : ''}${slide.imageOffsetY}%`
+                  : 'center'}
+              </button>
+            </div>
+          </Field>
+
+          <Field label="Horizontal position">
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={-50}
+                max={50}
+                step={1}
+                value={slide.imageOffsetX ?? 0}
+                onChange={(e) =>
+                  onChange({ ...slide, imageOffsetX: Number(e.target.value) })
+                }
+                className="flex-1 accent-primary"
+              />
+              <button
+                onClick={() => onChange({ ...slide, imageOffsetX: 0 })}
+                className="text-[10px] text-muted-foreground hover:text-foreground border border-border rounded px-1.5 py-0.5 shrink-0 w-12 text-center"
+              >
+                {slide.imageOffsetX
+                  ? `${slide.imageOffsetX > 0 ? '+' : ''}${slide.imageOffsetX}%`
+                  : 'center'}
+              </button>
+            </div>
+          </Field>
+
+          <Field label="Zoom">
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={100}
+                max={250}
+                step={5}
+                value={slide.imageZoom ?? 100}
+                onChange={(e) =>
+                  onChange({ ...slide, imageZoom: Number(e.target.value) })
+                }
+                className="flex-1 accent-primary"
+              />
+              <button
+                onClick={() => onChange({ ...slide, imageZoom: 100 })}
+                className="text-[10px] text-muted-foreground hover:text-foreground border border-border rounded px-1.5 py-0.5 shrink-0 w-12 text-center"
+              >
+                {slide.imageZoom ? `${slide.imageZoom}%` : '100%'}
+              </button>
+            </div>
+          </Field>
+        </>
       )}
+
+      {/* Background image */}
+      <Field label="Background image">
+        <input
+          ref={bgFileRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="hidden"
+          onChange={handleBgFileChange}
+        />
+        {slide.bgImageUrl ? (
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={slide.bgImageUrl}
+              alt="background preview"
+              className="w-16 h-10 object-cover rounded border border-border flex-shrink-0"
+            />
+            <div className="flex flex-col gap-1.5">
+              <button
+                onClick={() => bgFileRef.current?.click()}
+                disabled={bgUploading}
+                className="flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50"
+              >
+                <MdLoop className="h-3 w-3" />
+                {bgUploading ? 'Uploading…' : 'Replace'}
+              </button>
+              <button
+                onClick={() => setBase('bgImageUrl', undefined)}
+                className="flex items-center gap-1 text-xs text-destructive hover:underline"
+              >
+                <MdDelete className="h-3 w-3" />
+                Remove
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => bgFileRef.current?.click()}
+            disabled={bgUploading}
+            className="flex items-center gap-2 w-full rounded-md border border-dashed border-border px-3 py-2 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors disabled:opacity-50"
+          >
+            {bgUploading ? (
+              <>
+                <MdLoop className="h-4 w-4 animate-spin" /> Uploading…
+              </>
+            ) : (
+              <>
+                <MdUpload className="h-4 w-4" /> Upload background image
+              </>
+            )}
+          </button>
+        )}
+        <p className="text-xs text-muted-foreground mt-1">
+          Replaces solid/gradient background on this slide.
+        </p>
+      </Field>
+
+      {/* Custom text color */}
+      <Field label="Text color">
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={slide.customTextColor ?? '#ffffff'}
+            onChange={(e) =>
+              onChange({ ...slide, customTextColor: e.target.value })
+            }
+            className="w-8 h-8 rounded cursor-pointer border border-border bg-transparent"
+            title="Custom text color"
+          />
+          <span className="text-xs text-muted-foreground flex-1">
+            {slide.customTextColor
+              ? slide.customTextColor
+              : 'Using theme color'}
+          </span>
+          {slide.customTextColor && (
+            <button
+              onClick={() => onChange({ ...slide, customTextColor: undefined })}
+              className="text-[10px] text-muted-foreground hover:text-foreground border border-border rounded px-1.5 py-0.5"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      </Field>
 
       {/* App icon overlay — only when app has an icon */}
       {hasAppIcon && (
         <Field label="App icon overlay">
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer mb-2">
             <input
               type="checkbox"
               checked={slide.showAppIcon ?? false}
@@ -367,9 +530,33 @@ export function SlideEditor({
               className="accent-primary"
             />
             <span className="text-xs text-muted-foreground">
-              Show app icon in corner of slide
+              Show app icon on this slide
             </span>
           </label>
+          {slide.showAppIcon && (
+            <div className="grid grid-cols-2 gap-1">
+              {(
+                [
+                  'top-left',
+                  'top-right',
+                  'bottom-left',
+                  'bottom-right',
+                ] as AppIconPosition[]
+              ).map((pos) => (
+                <button
+                  key={pos}
+                  onClick={() => onChange({ ...slide, appIconPosition: pos })}
+                  className={`text-[10px] rounded border px-2 py-1 transition-colors ${
+                    (slide.appIconPosition ?? 'bottom-left') === pos
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:border-primary/50'
+                  }`}
+                >
+                  {pos.replace('-', ' ')}
+                </button>
+              ))}
+            </div>
+          )}
         </Field>
       )}
     </div>

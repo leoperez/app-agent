@@ -12,12 +12,15 @@ export function IPhoneFrame({
   screenshotUrl,
   screenFallbackColor,
   imageOffsetY = 0,
+  imageOffsetX = 0,
+  imageZoom = 100,
 }: {
   width: number;
   screenshotUrl?: string;
   screenFallbackColor: string;
-  /** Vertical shift as % of screen height, -50 to +50. 0 = center. */
   imageOffsetY?: number;
+  imageOffsetX?: number;
+  imageZoom?: number;
 }) {
   // iPhone 15 Pro natural ratio: 393 × 852 logical px  → 1:2.168
   const h = Math.round(width * 2.168);
@@ -116,18 +119,31 @@ export function IPhoneFrame({
       />
 
       {/* Screenshot image */}
-      {screenshotUrl && (
-        <image
-          href={screenshotUrl}
-          x={sx}
-          y={sy}
-          width={sw}
-          height={sh}
-          clipPath={`url(#${id})`}
-          preserveAspectRatio="xMidYMid slice"
-          transform={`translate(0, ${Math.round((imageOffsetY / 100) * sh)})`}
-        />
-      )}
+      {screenshotUrl &&
+        (() => {
+          const scale = imageZoom / 100;
+          const iw = Math.round(sw * scale);
+          const ih = Math.round(sh * scale);
+          const ix =
+            sx -
+            Math.round((iw - sw) / 2) +
+            Math.round((imageOffsetX / 100) * sw);
+          const iy =
+            sy -
+            Math.round((ih - sh) / 2) +
+            Math.round((imageOffsetY / 100) * sh);
+          return (
+            <image
+              href={screenshotUrl}
+              x={ix}
+              y={iy}
+              width={iw}
+              height={ih}
+              clipPath={`url(#${id})`}
+              preserveAspectRatio="xMidYMid slice"
+            />
+          );
+        })()}
 
       {/* Screen glass glare overlay */}
       <rect
@@ -218,11 +234,15 @@ export function AndroidFrame({
   screenshotUrl,
   screenFallbackColor,
   imageOffsetY = 0,
+  imageOffsetX = 0,
+  imageZoom = 100,
 }: {
   width: number;
   screenshotUrl?: string;
   screenFallbackColor: string;
   imageOffsetY?: number;
+  imageOffsetX?: number;
+  imageZoom?: number;
 }) {
   const h = Math.round(width * 2.165);
   const id = `android-clip-${width}`;
@@ -311,18 +331,31 @@ export function AndroidFrame({
       />
 
       {/* Screenshot */}
-      {screenshotUrl && (
-        <image
-          href={screenshotUrl}
-          x={sx}
-          y={sy}
-          width={sw}
-          height={sh}
-          clipPath={`url(#${id})`}
-          preserveAspectRatio="xMidYMid slice"
-          transform={`translate(0, ${Math.round((imageOffsetY / 100) * sh)})`}
-        />
-      )}
+      {screenshotUrl &&
+        (() => {
+          const scale = imageZoom / 100;
+          const iw = Math.round(sw * scale);
+          const ih = Math.round(sh * scale);
+          const ix =
+            sx -
+            Math.round((iw - sw) / 2) +
+            Math.round((imageOffsetX / 100) * sw);
+          const iy =
+            sy -
+            Math.round((ih - sh) / 2) +
+            Math.round((imageOffsetY / 100) * sh);
+          return (
+            <image
+              href={screenshotUrl}
+              x={ix}
+              y={iy}
+              width={iw}
+              height={ih}
+              clipPath={`url(#${id})`}
+              preserveAspectRatio="xMidYMid slice"
+            />
+          );
+        })()}
 
       {/* Screen glare */}
       <rect
@@ -410,11 +443,15 @@ export function IPadFrame({
   screenshotUrl,
   screenFallbackColor,
   imageOffsetY = 0,
+  imageOffsetX = 0,
+  imageZoom = 100,
 }: {
   width: number;
   screenshotUrl?: string;
   screenFallbackColor: string;
   imageOffsetY?: number;
+  imageOffsetX?: number;
+  imageZoom?: number;
 }) {
   const h = Math.round(width * (2752 / 2064)); // ≈ 1.334
   const id = `ipad-clip-${width}`;
@@ -506,18 +543,31 @@ export function IPadFrame({
       />
 
       {/* Screenshot */}
-      {screenshotUrl && (
-        <image
-          href={screenshotUrl}
-          x={sx}
-          y={sy}
-          width={sw}
-          height={sh}
-          clipPath={`url(#${id})`}
-          preserveAspectRatio="xMidYMid slice"
-          transform={`translate(0, ${Math.round((imageOffsetY / 100) * sh)})`}
-        />
-      )}
+      {screenshotUrl &&
+        (() => {
+          const scale = imageZoom / 100;
+          const iw = Math.round(sw * scale);
+          const ih = Math.round(sh * scale);
+          const ix =
+            sx -
+            Math.round((iw - sw) / 2) +
+            Math.round((imageOffsetX / 100) * sw);
+          const iy =
+            sy -
+            Math.round((ih - sh) / 2) +
+            Math.round((imageOffsetY / 100) * sh);
+          return (
+            <image
+              href={screenshotUrl}
+              x={ix}
+              y={iy}
+              width={iw}
+              height={ih}
+              clipPath={`url(#${id})`}
+              preserveAspectRatio="xMidYMid slice"
+            />
+          );
+        })()}
 
       {/* Glass glare */}
       <rect
@@ -600,12 +650,16 @@ export function PhoneFrame({
   screenFallbackColor,
   deviceType = 'iphone',
   imageOffsetY = 0,
+  imageOffsetX = 0,
+  imageZoom = 100,
 }: {
   width: number;
   screenshotUrl?: string;
   screenFallbackColor: string;
   deviceType?: 'iphone' | 'android' | 'ipad';
   imageOffsetY?: number;
+  imageOffsetX?: number;
+  imageZoom?: number;
 }) {
   if (deviceType === 'android') {
     return (
@@ -614,6 +668,8 @@ export function PhoneFrame({
         screenshotUrl={screenshotUrl}
         screenFallbackColor={screenFallbackColor}
         imageOffsetY={imageOffsetY}
+        imageOffsetX={imageOffsetX}
+        imageZoom={imageZoom}
       />
     );
   }
@@ -624,6 +680,8 @@ export function PhoneFrame({
         screenshotUrl={screenshotUrl}
         screenFallbackColor={screenFallbackColor}
         imageOffsetY={imageOffsetY}
+        imageOffsetX={imageOffsetX}
+        imageZoom={imageZoom}
       />
     );
   }
@@ -633,6 +691,8 @@ export function PhoneFrame({
       screenshotUrl={screenshotUrl}
       screenFallbackColor={screenFallbackColor}
       imageOffsetY={imageOffsetY}
+      imageOffsetX={imageOffsetX}
+      imageZoom={imageZoom}
     />
   );
 }

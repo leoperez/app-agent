@@ -227,13 +227,17 @@ function PhoneMockup({
   width,
   deviceType = 'iphone',
   imageOffsetY = 0,
+  imageOffsetX = 0,
+  imageZoom = 100,
 }: {
   screenshot?: string;
   screenColor: string;
-  borderColor: string; // kept for API compat, ignored — SVG frame has own gradient
+  borderColor: string;
   width: number;
   deviceType?: 'iphone' | 'android' | 'ipad';
   imageOffsetY?: number;
+  imageOffsetX?: number;
+  imageZoom?: number;
 }) {
   return (
     <PhoneFrame
@@ -242,6 +246,8 @@ function PhoneMockup({
       screenFallbackColor={screenColor}
       deviceType={deviceType}
       imageOffsetY={imageOffsetY}
+      imageOffsetX={imageOffsetX}
+      imageZoom={imageZoom}
     />
   );
 }
@@ -280,13 +286,17 @@ function TextBlock({
   align = 'center',
   width,
   fontFamily,
+  textColor,
 }: {
   slide: SlideData;
   theme: ResolvedTheme;
   align?: 'left' | 'center' | 'right';
   width?: number;
   fontFamily: string;
+  textColor?: string;
 }) {
+  const headlineColor = textColor ?? theme.text;
+  const subtitleColor = textColor ?? theme.accent;
   return (
     <div
       style={{
@@ -311,7 +321,7 @@ function TextBlock({
           margin: 0,
           fontSize: slide.headlineFontSize,
           fontWeight: 800,
-          color: theme.text,
+          color: headlineColor,
           lineHeight: 1.1,
           letterSpacing: -1,
           fontFamily,
@@ -323,7 +333,7 @@ function TextBlock({
         style={{
           margin: 0,
           fontSize: slide.subtitleFontSize,
-          color: theme.accent,
+          color: subtitleColor,
           lineHeight: 1.5,
           fontFamily,
           fontWeight: 400,
@@ -381,27 +391,54 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
       borderRadius: preview ? 12 : 0,
     };
 
-    // App icon overlay — rendered as absolute element inside each layout
+    // Effective text color — per-slide override takes priority over theme
+    const textColor = slide.customTextColor || theme.text;
+
+    // Background image layer (rendered behind everything else)
+    const bgImageLayer = slide.bgImageUrl ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={slide.bgImageUrl}
+        alt=""
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+    ) : null;
+
+    // App icon overlay — positioned per slide.appIconPosition
     const iconSize = Math.round(width * 0.14);
     const iconMargin = Math.round(width * 0.04);
+    const iconPos = slide.appIconPosition ?? 'bottom-left';
+    const iconStyle: React.CSSProperties = {
+      position: 'absolute',
+      width: iconSize,
+      height: iconSize,
+      borderRadius: Math.round(iconSize * 0.22),
+      boxShadow: `0 ${Math.round(iconSize * 0.06)}px ${Math.round(iconSize * 0.18)}px rgba(0,0,0,0.4)`,
+      pointerEvents: 'none',
+      zIndex: 10,
+      ...(iconPos === 'bottom-left'
+        ? { bottom: iconMargin, left: iconMargin }
+        : {}),
+      ...(iconPos === 'bottom-right'
+        ? { bottom: iconMargin, right: iconMargin }
+        : {}),
+      ...(iconPos === 'top-left' ? { top: iconMargin, left: iconMargin } : {}),
+      ...(iconPos === 'top-right'
+        ? { top: iconMargin, right: iconMargin }
+        : {}),
+    };
     const appIconOverlay =
       slide.showAppIcon && appIconUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={appIconUrl}
-          alt=""
-          style={{
-            position: 'absolute',
-            bottom: iconMargin,
-            left: iconMargin,
-            width: iconSize,
-            height: iconSize,
-            borderRadius: Math.round(iconSize * 0.22),
-            boxShadow: `0 ${Math.round(iconSize * 0.06)}px ${Math.round(iconSize * 0.18)}px rgba(0,0,0,0.4)`,
-            pointerEvents: 'none',
-            zIndex: 10,
-          }}
-        />
+        <img src={appIconUrl} alt="" style={iconStyle} />
       ) : null;
 
     // ── centered: text top, phone bottom ─────────────────────────────────────
@@ -414,6 +451,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             height={height}
             accent={theme.accent}
           />
+          {bgImageLayer}
           {appIconOverlay}
           <div
             style={{
@@ -432,6 +470,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               theme={theme}
               align="center"
               fontFamily={ff}
+              textColor={textColor !== theme.text ? textColor : undefined}
             />
             <div
               style={{
@@ -448,6 +487,8 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                 deviceType={deviceType}
                 width={phonePreviewW}
                 imageOffsetY={slide.imageOffsetY ?? 0}
+                imageOffsetX={slide.imageOffsetX ?? 0}
+                imageZoom={slide.imageZoom ?? 100}
               />
             </div>
           </div>
@@ -465,6 +506,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             height={height}
             accent={theme.accent}
           />
+          {bgImageLayer}
           {appIconOverlay}
           {/* phone fills top 75% */}
           <div
@@ -502,6 +544,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               theme={theme}
               align="center"
               fontFamily={ff}
+              textColor={textColor !== theme.text ? textColor : undefined}
             />
           </div>
         </div>
@@ -525,6 +568,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             height={height}
             accent={theme.accent}
           />
+          {bgImageLayer}
           {appIconOverlay}
           <div
             style={{
@@ -540,6 +584,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               theme={theme}
               align="left"
               fontFamily={ff}
+              textColor={textColor !== theme.text ? textColor : undefined}
             />
           </div>
           <div
@@ -582,6 +627,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             height={height}
             accent={theme.accent}
           />
+          {bgImageLayer}
           {appIconOverlay}
           <div
             style={{
@@ -616,6 +662,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               theme={theme}
               align="left"
               fontFamily={ff}
+              textColor={textColor !== theme.text ? textColor : undefined}
             />
           </div>
         </div>
@@ -641,6 +688,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             height={height}
             accent={theme.accent}
           />
+          {bgImageLayer}
           {appIconOverlay}
           {/* Text column — left 55% */}
           <div
@@ -669,7 +717,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                   resolvedSlide.headlineFontSize * fgTextSize * 0.8
                 ),
                 fontWeight: 800,
-                color: theme.text,
+                color: textColor,
                 lineHeight: 1.1,
                 letterSpacing: -1,
                 fontFamily: ff,
@@ -683,7 +731,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                 fontSize: Math.round(
                   resolvedSlide.subtitleFontSize * fgTextSize * 0.85
                 ),
-                color: theme.accent,
+                color: textColor,
                 lineHeight: 1.4,
                 fontFamily: ff,
                 fontWeight: 400,
@@ -749,6 +797,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
           height={height}
           accent={theme.accent}
         />
+        {bgImageLayer}
         {appIconOverlay}
         <div
           style={{
@@ -773,7 +822,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               margin: 0,
               fontSize: slide.headlineFontSize * 1.3,
               fontWeight: 900,
-              color: theme.text,
+              color: textColor,
               lineHeight: 1.0,
               letterSpacing: -2,
               textAlign: 'center',
@@ -786,7 +835,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             style={{
               margin: 0,
               fontSize: slide.subtitleFontSize,
-              color: theme.accent,
+              color: textColor,
               textAlign: 'center',
               fontFamily: ff,
               opacity: 0.9,

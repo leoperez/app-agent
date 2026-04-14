@@ -50,6 +50,9 @@ import {
   MdZoomOut,
   MdWarning,
   MdContentCopy,
+  MdPhoneAndroid,
+  MdAnimation,
+  MdSelectAll,
 } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import { SlideCanvas } from './slide-canvas';
@@ -63,6 +66,8 @@ import { AscImportPanel } from './asc-import-panel';
 import { TranslatePanel } from './translate-panel';
 import { SharePanel } from './share-panel';
 import { HelpTooltip } from '@/components/common/help-tooltip';
+import { StoreListingPreview } from './store-listing-preview';
+import { encodeGif } from '@/lib/gif-encoder';
 import {
   LAYOUTS,
   THEMES,
@@ -189,6 +194,8 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showTranslate, setShowTranslate] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showDuplicateLocales, setShowDuplicateLocales] = useState(false);
+  const [showStoreListing, setShowStoreListing] = useState(false);
+  const [exportingGif, setExportingGif] = useState(false);
   const [canvasDragOver, setCanvasDragOver] = useState(false);
   const [canvasUploading, setCanvasUploading] = useState(false);
   const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
@@ -633,6 +640,64 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     [exportTarget]
   );
 
+  // ── GIF export ────────────────────────────────────────────────────────────
+  const exportGif = useCallback(async () => {
+    setExportingGif(true);
+    try {
+      // Capture slides as PNG data URLs at a smaller size for GIF (400px wide)
+      const gifW = Math.min(400, exportTarget.width);
+      const gifRatio = gifW / PREVIEW_W;
+      const frames: { imageData: ImageData; delay: number }[] = [];
+
+      for (let i = 0; i < slides.length; i++) {
+        const el = slideRefs.current[i];
+        if (!el) continue;
+        const dataUrl = await toPng(el, {
+          pixelRatio: gifRatio,
+          style: { borderRadius: '0' },
+        });
+        // Draw to canvas to get ImageData
+        const img = new Image();
+        await new Promise<void>((res) => {
+          img.onload = () => res();
+          img.src = dataUrl;
+        });
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+        frames.push({
+          imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
+          delay: 200,
+        });
+      }
+
+      if (frames.length === 0) {
+        toast.error('No slides to export');
+        return;
+      }
+      const blob = encodeGif(frames);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${setName.replace(/\s+/g, '-')}.gif`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('GIF exported');
+    } catch (e) {
+      console.error(e);
+      toast.error('GIF export failed');
+    } finally {
+      setExportingGif(false);
+    }
+  }, [slides, exportTarget, setName]);
+
+  // ── Batch operations ──────────────────────────────────────────────────────
+  const applyToAllSlides = useCallback((patch: Partial<(typeof slides)[0]>) => {
+    setSlides((prev) => prev.map((s) => ({ ...s, ...patch })));
+  }, []);
+
   // ── Canvas drag-and-drop image upload ────────────────────────────────────
   const uploadSlideImage = async (file: File) => {
     if (!teamId || !currentApp?.id) return;
@@ -1016,6 +1081,27 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           teamId={teamId}
           appId={currentApp?.id ?? ''}
           onClose={() => setShowShare(false)}
+        />
+      )}
+
+      {/* Store listing preview modal */}
+      {showStoreListing && (
+        <StoreListingPreview
+          slides={slides}
+          layoutId={layoutId}
+          themeId={themeId}
+          fontId={fontId}
+          decorationId={decorationId}
+          bgGradient={bgGradient}
+          bgMode={bgMode}
+          customBg={customBg}
+          customText={customText}
+          customAccent={customAccent}
+          deviceType={exportTarget.deviceType}
+          appName={currentApp?.name}
+          appIconUrl={currentApp?.iconUrl ?? undefined}
+          store={exportTarget.store}
+          onClose={() => setShowStoreListing(false)}
         />
       )}
 
@@ -1426,6 +1512,29 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
               />
             </div>
           )}
+
+          {/* Store listing preview */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowStoreListing(true)}
+            title="Preview how screenshots look in the store listing"
+          >
+            <MdPhoneAndroid className="h-3.5 w-3.5 mr-1" />
+            Preview
+          </Button>
+
+          {/* GIF export */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportGif}
+            disabled={exportingGif}
+            title="Export slides as animated GIF"
+          >
+            <MdAnimation className="h-3.5 w-3.5 mr-1" />
+            {exportingGif ? 'Making GIF…' : 'GIF'}
+          </Button>
 
           {/* Export */}
           <div className="relative">
@@ -1988,6 +2097,68 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 Slide {activeSlide + 1}
               </span>
             </div>
+
+            {/* Batch operations */}
+            {slides.length > 1 && currentSlide.screenshotUrl && (
+              <div className="px-4 py-2 border-b border-border bg-muted/5">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 flex items-center gap-1">
+                  <MdSelectAll className="h-3 w-3" /> Apply to all slides
+                </p>
+                <div className="flex flex-col gap-1">
+                  <button
+                    onClick={() =>
+                      applyToAllSlides({
+                        screenshotUrl: currentSlide.screenshotUrl,
+                      })
+                    }
+                    className="text-[10px] text-left text-muted-foreground hover:text-foreground hover:bg-muted/40 rounded px-2 py-1 transition-colors"
+                  >
+                    Copy this screenshot to all slides
+                  </button>
+                  {(currentSlide.imageOffsetY !== undefined ||
+                    currentSlide.imageOffsetX !== undefined ||
+                    currentSlide.imageZoom !== undefined) && (
+                    <button
+                      onClick={() =>
+                        applyToAllSlides({
+                          imageOffsetY: currentSlide.imageOffsetY,
+                          imageOffsetX: currentSlide.imageOffsetX,
+                          imageZoom: currentSlide.imageZoom,
+                        })
+                      }
+                      className="text-[10px] text-left text-muted-foreground hover:text-foreground hover:bg-muted/40 rounded px-2 py-1 transition-colors"
+                    >
+                      Copy image position/zoom to all slides
+                    </button>
+                  )}
+                  {currentSlide.customTextColor && (
+                    <button
+                      onClick={() =>
+                        applyToAllSlides({
+                          customTextColor: currentSlide.customTextColor,
+                        })
+                      }
+                      className="text-[10px] text-left text-muted-foreground hover:text-foreground hover:bg-muted/40 rounded px-2 py-1 transition-colors"
+                    >
+                      Copy text color to all slides
+                    </button>
+                  )}
+                  {currentSlide.bgImageUrl && (
+                    <button
+                      onClick={() =>
+                        applyToAllSlides({
+                          bgImageUrl: currentSlide.bgImageUrl,
+                        })
+                      }
+                      className="text-[10px] text-left text-muted-foreground hover:text-foreground hover:bg-muted/40 rounded px-2 py-1 transition-colors"
+                    >
+                      Copy background image to all slides
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             <SlideEditor
               slide={currentSlide}
               onChange={(updated) =>
@@ -2048,6 +2219,28 @@ function SortableSlide({
     isDragging,
   } = useSortable({ id });
 
+  // Lazy render: only paint SlideCanvas when the thumbnail enters the viewport
+  const observerRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(isActive); // active slide always visible
+  useEffect(() => {
+    const el = observerRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // Estimate placeholder height based on aspect ratio
+  const thumbH = Math.round(100 * (19.5 / 9));
+
   return (
     <div
       ref={setNodeRef}
@@ -2072,17 +2265,23 @@ function SortableSlide({
             : 'ring-1 ring-border/50 opacity-70 hover:opacity-100'
         }`}
       >
-        <SlideCanvas
-          layout={layoutId}
-          theme={theme}
-          slide={slide}
-          bgGradient={bgGradient}
-          decorationId={decorationId}
-          deviceType={deviceType}
-          fontFamily={fontFamily}
-          preview={true}
-          width={100}
-        />
+        <div ref={observerRef} style={{ width: 100, minHeight: thumbH }}>
+          {visible ? (
+            <SlideCanvas
+              layout={layoutId}
+              theme={theme}
+              slide={slide}
+              bgGradient={bgGradient}
+              decorationId={decorationId}
+              deviceType={deviceType}
+              fontFamily={fontFamily}
+              preview={true}
+              width={100}
+            />
+          ) : (
+            <div style={{ width: 100, height: thumbH, background: theme.bg }} />
+          )}
+        </div>
       </button>
 
       <div className="flex items-center gap-0.5 mt-1">

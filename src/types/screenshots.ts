@@ -17,6 +17,12 @@ export interface SlideLocaleText {
   badge?: string;
 }
 
+export type AppIconPosition =
+  | 'bottom-left'
+  | 'bottom-right'
+  | 'top-left'
+  | 'top-right';
+
 export interface SlideData {
   headline: string;
   headlineFontSize: number; // px at export resolution
@@ -24,10 +30,20 @@ export interface SlideData {
   subtitleFontSize: number;
   badge?: string; // short pill text, e.g. "New" or "Pro"
   screenshotUrl?: string; // Vercel Blob public URL — persisted in DB
+  /** Background image URL — shown behind text/phone instead of solid/gradient bg */
+  bgImageUrl?: string;
   /** Vertical offset for screenshot image inside phone frame, -50 to +50 (percent). 0 = center */
   imageOffsetY?: number;
+  /** Horizontal offset for screenshot image inside phone frame, -50 to +50 (percent). 0 = center */
+  imageOffsetX?: number;
+  /** Zoom level for screenshot image inside phone frame, 100–250 (percent). 100 = fit */
+  imageZoom?: number;
+  /** Custom headline/subtitle color override (CSS hex). Overrides theme text color. */
+  customTextColor?: string;
   /** Show app icon overlay in the corner of the slide */
   showAppIcon?: boolean;
+  /** Which corner the app icon appears in. Default: bottom-left */
+  appIconPosition?: AppIconPosition;
   /** Per-locale text overrides. When present, takes precedence over headline/subtitle/badge */
   localeTexts?: Record<string, SlideLocaleText>;
 }
