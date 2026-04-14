@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useUndoRedo } from '@/hooks/use-undo-redo';
 import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
@@ -206,6 +206,10 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showStoreListing, setShowStoreListing] = useState(false);
   const [showVideoPanel, setShowVideoPanel] = useState(false);
   const [exportingGif, setExportingGif] = useState(false);
+  // Canvas inline text editor
+  const [inlineEdit, setInlineEdit] = useState<{
+    field: 'headline' | 'subtitle' | 'badge';
+  } | null>(null);
   // Multi-select
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedSlideIds, setSelectedSlideIds] = useState<Set<number>>(
@@ -2275,7 +2279,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                   </p>
                 </div>
               )}
-              <div className="shadow-2xl">
+              <div className="shadow-2xl relative group/canvas">
                 <SlideCanvas
                   layout={layoutId}
                   theme={theme}
@@ -2288,6 +2292,51 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                   preview={true}
                   width={previewW}
                   appIconUrl={currentApp?.iconUrl ?? undefined}
+                />
+                {/* Click-to-edit overlay hint */}
+                <div
+                  className="absolute inset-0 cursor-pointer opacity-0 group-hover/canvas:opacity-100 transition-opacity pointer-events-none"
+                  style={{ borderRadius: 12 }}
+                >
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm whitespace-nowrap">
+                    Click text to edit
+                  </div>
+                </div>
+                {/* Inline text editor popover */}
+                {inlineEdit && (
+                  <CanvasInlineEditor
+                    field={inlineEdit.field}
+                    value={
+                      inlineEdit.field === 'headline'
+                        ? currentSlide.headline
+                        : inlineEdit.field === 'subtitle'
+                          ? currentSlide.subtitle
+                          : (currentSlide.badge ?? '')
+                    }
+                    onChange={(val) => {
+                      setSlides((prev) =>
+                        prev.map((s, i) =>
+                          i === activeSlide
+                            ? { ...s, [inlineEdit.field]: val }
+                            : s
+                        )
+                      );
+                    }}
+                    onClose={() => setInlineEdit(null)}
+                  />
+                )}
+                {/* Transparent click zones per layout */}
+                <CanvasClickZones
+                  layout={layoutId}
+                  width={previewW}
+                  height={Math.round(
+                    layoutId === 'feature-graphic'
+                      ? previewW * (500 / 1024)
+                      : exportTarget.deviceType === 'ipad'
+                        ? previewW * (2752 / 2064)
+                        : previewW * (19.5 / 9)
+                  )}
+                  onClickZone={(field) => setInlineEdit({ field })}
                 />
               </div>
             </div>
@@ -2825,6 +2874,150 @@ function DuplicateToLocalesPanel({
               : `Duplicate to ${selected.size} locale${selected.size !== 1 ? 's' : ''}`}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Canvas click zones (transparent overlay per layout) ───────────────────────
+
+type EditField = 'headline' | 'subtitle' | 'badge';
+
+function CanvasClickZones({
+  layout,
+  width,
+  height,
+  onClickZone,
+}: {
+  layout: LayoutId;
+  width: number;
+  height: number;
+  onClickZone: (field: EditField) => void;
+}) {
+  // Define text zone rectangles per layout as fractions of [x, y, w, h]
+  type Zone = { field: EditField; x: number; y: number; w: number; h: number };
+  const zones: Zone[] = (() => {
+    if (layout === 'feature-graphic') {
+      return [
+        { field: 'headline', x: 0.04, y: 0.22, w: 0.46, h: 0.28 },
+        { field: 'subtitle', x: 0.04, y: 0.55, w: 0.46, h: 0.22 },
+      ];
+    }
+    if (layout === 'split-left') {
+      return [
+        { field: 'headline', x: 0.02, y: 0.28, w: 0.48, h: 0.22 },
+        { field: 'subtitle', x: 0.02, y: 0.52, w: 0.48, h: 0.16 },
+      ];
+    }
+    if (layout === 'split-right') {
+      return [
+        { field: 'headline', x: 0.5, y: 0.28, w: 0.48, h: 0.22 },
+        { field: 'subtitle', x: 0.5, y: 0.52, w: 0.48, h: 0.16 },
+      ];
+    }
+    if (layout === 'bottom-caption') {
+      return [
+        { field: 'headline', x: 0.05, y: 0.72, w: 0.9, h: 0.13 },
+        { field: 'subtitle', x: 0.05, y: 0.85, w: 0.9, h: 0.1 },
+      ];
+    }
+    if (layout === 'hero') {
+      return [
+        { field: 'headline', x: 0.08, y: 0.08, w: 0.84, h: 0.14 },
+        { field: 'subtitle', x: 0.08, y: 0.22, w: 0.84, h: 0.1 },
+      ];
+    }
+    // centered (default)
+    return [
+      { field: 'headline', x: 0.06, y: 0.63, w: 0.88, h: 0.14 },
+      { field: 'subtitle', x: 0.06, y: 0.78, w: 0.88, h: 0.1 },
+    ];
+  })();
+
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{ borderRadius: 12, overflow: 'hidden' }}
+    >
+      {zones.map((z) => (
+        <div
+          key={z.field}
+          onClick={() => onClickZone(z.field)}
+          title={`Edit ${z.field}`}
+          className="absolute pointer-events-auto cursor-text group/zone hover:bg-white/10 hover:ring-1 hover:ring-white/40 rounded transition-all"
+          style={{
+            left: z.x * width,
+            top: z.y * height,
+            width: z.w * width,
+            height: z.h * height,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Canvas inline text editor popover ─────────────────────────────────────────
+
+function CanvasInlineEditor({
+  field,
+  value,
+  onChange,
+  onClose,
+}: {
+  field: EditField;
+  value: string;
+  onChange: (val: string) => void;
+  onClose: () => void;
+}) {
+  const inputRef = React.useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, []);
+
+  const label =
+    field === 'headline'
+      ? 'Headline'
+      : field === 'subtitle'
+        ? 'Subtitle'
+        : 'Badge';
+
+  return (
+    <div
+      className="absolute inset-x-0 bottom-0 z-30 p-3"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="bg-background/95 backdrop-blur rounded-xl shadow-2xl border border-border p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            {label}
+          </span>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <MdClose className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <textarea
+          ref={inputRef}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') onClose();
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              onClose();
+            }
+          }}
+          rows={field === 'headline' ? 2 : 3}
+          className="w-full text-sm rounded border border-border bg-background px-2 py-1.5 resize-none focus:outline-none focus:border-primary/60"
+          placeholder={`Enter ${label.toLowerCase()}…`}
+        />
+        <p className="text-[10px] text-muted-foreground">
+          Enter to confirm · Esc to cancel
+        </p>
       </div>
     </div>
   );

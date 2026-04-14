@@ -7,7 +7,13 @@ import type {
   AppIconPosition,
 } from '@/types/screenshots';
 import { resolveSlideText } from '@/types/screenshots';
-import { MdUpload, MdDelete, MdLoop, MdTranslate } from 'react-icons/md';
+import {
+  MdUpload,
+  MdDelete,
+  MdLoop,
+  MdTranslate,
+  MdAutoAwesome,
+} from 'react-icons/md';
 import { useTeam } from '@/context/team';
 import { useApp } from '@/context/app';
 
@@ -50,6 +56,8 @@ export function SlideEditor({
   const bgFileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [bgUploading, setBgUploading] = useState(false);
+  const [bgPrompt, setBgPrompt] = useState('');
+  const [generatingBg, setGeneratingBg] = useState(false);
   const [editingLocale, setEditingLocale] = useState<string | null>(
     activeLocale ?? null
   );
@@ -157,6 +165,35 @@ export function SlideEditor({
     } finally {
       setBgUploading(false);
       if (bgFileRef.current) bgFileRef.current.value = '';
+    }
+  };
+
+  const handleGenerateBg = async () => {
+    if (!bgPrompt.trim()) return;
+    const teamId = teamInfo?.currentTeam?.id;
+    const appId = currentApp?.id;
+    if (!teamId || !appId) return;
+    setGeneratingBg(true);
+    try {
+      const res = await fetch(
+        `/api/teams/${teamId}/apps/${appId}/screenshot-sets/generate-bg`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: bgPrompt }),
+        }
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? 'Generation failed');
+      }
+      const { url } = await res.json();
+      setBase('bgImageUrl', url);
+      setBgPrompt('');
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setGeneratingBg(false);
     }
   };
 
@@ -484,6 +521,30 @@ export function SlideEditor({
             )}
           </button>
         )}
+        {/* AI Generate */}
+        <div className="mt-2 flex gap-1.5">
+          <input
+            type="text"
+            value={bgPrompt}
+            onChange={(e) => setBgPrompt(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleGenerateBg();
+            }}
+            placeholder="e.g. soft purple aurora, night sky…"
+            className="flex-1 text-xs rounded border border-border bg-transparent px-2 py-1.5 placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/60"
+          />
+          <button
+            onClick={handleGenerateBg}
+            disabled={generatingBg || !bgPrompt.trim()}
+            title="Generate background with AI"
+            className="flex items-center gap-1 px-2 py-1.5 rounded border border-border text-xs text-muted-foreground hover:border-primary/50 hover:text-foreground disabled:opacity-50 transition-colors whitespace-nowrap"
+          >
+            <MdAutoAwesome
+              className={`h-3.5 w-3.5 ${generatingBg ? 'animate-spin' : ''}`}
+            />
+            {generatingBg ? 'Generating…' : 'AI'}
+          </button>
+        </div>
         <p className="text-xs text-muted-foreground mt-1">
           Replaces solid/gradient background on this slide.
         </p>
