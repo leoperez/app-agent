@@ -136,6 +136,14 @@ export default function DashboardLayout({
               <ThemeToggle />
               <NotificationBell />
 
+              <Link
+                href="/help"
+                className="w-7 h-7 rounded-full border border-border text-muted-foreground hover:border-primary hover:text-primary text-xs font-bold flex items-center justify-center transition-colors"
+                title="Help Center"
+              >
+                ?
+              </Link>
+
               <Button variant="ghost" size="icon" asChild>
                 <Link href="/dashboard/account">
                   {session?.user?.image ? (

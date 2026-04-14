@@ -62,6 +62,7 @@ import { PaletteSwatches } from './icon-palette';
 import { AscImportPanel } from './asc-import-panel';
 import { TranslatePanel } from './translate-panel';
 import { SharePanel } from './share-panel';
+import { HelpTooltip } from '@/components/common/help-tooltip';
 import {
   LAYOUTS,
   THEMES,
@@ -1350,30 +1351,42 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
 
           {/* Push to App Store Connect (App Store apps only) */}
           {currentApp?.store === 'APPSTORE' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={pushToAsc}
-              disabled={pushingToAsc}
-              title="Upload screenshots directly to App Store Connect"
-            >
-              <MdCloudUpload className="h-3.5 w-3.5 mr-1" />
-              {pushingToAsc ? 'Uploading…' : 'Push to ASC'}
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={pushToAsc}
+                disabled={pushingToAsc}
+                title="Upload screenshots directly to App Store Connect"
+              >
+                <MdCloudUpload className="h-3.5 w-3.5 mr-1" />
+                {pushingToAsc ? 'Uploading…' : 'Push to ASC'}
+              </Button>
+              <HelpTooltip
+                text="Uploads all slides directly to App Store Connect for the current locale and export target. Requires ASC credentials in Settings."
+                articleSlug="screenshot-studio-export"
+              />
+            </div>
           )}
 
           {/* Push to Google Play (Google Play apps only) */}
           {currentApp?.store === 'GOOGLEPLAY' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={pushToGooglePlay}
-              disabled={pushingToGP}
-              title="Upload screenshots directly to Google Play Console"
-            >
-              <MdCloudUpload className="h-3.5 w-3.5 mr-1" />
-              {pushingToGP ? 'Uploading…' : 'Push to Google Play'}
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={pushToGooglePlay}
+                disabled={pushingToGP}
+                title="Upload screenshots directly to Google Play Console"
+              >
+                <MdCloudUpload className="h-3.5 w-3.5 mr-1" />
+                {pushingToGP ? 'Uploading…' : 'Push to Google Play'}
+              </Button>
+              <HelpTooltip
+                text="Creates a transient edit in Google Play Console, replaces existing images for this locale and image type, then commits. Changes appear as a draft in Play Console."
+                articleSlug="screenshot-studio-export"
+              />
+            </div>
           )}
 
           {/* Export */}
