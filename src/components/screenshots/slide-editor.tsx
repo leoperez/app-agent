@@ -517,6 +517,52 @@ export function SlideEditor({
         </div>
       </Field>
 
+      {/* Text effects */}
+      <Field label="Text effects">
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={slide.textShadow ?? false}
+              onChange={(e) =>
+                onChange({ ...slide, textShadow: e.target.checked })
+              }
+              className="accent-primary"
+            />
+            <span className="text-xs text-muted-foreground">Drop shadow</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={slide.textOutline ?? false}
+              onChange={(e) =>
+                onChange({ ...slide, textOutline: e.target.checked })
+              }
+              className="accent-primary"
+            />
+            <span className="text-xs text-muted-foreground">
+              Outline / stroke
+            </span>
+          </label>
+          {slide.textOutline && (
+            <div className="flex items-center gap-2 pl-5">
+              <input
+                type="color"
+                value={slide.textOutlineColor ?? '#000000'}
+                onChange={(e) =>
+                  onChange({ ...slide, textOutlineColor: e.target.value })
+                }
+                className="w-7 h-7 rounded cursor-pointer border border-border bg-transparent"
+                title="Outline color"
+              />
+              <span className="text-xs text-muted-foreground">
+                {slide.textOutlineColor ?? '#000000'}
+              </span>
+            </div>
+          )}
+        </div>
+      </Field>
+
       {/* App icon overlay — only when app has an icon */}
       {hasAppIcon && (
         <Field label="App icon overlay">

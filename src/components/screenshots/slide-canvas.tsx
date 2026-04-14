@@ -297,6 +297,15 @@ function TextBlock({
 }) {
   const headlineColor = textColor ?? theme.text;
   const subtitleColor = textColor ?? theme.accent;
+  const outlineColor = slide.textOutlineColor ?? '#000000';
+  const shadowVal = slide.textShadow
+    ? `0px 2px 8px rgba(0,0,0,0.55), 0px 1px 3px rgba(0,0,0,0.4)`
+    : undefined;
+  const outlineVal = slide.textOutline
+    ? `-1px -1px 0 ${outlineColor}, 1px -1px 0 ${outlineColor}, -1px 1px 0 ${outlineColor}, 1px 1px 0 ${outlineColor}`
+    : undefined;
+  const combinedShadow =
+    [shadowVal, outlineVal].filter(Boolean).join(', ') || undefined;
   return (
     <div
       style={{
@@ -325,6 +334,7 @@ function TextBlock({
           lineHeight: 1.1,
           letterSpacing: -1,
           fontFamily,
+          textShadow: combinedShadow,
         }}
       >
         {slide.headline}
@@ -338,6 +348,7 @@ function TextBlock({
           fontFamily,
           fontWeight: 400,
           opacity: 0.9,
+          textShadow: shadowVal,
         }}
       >
         {slide.subtitle}

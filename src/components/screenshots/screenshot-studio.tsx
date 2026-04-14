@@ -54,6 +54,13 @@ import {
   MdAnimation,
   MdSelectAll,
   MdVideocam,
+  MdCheckBox,
+  MdCheckBoxOutlineBlank,
+  MdDeleteSweep,
+  MdLibraryAdd,
+  MdWbSunny,
+  MdNightlight,
+  MdFindInPage,
 } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import { SlideCanvas } from './slide-canvas';
@@ -199,6 +206,15 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showStoreListing, setShowStoreListing] = useState(false);
   const [showVideoPanel, setShowVideoPanel] = useState(false);
   const [exportingGif, setExportingGif] = useState(false);
+  // Multi-select
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [selectedSlideIds, setSelectedSlideIds] = useState<Set<number>>(
+    new Set()
+  );
+  // Localization gap detector
+  const [showGapDetector, setShowGapDetector] = useState(false);
+  // Dark/Light variant export
+  const [exportingVariants, setExportingVariants] = useState(false);
   const [canvasDragOver, setCanvasDragOver] = useState(false);
   const [canvasUploading, setCanvasUploading] = useState(false);
   const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
@@ -696,6 +712,85 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     }
   }, [slides, exportTarget, setName]);
 
+  // ── Multi-select helpers ──────────────────────────────────────────────────
+  const toggleSelectSlide = useCallback((i: number) => {
+    setSelectedSlideIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) {
+        next.delete(i);
+      } else {
+        next.add(i);
+      }
+      return next;
+    });
+  }, []);
+
+  const deleteSelectedSlides = useCallback(() => {
+    if (selectedSlideIds.size === 0) return;
+    if (slides.length - selectedSlideIds.size < 1) {
+      toast.error('Cannot delete all slides');
+      return;
+    }
+    setSlides((prev) => prev.filter((_, i) => !selectedSlideIds.has(i)));
+    setActiveSlide(0);
+    setSelectedSlideIds(new Set());
+  }, [selectedSlideIds, slides.length]);
+
+  const duplicateSelectedSlides = useCallback(() => {
+    if (selectedSlideIds.size === 0) return;
+    setSlides((prev) => {
+      const copies = Array.from(selectedSlideIds)
+        .sort((a, b) => a - b)
+        .map((i) => ({ ...prev[i] }));
+      return [...prev, ...copies];
+    });
+    setSelectedSlideIds(new Set());
+  }, [selectedSlideIds]);
+
+  // ── Dark / Light variant export ───────────────────────────────────────────
+  const exportVariants = useCallback(async () => {
+    setExportingVariants(true);
+    try {
+      const ratio = exportTarget.width / PREVIEW_W;
+      const zip = new JSZip();
+      for (const [label, varThemeId] of [
+        ['dark', 'midnight'],
+        ['light', 'ivory'],
+      ] as const) {
+        const varTheme = resolveTheme(varThemeId, {
+          bg: null,
+          text: null,
+          accent: null,
+        });
+        for (let i = 0; i < slides.length; i++) {
+          const el = slideRefs.current[i];
+          if (!el) continue;
+          // Temporarily inject theme colors as CSS custom properties via a wrapper
+          const origBg = el.style.background;
+          el.style.background = varTheme.bg;
+          const png = await toPng(el, { pixelRatio: ratio, cacheBust: true });
+          el.style.background = origBg;
+          zip.file(`${label}/slide-${i + 1}.png`, png.split(',')[1], {
+            base64: true,
+          });
+        }
+      }
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${setName.replace(/\s+/g, '-')}-dark-light.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Dark/Light variants exported');
+    } catch (e) {
+      console.error(e);
+      toast.error('Variant export failed');
+    } finally {
+      setExportingVariants(false);
+    }
+  }, [slides, exportTarget, setName]);
+
   // ── Batch operations ──────────────────────────────────────────────────────
   const applyToAllSlides = useCallback((patch: Partial<(typeof slides)[0]>) => {
     setSlides((prev) => prev.map((s) => ({ ...s, ...patch })));
@@ -1122,6 +1217,15 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           canvasWidth={exportTarget.width}
           canvasHeight={exportTarget.height}
           onClose={() => setShowVideoPanel(false)}
+        />
+      )}
+
+      {/* Localization gap detector */}
+      {showGapDetector && (
+        <LocalizationGapDetector
+          slides={slides}
+          locales={locales}
+          onClose={() => setShowGapDetector(false)}
         />
       )}
 
@@ -1567,6 +1671,30 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             Video
           </Button>
 
+          {/* Dark / Light variant export */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportVariants}
+            disabled={exportingVariants}
+            title="Export Dark & Light theme variants as ZIP"
+          >
+            <MdNightlight className="h-3.5 w-3.5 mr-0.5" />
+            <MdWbSunny className="h-3 w-3 mr-1" />
+            {exportingVariants ? 'Exporting…' : 'Variants'}
+          </Button>
+
+          {/* Localization gap detector */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowGapDetector((v) => !v)}
+            title="Detect missing slide translations per locale"
+          >
+            <MdFindInPage className="h-3.5 w-3.5 mr-1" />
+            Gaps
+          </Button>
+
           {/* Export */}
           <div className="relative">
             <Button
@@ -1993,6 +2121,43 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
         <div className="flex flex-1 overflow-hidden">
           {/* Slides strip — sortable */}
           <div className="w-36 border-r border-border overflow-y-auto bg-muted/5 py-3 flex flex-col items-center gap-2">
+            {/* Multi-select toolbar */}
+            <div className="w-full px-2 flex flex-col gap-1">
+              <button
+                onClick={() => {
+                  setMultiSelectMode((v) => !v);
+                  setSelectedSlideIds(new Set());
+                }}
+                className={`w-full flex items-center justify-center gap-1 text-[10px] rounded py-0.5 border transition-colors ${
+                  multiSelectMode
+                    ? 'bg-primary/10 border-primary text-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/50'
+                }`}
+              >
+                <MdSelectAll className="h-3 w-3" />
+                {multiSelectMode ? 'Cancel select' : 'Select'}
+              </button>
+              {multiSelectMode && selectedSlideIds.size > 0 && (
+                <div className="flex gap-1">
+                  <button
+                    onClick={duplicateSelectedSlides}
+                    className="flex-1 flex items-center justify-center gap-0.5 text-[10px] rounded py-0.5 border border-border text-muted-foreground hover:border-primary/50"
+                    title="Duplicate selected"
+                  >
+                    <MdLibraryAdd className="h-3 w-3" />
+                    Copy
+                  </button>
+                  <button
+                    onClick={deleteSelectedSlides}
+                    className="flex-1 flex items-center justify-center gap-0.5 text-[10px] rounded py-0.5 border border-border text-muted-foreground hover:text-destructive hover:border-destructive/50"
+                    title="Delete selected"
+                  >
+                    <MdDeleteSweep className="h-3 w-3" />
+                    Del
+                  </button>
+                </div>
+              )}
+            </div>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -2015,7 +2180,13 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                     decorationId={decorationId}
                     deviceType={exportTarget.deviceType}
                     fontFamily={resolveFont(fontId).family}
-                    onSelect={() => setActiveSlide(i)}
+                    onSelect={() => {
+                      if (multiSelectMode) {
+                        toggleSelectSlide(i);
+                      } else {
+                        setActiveSlide(i);
+                      }
+                    }}
                     onExport={() => exportSingle(i)}
                     onDuplicate={() => duplicateSlide(i)}
                     onDelete={
@@ -2029,6 +2200,8 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                           }
                         : undefined
                     }
+                    multiSelectMode={multiSelectMode}
+                    isSelected={selectedSlideIds.has(i)}
                   />
                 ))}
               </SortableContext>
@@ -2225,6 +2398,8 @@ function SortableSlide({
   onExport,
   onDuplicate,
   onDelete,
+  multiSelectMode,
+  isSelected,
 }: {
   id: string;
   index: number;
@@ -2240,6 +2415,8 @@ function SortableSlide({
   onExport: () => void;
   onDuplicate: () => void;
   onDelete?: () => void;
+  multiSelectMode?: boolean;
+  isSelected?: boolean;
 }) {
   const {
     attributes,
@@ -2288,12 +2465,25 @@ function SortableSlide({
         <MdDragIndicator className="h-3.5 w-3.5 text-muted-foreground" />
       </div>
 
+      {/* Multi-select checkbox */}
+      {multiSelectMode && (
+        <div className="absolute top-1 right-1 z-20 pointer-events-none">
+          {isSelected ? (
+            <MdCheckBox className="h-4 w-4 text-primary drop-shadow" />
+          ) : (
+            <MdCheckBoxOutlineBlank className="h-4 w-4 text-white/70 drop-shadow" />
+          )}
+        </div>
+      )}
+
       <button
         onClick={onSelect}
         className={`rounded-lg overflow-hidden transition-all ${
-          isActive
+          multiSelectMode && isSelected
             ? 'ring-2 ring-primary'
-            : 'ring-1 ring-border/50 opacity-70 hover:opacity-100'
+            : isActive && !multiSelectMode
+              ? 'ring-2 ring-primary'
+              : 'ring-1 ring-border/50 opacity-70 hover:opacity-100'
         }`}
       >
         <div ref={observerRef} style={{ width: 100, minHeight: thumbH }}>
@@ -2634,6 +2824,149 @@ function DuplicateToLocalesPanel({
               ? 'Duplicating…'
               : `Duplicate to ${selected.size} locale${selected.size !== 1 ? 's' : ''}`}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Localization Gap Detector ─────────────────────────────────────────────────
+
+function LocalizationGapDetector({
+  slides,
+  locales,
+  onClose,
+}: {
+  slides: SlideData[];
+  locales: string[];
+  onClose: () => void;
+}) {
+  if (locales.length === 0) {
+    return (
+      <div
+        className="fixed inset-0 z-[110] bg-black/70 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <div className="bg-background rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center">
+          <MdFindInPage className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+          <p className="text-sm font-semibold mb-1">No locales found</p>
+          <p className="text-xs text-muted-foreground">
+            Add localizations in the app settings to detect gaps.
+          </p>
+          <button
+            onClick={onClose}
+            className="mt-4 text-xs border border-border rounded-lg px-4 py-1.5 hover:bg-muted transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const matrix = locales.map((loc) => ({
+    locale: loc,
+    slideStatus: slides.map((s) => ({
+      hasTranslation: !!s.localeTexts?.[loc]?.headline?.trim(),
+    })),
+  }));
+
+  const totalCells = locales.length * slides.length;
+  const filledCells = matrix.reduce(
+    (sum, row) => sum + row.slideStatus.filter((c) => c.hasTranslation).length,
+    0
+  );
+  const pct = totalCells > 0 ? Math.round((filledCells / totalCells) * 100) : 0;
+
+  return (
+    <div
+      className="fixed inset-0 z-[110] bg-black/70 flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-background rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh]">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
+          <div className="flex items-center gap-2">
+            <MdFindInPage className="h-4 w-4 text-primary" />
+            <span className="font-semibold text-sm">Localization gaps</span>
+            <span className="text-xs text-muted-foreground ml-1">
+              {filledCells}/{totalCells} ({pct}%)
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <MdClose className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-auto p-4">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr>
+                <th className="text-left text-muted-foreground font-medium pb-2 pr-3 whitespace-nowrap">
+                  Locale
+                </th>
+                {slides.map((_, i) => (
+                  <th
+                    key={i}
+                    className="text-center text-muted-foreground font-medium pb-2 px-1 w-8"
+                  >
+                    {i + 1}
+                  </th>
+                ))}
+                <th className="text-right text-muted-foreground font-medium pb-2 pl-3 whitespace-nowrap">
+                  Coverage
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {matrix.map(({ locale: loc, slideStatus }) => {
+                const filled = slideStatus.filter(
+                  (s) => s.hasTranslation
+                ).length;
+                const complete = filled === slides.length;
+                return (
+                  <tr key={loc} className="border-t border-border/40">
+                    <td className="py-1.5 pr-3 font-mono text-[11px] whitespace-nowrap">
+                      {loc}
+                    </td>
+                    {slideStatus.map((cell, i) => (
+                      <td key={i} className="text-center px-1 py-1.5">
+                        {cell.hasTranslation ? (
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-emerald-500/20 text-emerald-600 text-[10px]">
+                            ✓
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-500/15 text-amber-500 text-[10px]">
+                            ○
+                          </span>
+                        )}
+                      </td>
+                    ))}
+                    <td className="text-right pl-3 py-1.5">
+                      <span
+                        className={`font-medium ${complete ? 'text-emerald-600' : 'text-amber-500'}`}
+                      >
+                        {filled}/{slides.length}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          <div className="mt-4 rounded-lg bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground mb-1">How to fill gaps</p>
+            <p>
+              Select a slide, switch to the locale tab in the editor, and add
+              translated text. Or use the <strong>Translate</strong> button in
+              the toolbar to auto-translate all locales at once.
+            </p>
+          </div>
         </div>
       </div>
     </div>

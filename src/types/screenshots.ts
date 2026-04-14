@@ -40,6 +40,12 @@ export interface SlideData {
   imageZoom?: number;
   /** Custom headline/subtitle color override (CSS hex). Overrides theme text color. */
   customTextColor?: string;
+  /** Drop shadow on headline/subtitle text */
+  textShadow?: boolean;
+  /** Stroke/outline on headline/subtitle text */
+  textOutline?: boolean;
+  /** Color for the text outline (CSS hex). Default: '#000000' */
+  textOutlineColor?: string;
   /** Show app icon overlay in the corner of the slide */
   showAppIcon?: boolean;
   /** Which corner the app icon appears in. Default: bottom-left */
