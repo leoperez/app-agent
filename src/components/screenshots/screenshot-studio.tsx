@@ -39,6 +39,7 @@ import {
   MdFolderOpen,
   MdDragIndicator,
   MdCopyAll,
+  MdScience,
   MdZoomIn,
   MdZoomOut,
 } from 'react-icons/md';
@@ -48,6 +49,7 @@ import { SlideEditor } from './slide-editor';
 import { AsoScorePanel } from './aso-score-panel';
 import { HistoryPanel } from './history-panel';
 import { CompetitorPanel } from './competitor-panel';
+import { AbTestPanel } from './ab-test-panel';
 import {
   LAYOUTS,
   THEMES,
@@ -100,6 +102,9 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     saveSnapshot,
     restoreSnapshot,
     deleteSnapshot,
+    listAbTests,
+    createAbTest,
+    deleteAbTest,
   } = useGetScreenshotSets();
   const { templates, saveTemplate, deleteTemplate } =
     useGetScreenshotTemplates();
@@ -146,7 +151,9 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
 
   // ── UI state ─────────────────────────────────────────────────────────────
   const [view, setView] = useState<'list' | 'editor'>('list');
-  const [listTab, setListTab] = useState<'sets' | 'templates'>('sets');
+  const [listTab, setListTab] = useState<'sets' | 'templates' | 'ab-tests'>(
+    'sets'
+  );
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -161,6 +168,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showAsoScore, setShowAsoScore] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showCompetitor, setShowCompetitor] = useState(false);
+  const [showAbTest, setShowAbTest] = useState(false);
   const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
 
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -561,7 +569,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           </button>
           <button
             onClick={() => setListTab('templates')}
-            className={`text-sm px-1 py-2.5 border-b-2 transition-colors flex items-center gap-1 ${listTab === 'templates' ? 'border-primary text-foreground font-medium' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            className={`text-sm px-1 py-2.5 mr-4 border-b-2 transition-colors flex items-center gap-1 ${listTab === 'templates' ? 'border-primary text-foreground font-medium' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
           >
             <MdBookmark className="h-3.5 w-3.5" /> Templates
             {templates.length > 0 && (
@@ -569,6 +577,12 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 {templates.length}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => setListTab('ab-tests')}
+            className={`text-sm px-1 py-2.5 border-b-2 transition-colors flex items-center gap-1 ${listTab === 'ab-tests' ? 'border-primary text-foreground font-medium' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+          >
+            <MdScience className="h-3.5 w-3.5" /> A/B Tests
           </button>
         </div>
 
@@ -613,32 +627,51 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 ))}
               </div>
             )
-          ) : templates.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
+          ) : listTab === 'templates' ? (
+            templates.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
+                <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+                  <MdBookmark className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-medium">No templates yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Open a set and click the bookmark icon to save it as a
+                    reusable template
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {templates.map((tpl) => (
+                  <TemplateCard
+                    key={tpl.id}
+                    template={tpl}
+                    onApply={() => applyTemplate(tpl)}
+                    onDelete={() => {
+                      if (confirm('Delete this template?'))
+                        deleteTemplate(tpl.id);
+                    }}
+                  />
+                ))}
+              </div>
+            )
+          ) : (
+            /* A/B Tests tab — open the panel */
+            <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
               <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
-                <MdBookmark className="h-8 w-8 text-muted-foreground" />
+                <MdScience className="h-8 w-8 text-muted-foreground" />
               </div>
               <div>
-                <p className="font-medium">No templates yet</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Open a set and click the bookmark icon to save it as a
-                  reusable template
+                <p className="font-medium">A/B Test pairings</p>
+                <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                  Link two screenshot sets as A/B variants to track which
+                  performs better.
                 </p>
               </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {templates.map((tpl) => (
-                <TemplateCard
-                  key={tpl.id}
-                  template={tpl}
-                  onApply={() => applyTemplate(tpl)}
-                  onDelete={() => {
-                    if (confirm('Delete this template?'))
-                      deleteTemplate(tpl.id);
-                  }}
-                />
-              ))}
+              <Button onClick={() => setShowAbTest(true)}>
+                <MdScience className="h-4 w-4 mr-1" /> Manage A/B tests
+              </Button>
             </div>
           )}
         </div>
@@ -665,6 +698,17 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           locale={locale}
           onScore={async (s, l) => scoreSlides({ slides: s, locale: l })}
           onClose={() => setShowAsoScore(false)}
+        />
+      )}
+
+      {/* A/B Test panel */}
+      {showAbTest && (
+        <AbTestPanel
+          sets={sets}
+          listAbTests={listAbTests}
+          createAbTest={createAbTest}
+          deleteAbTest={deleteAbTest}
+          onClose={() => setShowAbTest(false)}
         />
       )}
 
@@ -890,6 +934,16 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
               <MdCompare className="h-3.5 w-3.5" />
             </Button>
           )}
+
+          {/* A/B Test pairings */}
+          <Button
+            variant="outline"
+            size="sm"
+            title="Manage A/B test pairings"
+            onClick={() => setShowAbTest(true)}
+          >
+            <MdScience className="h-3.5 w-3.5" />
+          </Button>
 
           {/* Full preview */}
           <Button

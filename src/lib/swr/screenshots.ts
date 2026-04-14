@@ -7,6 +7,7 @@ import { useApp } from '@/context/app';
 import type {
   ScreenshotSetRecord,
   ScreenshotSetSnapshotRecord,
+  ScreenshotSetAbTestRecord,
   ScreenshotTemplateRecord,
   AsoScoreResult,
 } from '@/types/screenshots';
@@ -157,6 +158,41 @@ export function useGetScreenshotSets(locale?: string) {
     );
   };
 
+  const listAbTests = async (): Promise<ScreenshotSetAbTestRecord[]> => {
+    if (!teamId || !appId) return [];
+    const res = await fetch(
+      `/api/teams/${teamId}/apps/${appId}/screenshot-sets/ab-tests`
+    );
+    if (!res.ok) return [];
+    return res.json();
+  };
+
+  const createAbTest = async (
+    setAId: string,
+    setBId: string,
+    note?: string
+  ): Promise<ScreenshotSetAbTestRecord | null> => {
+    if (!teamId || !appId) return null;
+    const res = await fetch(
+      `/api/teams/${teamId}/apps/${appId}/screenshot-sets/ab-tests`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setAId, setBId, note: note ?? '' }),
+      }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  };
+
+  const deleteAbTest = async (testId: string): Promise<void> => {
+    if (!teamId || !appId) return;
+    await fetch(
+      `/api/teams/${teamId}/apps/${appId}/screenshot-sets/ab-tests/${testId}`,
+      { method: 'DELETE' }
+    );
+  };
+
   return {
     sets: data ?? [],
     loading: isLoading,
@@ -171,6 +207,9 @@ export function useGetScreenshotSets(locale?: string) {
     saveSnapshot,
     restoreSnapshot,
     deleteSnapshot,
+    listAbTests,
+    createAbTest,
+    deleteAbTest,
   };
 }
 

@@ -114,6 +114,24 @@ export interface ScreenshotTemplateRecord {
   updatedAt: string;
 }
 
+export interface AbTestSetInfo {
+  id: string;
+  name: string;
+  locale: string;
+  themeId: ThemeId;
+  layoutId: LayoutId;
+}
+
+export interface ScreenshotSetAbTestRecord {
+  id: string;
+  setAId: string;
+  setBId: string;
+  note: string;
+  setA: AbTestSetInfo;
+  setB: AbTestSetInfo;
+  createdAt: string;
+}
+
 export interface ScreenshotSetSnapshotRecord {
   id: string;
   setId: string;

@@ -694,12 +694,29 @@ model ScreenshotSet {
   slides   Json   @default("[]")
 
   snapshots ScreenshotSetSnapshot[]
+  abTestsAsA ScreenshotSetAbTest[] @relation("AbTestSetA")
+  abTestsAsB ScreenshotSetAbTest[] @relation("AbTestSetB")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([appId])
   @@index([appId, locale])
+}
+
+model ScreenshotSetAbTest {
+  id    String @id @default(cuid())
+  setAId String
+  setBId String
+  setA  ScreenshotSet @relation("AbTestSetA", fields: [setAId], references: [id], onDelete: Cascade)
+  setB  ScreenshotSet @relation("AbTestSetB", fields: [setBId], references: [id], onDelete: Cascade)
+  note  String @default("") // optional label like "Old hero vs New hero"
+
+  createdAt DateTime @default(now())
+
+  @@unique([setAId, setBId])
+  @@index([setAId])
+  @@index([setBId])
 }
 
 model ScreenshotSetSnapshot {
