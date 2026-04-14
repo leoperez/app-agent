@@ -2,7 +2,7 @@ import { STRIPE_SECRET_KEY, WHITE_LABEL_CONFIG } from '@/lib/config';
 import Stripe from 'stripe';
 
 const stripeNew = new Stripe(STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2025-02-24.acacia',
   appInfo: {
     name: WHITE_LABEL_CONFIG.appName,
     version: '0.1.0',
