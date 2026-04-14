@@ -13,9 +13,12 @@ import {
   MdLoop,
   MdTranslate,
   MdAutoAwesome,
+  MdFitScreen,
+  MdPalette,
 } from 'react-icons/md';
 import { useTeam } from '@/context/team';
 import { useApp } from '@/context/app';
+import { autoFitFontSize, extractDominantColors } from '@/lib/color-extractor';
 
 interface SlideEditorProps {
   slide: SlideData;
@@ -26,6 +29,10 @@ interface SlideEditorProps {
   availableLocales?: string[];
   /** Whether the app has an icon URL — shows the icon overlay toggle when true */
   hasAppIcon?: boolean;
+  /** Export canvas width in px — used for auto-fit font size calculation */
+  canvasWidth?: number;
+  /** Resolved font-family string — used for auto-fit measurement */
+  fontFamily?: string;
 }
 
 function Field({
@@ -51,6 +58,8 @@ export function SlideEditor({
   activeLocale,
   availableLocales = [],
   hasAppIcon = false,
+  canvasWidth = 1290,
+  fontFamily = 'sans-serif',
 }: SlideEditorProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const bgFileRef = useRef<HTMLInputElement>(null);
@@ -58,6 +67,8 @@ export function SlideEditor({
   const [bgUploading, setBgUploading] = useState(false);
   const [bgPrompt, setBgPrompt] = useState('');
   const [generatingBg, setGeneratingBg] = useState(false);
+  const [extractedColors, setExtractedColors] = useState<string[]>([]);
+  const [extractingColors, setExtractingColors] = useState(false);
   const [editingLocale, setEditingLocale] = useState<string | null>(
     activeLocale ?? null
   );
@@ -197,6 +208,43 @@ export function SlideEditor({
     }
   };
 
+  const handleAutoFitHeadline = () => {
+    const size = autoFitFontSize({
+      text: slide.headline,
+      fontFamily,
+      fontWeight: 800,
+      canvasWidth,
+      maxWidthFraction: 0.84,
+      maxLines: 2,
+      minSize: 24,
+      maxSize: 80,
+    });
+    onChange({ ...slide, headlineFontSize: size });
+  };
+
+  const handleAutoFitSubtitle = () => {
+    const size = autoFitFontSize({
+      text: slide.subtitle,
+      fontFamily,
+      fontWeight: 400,
+      canvasWidth,
+      maxWidthFraction: 0.84,
+      maxLines: 3,
+      minSize: 12,
+      maxSize: 30,
+    });
+    onChange({ ...slide, subtitleFontSize: size });
+  };
+
+  const handleExtractColors = async () => {
+    const url = slide.screenshotUrl ?? slide.bgImageUrl;
+    if (!url) return;
+    setExtractingColors(true);
+    const colors = await extractDominantColors(url);
+    setExtractedColors(colors);
+    setExtractingColors(false);
+  };
+
   // Show locale tabs only when there are multiple locales
   const showLocaleTabs = availableLocales.length > 1;
   const hasOverride =
@@ -282,9 +330,16 @@ export function SlideEditor({
             }
             className="flex-1 h-1 accent-primary"
           />
-          <span className="text-xs w-8 text-right">
+          <span className="text-xs w-6 text-right">
             {slide.headlineFontSize}
           </span>
+          <button
+            onClick={handleAutoFitHeadline}
+            title="Auto-fit font size"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <MdFitScreen className="h-3.5 w-3.5" />
+          </button>
         </div>
       </Field>
 
@@ -313,9 +368,16 @@ export function SlideEditor({
             }
             className="flex-1 h-1 accent-primary"
           />
-          <span className="text-xs w-8 text-right">
+          <span className="text-xs w-6 text-right">
             {slide.subtitleFontSize}
           </span>
+          <button
+            onClick={handleAutoFitSubtitle}
+            title="Auto-fit font size"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <MdFitScreen className="h-3.5 w-3.5" />
+          </button>
         </div>
       </Field>
 
@@ -392,6 +454,69 @@ export function SlideEditor({
         <p className="text-xs text-muted-foreground mt-1">
           Uploaded to Vercel Blob and saved with the set.
         </p>
+        {/* Color extractor */}
+        {(slide.screenshotUrl || slide.bgImageUrl) && (
+          <div className="mt-2">
+            <button
+              onClick={handleExtractColors}
+              disabled={extractingColors}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md px-2 py-1 transition-colors disabled:opacity-50"
+            >
+              <MdPalette
+                className={`h-3.5 w-3.5 ${extractingColors ? 'animate-pulse' : ''}`}
+              />
+              {extractingColors ? 'Extracting…' : 'Extract colors'}
+            </button>
+            {extractedColors.length > 0 && (
+              <div className="mt-2 space-y-1.5">
+                <p className="text-[10px] text-muted-foreground">
+                  Click to apply as custom color:
+                </p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {extractedColors.map((color) => (
+                    <div
+                      key={color}
+                      className="flex flex-col items-center gap-0.5"
+                    >
+                      <button
+                        style={{ background: color }}
+                        className="w-7 h-7 rounded border border-border/60 hover:scale-110 transition-transform shadow-sm"
+                        title={color}
+                        onClick={() =>
+                          onChange({ ...slide, customTextColor: color })
+                        }
+                      />
+                      <button
+                        style={{ background: color }}
+                        className="w-5 h-1.5 rounded-sm opacity-60 hover:opacity-100 transition-opacity"
+                        title={`Set as bg: ${color}`}
+                        onClick={() =>
+                          onChange({
+                            ...slide,
+                            bgImageUrl: undefined,
+                            customTextColor: slide.customTextColor,
+                          })
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  {extractedColors.map((color) => (
+                    <button
+                      key={color}
+                      className="text-[9px] font-mono text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => navigator.clipboard?.writeText(color)}
+                      title="Copy hex"
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </Field>
 
       {/* Screenshot image controls — only when a screenshot is loaded */}

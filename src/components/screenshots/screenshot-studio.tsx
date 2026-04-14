@@ -61,6 +61,7 @@ import {
   MdWbSunny,
   MdNightlight,
   MdFindInPage,
+  MdAspectRatio,
 } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import { SlideCanvas } from './slide-canvas';
@@ -219,6 +220,8 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showGapDetector, setShowGapDetector] = useState(false);
   // Dark/Light variant export
   const [exportingVariants, setExportingVariants] = useState(false);
+  // Magic resize
+  const [showResizePicker, setShowResizePicker] = useState(false);
   const [canvasDragOver, setCanvasDragOver] = useState(false);
   const [canvasUploading, setCanvasUploading] = useState(false);
   const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
@@ -794,6 +797,30 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
       setExportingVariants(false);
     }
   }, [slides, exportTarget, setName]);
+
+  // ── Magic resize ──────────────────────────────────────────────────────────
+  const magicResize = useCallback(
+    (target: ExportTarget) => {
+      const fromW = exportTarget.width;
+      const toW = target.width;
+      const ratio = toW / fromW;
+      // Scale font sizes proportionally, clamped to slider bounds
+      setSlides((prev) =>
+        prev.map((s) => ({
+          ...s,
+          headlineFontSize: Math.round(
+            Math.min(80, Math.max(24, s.headlineFontSize * ratio))
+          ),
+          subtitleFontSize: Math.round(
+            Math.min(30, Math.max(12, s.subtitleFontSize * ratio))
+          ),
+        }))
+      );
+      setExportTarget(target);
+      setShowResizePicker(false);
+    },
+    [exportTarget.width]
+  );
 
   // ── Batch operations ──────────────────────────────────────────────────────
   const applyToAllSlides = useCallback((patch: Partial<(typeof slides)[0]>) => {
@@ -1699,6 +1726,40 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             Gaps
           </Button>
 
+          {/* Magic resize */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowResizePicker((v) => !v)}
+              title="Resize to a different screen format, scaling fonts proportionally"
+            >
+              <MdAspectRatio className="h-3.5 w-3.5 mr-1" />
+              Resize
+            </Button>
+            {showResizePicker && (
+              <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-lg border border-border bg-popover shadow-lg py-1">
+                <p className="px-3 py-1.5 text-[10px] text-muted-foreground font-medium uppercase tracking-wide border-b border-border mb-1">
+                  Resize to…
+                </p>
+                {EXPORT_TARGETS.filter(
+                  (t) => t.label !== exportTarget.label
+                ).map((t) => (
+                  <button
+                    key={t.label}
+                    onClick={() => magicResize(t)}
+                    className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted transition-colors flex items-center justify-between"
+                  >
+                    <span>{t.label}</span>
+                    <span className="text-muted-foreground text-[10px]">
+                      {t.width}×{t.height}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Export */}
           <div className="relative">
             <Button
@@ -2422,6 +2483,8 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
               activeLocale={locale}
               availableLocales={locales}
               hasAppIcon={!!currentApp?.iconUrl}
+              canvasWidth={exportTarget.width}
+              fontFamily={resolveFont(fontId).family}
             />
           </div>
         </div>
