@@ -93,7 +93,7 @@ export default function HelpPage() {
       {/* Contact */}
       <div className="mt-14 rounded-xl border border-border bg-muted/10 p-6 text-center">
         <p className="text-sm font-medium mb-1">
-          Can't find what you're looking for?
+          Can&apos;t find what you&apos;re looking for?
         </p>
         <p className="text-xs text-muted-foreground mb-3">
           Our team usually responds within one business day.
