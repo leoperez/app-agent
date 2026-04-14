@@ -1101,7 +1101,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           customText={customText}
           customAccent={customAccent}
           deviceType={exportTarget.deviceType}
-          appName={currentApp?.name}
+          appName={currentApp?.title ?? undefined}
           appIconUrl={currentApp?.iconUrl ?? undefined}
           store={exportTarget.store}
           onClose={() => setShowStoreListing(false)}
