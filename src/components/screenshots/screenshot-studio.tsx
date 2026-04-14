@@ -42,6 +42,7 @@ import {
   MdDragIndicator,
   MdCopyAll,
   MdScience,
+  MdShare,
   MdTranslate,
   MdUndo,
   MdRedo,
@@ -58,6 +59,7 @@ import { AbTestPanel } from './ab-test-panel';
 import { PaletteSwatches } from './icon-palette';
 import { AscImportPanel } from './asc-import-panel';
 import { TranslatePanel } from './translate-panel';
+import { SharePanel } from './share-panel';
 import {
   LAYOUTS,
   THEMES,
@@ -180,6 +182,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showAbTest, setShowAbTest] = useState(false);
   const [showAscImport, setShowAscImport] = useState(false);
   const [showTranslate, setShowTranslate] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [canvasDragOver, setCanvasDragOver] = useState(false);
   const [canvasUploading, setCanvasUploading] = useState(false);
   const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
@@ -904,6 +907,16 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
         />
       )}
 
+      {/* Share preview panel */}
+      {showShare && activeSet && (
+        <SharePanel
+          setId={activeSet.id}
+          teamId={teamId}
+          appId={currentApp?.id ?? ''}
+          onClose={() => setShowShare(false)}
+        />
+      )}
+
       {/* Translate panel */}
       {showTranslate && (
         <TranslatePanel
@@ -1126,6 +1139,18 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             <MdSave className="h-3.5 w-3.5 mr-1" />
             {saving ? 'Saving…' : 'Save'}
           </Button>
+
+          {/* Share preview link (only for saved sets) */}
+          {activeSet && (
+            <Button
+              variant="outline"
+              size="sm"
+              title="Share a preview link"
+              onClick={() => setShowShare(true)}
+            >
+              <MdShare className="h-3.5 w-3.5" />
+            </Button>
+          )}
 
           {/* Save as template */}
           <Button

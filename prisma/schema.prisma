@@ -693,15 +693,29 @@ model ScreenshotSet {
   // slides: array of SlideData (texts + badge + screenshotUrl)
   slides   Json   @default("[]")
 
-  snapshots ScreenshotSetSnapshot[]
-  abTestsAsA ScreenshotSetAbTest[] @relation("AbTestSetA")
-  abTestsAsB ScreenshotSetAbTest[] @relation("AbTestSetB")
+  snapshots    ScreenshotSetSnapshot[]
+  shareTokens  ScreenshotSetShareToken[]
+  abTestsAsA   ScreenshotSetAbTest[] @relation("AbTestSetA")
+  abTestsAsB   ScreenshotSetAbTest[] @relation("AbTestSetB")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([appId])
   @@index([appId, locale])
+}
+
+model ScreenshotSetShareToken {
+  id        String        @id @default(cuid())
+  token     String        @unique @default(cuid())
+  setId     String
+  set       ScreenshotSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  label     String        @default("") // e.g. "For client review"
+  expiresAt DateTime?
+  createdAt DateTime      @default(now())
+
+  @@index([setId])
+  @@index([token])
 }
 
 model ScreenshotSetAbTest {
