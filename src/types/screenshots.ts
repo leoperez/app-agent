@@ -5,7 +5,8 @@ export type LayoutId =
   | 'bottom-caption'
   | 'split-left'
   | 'split-right'
-  | 'hero';
+  | 'hero'
+  | 'feature-graphic';
 
 export type ThemeId = 'midnight' | 'ivory' | 'violet' | 'ocean' | 'ember';
 

@@ -133,6 +133,11 @@ export const LAYOUTS: LayoutDefinition[] = [
     label: 'Hero',
     description: 'Oversized headline, compact phone',
   },
+  {
+    id: 'feature-graphic',
+    label: 'Feature Graphic',
+    description: 'Landscape 1024×500 banner for Google Play',
+  },
 ];
 
 // ─── Themes ─────────────────────────────────────────────────────────────────
@@ -248,6 +253,13 @@ export const EXPORT_TARGETS: ExportTarget[] = [
     deviceType: 'android',
     width: 1080,
     height: 1920,
+  },
+  {
+    label: 'Feature Graphic',
+    store: 'GOOGLEPLAY',
+    deviceType: 'android',
+    width: 1024,
+    height: 500,
   },
 ];
 

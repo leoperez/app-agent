@@ -355,8 +355,11 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
     const resolvedSlide: SlideData = { ...slide, ...resolvedText };
     const screenshotDataUrl = slide.screenshotUrl;
     const bgCss = bgGradient ? bgToCss(bgGradient) : theme.bg;
-    // Preview aspect ratio: iPhone-ish 9:19.5
-    const height = Math.round(width * (19.5 / 9));
+    // Aspect ratio: feature-graphic uses 1024:500 (landscape), all others use 9:19.5
+    const isFeatureGraphic = layout === 'feature-graphic';
+    const height = isFeatureGraphic
+      ? Math.round(width * (500 / 1024))
+      : Math.round(width * (19.5 / 9));
     const pad = Math.round(width * 0.08);
     const phonePreviewW = Math.round(width * 0.52);
 
@@ -576,6 +579,123 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               fontFamily={ff}
             />
           </div>
+        </div>
+      );
+    }
+
+    // ── feature-graphic: landscape 1024×500 banner for Google Play ───────────
+    if (layout === 'feature-graphic') {
+      const fgPad = Math.round(width * 0.06);
+      const fgTextSize = width / 1024; // scale factor relative to 1024px baseline
+      return (
+        <div
+          ref={ref}
+          style={{
+            ...containerStyle,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
+        >
+          <DecorationOverlay
+            id={decorationId}
+            width={width}
+            height={height}
+            accent={theme.accent}
+          />
+          {/* Text column — left 55% */}
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              gap: Math.round(fgPad * 0.5),
+              padding: fgPad,
+              paddingRight: fgPad * 0.5,
+              zIndex: 1,
+            }}
+          >
+            {resolvedSlide.badge && (
+              <Badge
+                text={resolvedSlide.badge}
+                accent={theme.accent}
+                textColor={theme.bg}
+              />
+            )}
+            <h2
+              style={{
+                margin: 0,
+                fontSize: Math.round(
+                  resolvedSlide.headlineFontSize * fgTextSize * 0.8
+                ),
+                fontWeight: 800,
+                color: theme.text,
+                lineHeight: 1.1,
+                letterSpacing: -1,
+                fontFamily: ff,
+              }}
+            >
+              {resolvedSlide.headline}
+            </h2>
+            <p
+              style={{
+                margin: 0,
+                fontSize: Math.round(
+                  resolvedSlide.subtitleFontSize * fgTextSize * 0.85
+                ),
+                color: theme.accent,
+                lineHeight: 1.4,
+                fontFamily: ff,
+                fontWeight: 400,
+                opacity: 0.9,
+              }}
+            >
+              {resolvedSlide.subtitle}
+            </p>
+          </div>
+          {/* Screenshot column — right 45% (only if screenshot present) */}
+          {screenshotDataUrl ? (
+            <div
+              style={{
+                width: Math.round(width * 0.4),
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingRight: fgPad * 0.5,
+                paddingTop: fgPad * 0.4,
+                paddingBottom: fgPad * 0.4,
+                flexShrink: 0,
+                zIndex: 1,
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={screenshotDataUrl}
+                alt=""
+                style={{
+                  maxHeight: '100%',
+                  maxWidth: '100%',
+                  objectFit: 'contain',
+                  borderRadius: Math.round(width * 0.012),
+                  boxShadow: `0 ${Math.round(width * 0.008)}px ${Math.round(width * 0.03)}px rgba(0,0,0,0.35)`,
+                }}
+              />
+            </div>
+          ) : (
+            /* Placeholder accent shape when no screenshot */
+            <div
+              style={{
+                width: Math.round(width * 0.35),
+                height: '75%',
+                flexShrink: 0,
+                marginRight: fgPad,
+                borderRadius: Math.round(width * 0.02),
+                background: theme.accent,
+                opacity: 0.12,
+              }}
+            />
+          )}
         </div>
       );
     }

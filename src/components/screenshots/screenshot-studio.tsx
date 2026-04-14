@@ -585,8 +585,6 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
         if (!el) continue;
         const dataUrl = await toPng(el, {
           pixelRatio,
-          width: PREVIEW_W,
-          height: Math.round(PREVIEW_W * (19.5 / 9)),
           style: { borderRadius: '0' },
         });
         const base64 = dataUrl.split(',')[1];
@@ -680,8 +678,6 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
         if (!el) continue;
         const dataUrl = await toPng(el, {
           pixelRatio,
-          width: PREVIEW_W,
-          height: Math.round(PREVIEW_W * (19.5 / 9)),
           style: { borderRadius: '0' },
         });
         slidePayloads.push({ dataUrl, fileName: `slide-${i + 1}.png` });
@@ -1322,7 +1318,15 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 {LAYOUTS.map((l) => (
                   <button
                     key={l.id}
-                    onClick={() => setLayoutId(l.id)}
+                    onClick={() => {
+                      setLayoutId(l.id);
+                      if (l.id === 'feature-graphic') {
+                        const fg = EXPORT_TARGETS.find(
+                          (t) => t.label === 'Feature Graphic'
+                        );
+                        if (fg) setExportTarget(fg);
+                      }
+                    }}
                     className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors ${
                       layoutId === l.id
                         ? 'bg-primary/10 text-primary font-medium'
