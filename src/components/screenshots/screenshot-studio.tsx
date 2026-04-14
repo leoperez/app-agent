@@ -50,6 +50,7 @@ import { AsoScorePanel } from './aso-score-panel';
 import { HistoryPanel } from './history-panel';
 import { CompetitorPanel } from './competitor-panel';
 import { AbTestPanel } from './ab-test-panel';
+import { PaletteSwatches } from './icon-palette';
 import {
   LAYOUTS,
   THEMES,
@@ -1229,6 +1230,24 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                 </button>
               )}
             </div>
+
+            {/* App icon palette */}
+            {currentApp?.iconUrl && (
+              <div className="pt-1 space-y-1">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                  From app icon
+                </p>
+                <PaletteSwatches
+                  iconUrl={currentApp.iconUrl}
+                  onPick={(color) => {
+                    setCustomBg(color);
+                  }}
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Click a swatch to apply as background colour
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Font */}
