@@ -49,7 +49,11 @@ export function TranslatePanel({
   const toggle = (locale: string) =>
     setSelected((s) => {
       const next = new Set(s);
-      next.has(locale) ? next.delete(locale) : next.add(locale);
+      if (next.has(locale)) {
+        next.delete(locale);
+      } else {
+        next.add(locale);
+      }
       return next;
     });
 
