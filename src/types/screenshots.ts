@@ -169,7 +169,7 @@ export interface AsoScoreResult {
 export interface ExportTarget {
   label: string;
   store: 'APPSTORE' | 'GOOGLEPLAY';
-  deviceType: 'iphone' | 'android';
+  deviceType: 'iphone' | 'android' | 'ipad';
   width: number;
   height: number;
 }

@@ -19,7 +19,7 @@ interface SlideCanvasProps {
   bgGradient?: GradientBg | null;
   decorationId?: DecorationId;
   /** Which device frame to render. Default: 'iphone' */
-  deviceType?: 'iphone' | 'android';
+  deviceType?: 'iphone' | 'android' | 'ipad';
   /** Active locale for per-locale text resolution */
   activeLocale?: string;
   /** CSS font-family string — defaults to system font */
@@ -229,7 +229,7 @@ function PhoneMockup({
   screenColor: string;
   borderColor: string; // kept for API compat, ignored — SVG frame has own gradient
   width: number;
-  deviceType?: 'iphone' | 'android';
+  deviceType?: 'iphone' | 'android' | 'ipad';
 }) {
   return (
     <PhoneFrame
@@ -355,11 +355,13 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
     const resolvedSlide: SlideData = { ...slide, ...resolvedText };
     const screenshotDataUrl = slide.screenshotUrl;
     const bgCss = bgGradient ? bgToCss(bgGradient) : theme.bg;
-    // Aspect ratio: feature-graphic uses 1024:500 (landscape), all others use 9:19.5
+    // Aspect ratio varies by layout and device type
     const isFeatureGraphic = layout === 'feature-graphic';
     const height = isFeatureGraphic
       ? Math.round(width * (500 / 1024))
-      : Math.round(width * (19.5 / 9));
+      : deviceType === 'ipad'
+        ? Math.round(width * (2752 / 2064)) // iPad Pro 13"
+        : Math.round(width * (19.5 / 9)); // iPhone / Android
     const pad = Math.round(width * 0.08);
     const phonePreviewW = Math.round(width * 0.52);
 

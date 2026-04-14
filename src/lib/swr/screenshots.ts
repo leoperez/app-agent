@@ -181,6 +181,42 @@ export function useGetScreenshotSets(locale?: string) {
     );
   };
 
+  const copyToApp = async (
+    setId: string,
+    targetAppId: string,
+    locale?: string
+  ): Promise<boolean> => {
+    if (!teamId || !appId) return false;
+    const res = await fetch(
+      `/api/teams/${teamId}/apps/${appId}/screenshot-sets/${setId}/copy-to-app`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetAppId, locale }),
+      }
+    );
+    return res.ok;
+  };
+
+  const duplicateToLocales = async (
+    setId: string,
+    targetLocales: string[]
+  ): Promise<ScreenshotSetRecord[]> => {
+    if (!teamId || !appId) return [];
+    const res = await fetch(
+      `/api/teams/${teamId}/apps/${appId}/screenshot-sets/${setId}/duplicate-to-locales`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetLocales }),
+      }
+    );
+    if (!res.ok) return [];
+    const created = await res.json();
+    await mutate();
+    return created as ScreenshotSetRecord[];
+  };
+
   const listAbTests = async (): Promise<ScreenshotSetAbTestRecord[]> => {
     if (!teamId || !appId) return [];
     const res = await fetch(
@@ -231,6 +267,8 @@ export function useGetScreenshotSets(locale?: string) {
     saveSnapshot,
     restoreSnapshot,
     deleteSnapshot,
+    copyToApp,
+    duplicateToLocales,
     listAbTests,
     createAbTest,
     deleteAbTest,

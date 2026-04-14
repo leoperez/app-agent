@@ -48,6 +48,8 @@ import {
   MdRedo,
   MdZoomIn,
   MdZoomOut,
+  MdWarning,
+  MdContentCopy,
 } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import { SlideCanvas } from './slide-canvas';
@@ -116,6 +118,8 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
     listAbTests,
     createAbTest,
     deleteAbTest,
+    copyToApp,
+    duplicateToLocales,
   } = useGetScreenshotSets();
   const { templates, saveTemplate, deleteTemplate } =
     useGetScreenshotTemplates();
@@ -183,6 +187,7 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const [showAscImport, setShowAscImport] = useState(false);
   const [showTranslate, setShowTranslate] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showDuplicateLocales, setShowDuplicateLocales] = useState(false);
   const [canvasDragOver, setCanvasDragOver] = useState(false);
   const [canvasUploading, setCanvasUploading] = useState(false);
   const [fullPreviewZoom, setFullPreviewZoom] = useState(40); // % of export size
@@ -814,6 +819,11 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
                     onDelete={() => {
                       if (confirm('Delete this set?')) deleteSet(set.id);
                     }}
+                    onCopyToApp={async (targetAppId) => {
+                      const ok = await copyToApp(set.id, targetAppId);
+                      if (ok) toast.success('Set copied to app');
+                      else toast.error('Copy failed');
+                    }}
                   />
                 ))}
               </div>
@@ -880,6 +890,11 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
   const fullW = Math.round((exportTarget.width * fullPreviewZoom) / 100);
   const fullH = Math.round((exportTarget.height * fullPreviewZoom) / 100);
 
+  // Warn when layout and export target aspect ratios are mismatched
+  const isFeatureGraphicLayout = layoutId === 'feature-graphic';
+  const isFeatureGraphicTarget = exportTarget.label === 'Feature Graphic';
+  const exportMismatch = isFeatureGraphicLayout !== isFeatureGraphicTarget;
+
   return (
     <div className="flex flex-col h-full">
       {/* ASO Score panel */}
@@ -910,6 +925,31 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
           teamId={teamId}
           appId={currentApp?.id ?? ''}
           onClose={() => setShowShare(false)}
+        />
+      )}
+
+      {/* Duplicate to locales panel */}
+      {showDuplicateLocales && (
+        <DuplicateToLocalesPanel
+          currentLocale={locale}
+          availableLocales={locales}
+          existingLocales={sets.map((s) => s.locale)}
+          onConfirm={async (targetLocales) => {
+            if (!activeSet) {
+              // Save first, then duplicate
+              toast.error('Save the set before duplicating to other locales');
+              return;
+            }
+            const created = await duplicateToLocales(
+              activeSet.id,
+              targetLocales
+            );
+            setShowDuplicateLocales(false);
+            toast.success(
+              `Design duplicated to ${created.length} locale${created.length !== 1 ? 's' : ''}`
+            );
+          }}
+          onClose={() => setShowDuplicateLocales(false)}
         />
       )}
 
@@ -1148,6 +1188,18 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
             </Button>
           )}
 
+          {/* Duplicate design to other locales */}
+          {localizationEntries.length > 1 && (
+            <Button
+              variant="outline"
+              size="sm"
+              title="Duplicate this design to other locales"
+              onClick={() => setShowDuplicateLocales(true)}
+            >
+              <MdContentCopy className="h-3.5 w-3.5" />
+            </Button>
+          )}
+
           {/* Save as template */}
           <Button
             variant="outline"
@@ -1263,29 +1315,59 @@ export function ScreenshotStudio({ onClose }: ScreenshotStudioProps) {
               size="sm"
               onClick={() => setShowExportPicker((v) => !v)}
               disabled={exporting}
+              title={
+                exportMismatch
+                  ? isFeatureGraphicLayout
+                    ? 'Layout is Feature Graphic but export target is portrait — dimensions will not match'
+                    : 'Export target is Feature Graphic but layout is portrait — dimensions will not match'
+                  : undefined
+              }
+              className={exportMismatch ? 'border-amber-500/60' : ''}
             >
-              <MdDownload className="h-3.5 w-3.5 mr-1" />
+              {exportMismatch ? (
+                <MdWarning className="h-3.5 w-3.5 mr-1 text-amber-500" />
+              ) : (
+                <MdDownload className="h-3.5 w-3.5 mr-1" />
+              )}
               {exporting ? 'Exporting…' : 'Export'}
               <MdExpandMore className="h-3.5 w-3.5 ml-1" />
             </Button>
             {showExportPicker && (
-              <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-lg border border-border bg-popover shadow-lg py-1">
-                {EXPORT_TARGETS.map((t) => (
-                  <button
-                    key={t.label}
-                    onClick={() => {
-                      setExportTarget(t);
-                      setShowExportPicker(false);
-                      exportAll();
-                    }}
-                    className={`w-full text-left px-3 py-2 text-xs hover:bg-muted/50 flex items-center justify-between ${t.label === exportTarget.label ? 'font-semibold text-primary' : ''}`}
-                  >
-                    <span>{t.label}</span>
-                    <span className="text-muted-foreground">
-                      {t.width}×{t.height}
-                    </span>
-                  </button>
-                ))}
+              <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-lg border border-border bg-popover shadow-lg py-1">
+                {exportMismatch && (
+                  <p className="px-3 py-2 text-[10px] text-amber-500 border-b border-border flex items-center gap-1">
+                    <MdWarning className="h-3 w-3 shrink-0" />
+                    {isFeatureGraphicLayout
+                      ? 'Feature Graphic layout needs 1024×500 target'
+                      : 'Feature Graphic target needs Feature Graphic layout'}
+                  </p>
+                )}
+                {EXPORT_TARGETS.map((t) => {
+                  const isMismatch =
+                    (layoutId === 'feature-graphic') !==
+                    (t.label === 'Feature Graphic');
+                  return (
+                    <button
+                      key={t.label}
+                      onClick={() => {
+                        setExportTarget(t);
+                        setShowExportPicker(false);
+                        exportAll();
+                      }}
+                      className={`w-full text-left px-3 py-2 text-xs hover:bg-muted/50 flex items-center justify-between ${t.label === exportTarget.label ? 'font-semibold text-primary' : ''} ${isMismatch ? 'opacity-40' : ''}`}
+                    >
+                      <span className="flex items-center gap-1">
+                        {isMismatch && (
+                          <MdWarning className="h-3 w-3 text-amber-500 shrink-0" />
+                        )}
+                        {t.label}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {t.width}×{t.height}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1817,7 +1899,7 @@ function SortableSlide({
   theme: ReturnType<typeof resolveTheme>;
   bgGradient: GradientBg | null;
   decorationId: DecorationId;
-  deviceType: 'iphone' | 'android';
+  deviceType: 'iphone' | 'android' | 'ipad';
   fontFamily: string;
   slideRef: (el: HTMLDivElement | null) => void;
   onSelect: () => void;
@@ -1910,11 +1992,30 @@ function SetCard({
   set,
   onEdit,
   onDelete,
+  onCopyToApp,
 }: {
   set: ScreenshotSetRecord;
   onEdit: () => void;
   onDelete: () => void;
+  onCopyToApp: (targetAppId: string) => Promise<void>;
 }) {
+  const teamCtx = useTeam();
+  const teamId = teamCtx?.currentTeam?.id;
+  const [showCopyMenu, setShowCopyMenu] = useState(false);
+  const [apps, setApps] = useState<{ id: string; title: string | null }[]>([]);
+  const [loadingApps, setLoadingApps] = useState(false);
+
+  const openCopyMenu = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowCopyMenu(true);
+    if (apps.length === 0 && teamId) {
+      setLoadingApps(true);
+      const res = await fetch(`/api/teams/${teamId}/apps`);
+      if (res.ok) setApps(await res.json());
+      setLoadingApps(false);
+    }
+  };
+
   const firstSlide = (set.slides as SlideData[])[0];
   const theme = resolveTheme(set.themeId as ThemeId, {
     bg: set.customBg,
@@ -1944,13 +2045,65 @@ function SetCard({
           </p>
         </div>
       </button>
-      <button
-        onClick={onDelete}
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/20"
-        title="Delete set"
-      >
-        <MdDelete className="h-3.5 w-3.5" />
-      </button>
+
+      {/* Action buttons (visible on hover) */}
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+        {/* Copy to another app */}
+        <div className="relative">
+          <button
+            onClick={openCopyMenu}
+            className="p-1 rounded bg-muted/80 text-muted-foreground hover:text-foreground"
+            title="Copy to another app"
+          >
+            <MdContentCopy className="h-3.5 w-3.5" />
+          </button>
+          {showCopyMenu && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowCopyMenu(false)}
+              />
+              <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-lg border border-border bg-popover shadow-lg py-1">
+                <p className="px-3 py-1.5 text-[10px] text-muted-foreground font-semibold uppercase tracking-wide border-b border-border">
+                  Copy to app
+                </p>
+                {loadingApps ? (
+                  <p className="px-3 py-2 text-xs text-muted-foreground">
+                    Loading…
+                  </p>
+                ) : (
+                  apps
+                    .filter((a) => a.id !== set.appId)
+                    .map((a) => (
+                      <button
+                        key={a.id}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          setShowCopyMenu(false);
+                          await onCopyToApp(a.id);
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-muted/50 truncate"
+                      >
+                        {a.title ?? a.id}
+                      </button>
+                    ))
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="p-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/20"
+          title="Delete set"
+        >
+          <MdDelete className="h-3.5 w-3.5" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -2007,6 +2160,121 @@ function TemplateCard({
       >
         <MdDelete className="h-3.5 w-3.5" />
       </button>
+    </div>
+  );
+}
+
+// ── Duplicate to locales panel ────────────────────────────────────────────────
+
+function DuplicateToLocalesPanel({
+  currentLocale,
+  availableLocales,
+  existingLocales,
+  onConfirm,
+  onClose,
+}: {
+  currentLocale: string;
+  availableLocales: string[];
+  existingLocales: string[];
+  onConfirm: (targetLocales: string[]) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false);
+
+  const otherLocales = availableLocales.filter((l) => l !== currentLocale);
+
+  const toggle = (locale: string) =>
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(locale)) {
+        next.delete(locale);
+      } else {
+        next.add(locale);
+      }
+      return next;
+    });
+
+  const handleConfirm = async () => {
+    setLoading(true);
+    await onConfirm(Array.from(selected));
+    setLoading(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4">
+      <div className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-sm flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div className="flex items-center gap-2">
+            <MdContentCopy className="h-5 w-5 text-primary" />
+            <h2 className="font-semibold text-sm">Duplicate to locales</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <MdClose className="h-5 w-5" />
+          </button>
+        </div>
+
+        <p className="px-5 pt-4 pb-2 text-xs text-muted-foreground">
+          Copy this design (theme, layout, font, slides) to the selected
+          locales. Locales that already have a set are skipped.
+        </p>
+
+        <div className="px-5 pb-2 flex gap-2">
+          <button
+            className="text-[10px] text-primary hover:underline"
+            onClick={() => setSelected(new Set(otherLocales))}
+          >
+            All
+          </button>
+          <button
+            className="text-[10px] text-primary hover:underline"
+            onClick={() => setSelected(new Set())}
+          >
+            None
+          </button>
+        </div>
+
+        <div className="px-5 pb-4 flex-1 overflow-y-auto max-h-64 space-y-1">
+          {otherLocales.map((l) => {
+            const hasSet = existingLocales.includes(l);
+            return (
+              <label
+                key={l}
+                className={`flex items-center gap-2 text-xs py-1 cursor-pointer ${hasSet ? 'opacity-40' : ''}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.has(l)}
+                  disabled={hasSet}
+                  onChange={() => toggle(l)}
+                  className="accent-primary"
+                />
+                <span>{l}</span>
+                {hasSet && (
+                  <span className="text-[10px] text-muted-foreground">
+                    (already has set)
+                  </span>
+                )}
+              </label>
+            );
+          })}
+        </div>
+
+        <div className="px-5 py-4 border-t border-border">
+          <button
+            onClick={handleConfirm}
+            disabled={selected.size === 0 || loading}
+            className="w-full py-2 text-xs bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          >
+            {loading
+              ? 'Duplicating…'
+              : `Duplicate to ${selected.size} locale${selected.size !== 1 ? 's' : ''}`}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

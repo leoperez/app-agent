@@ -243,7 +243,7 @@ export const EXPORT_TARGETS: ExportTarget[] = [
   {
     label: 'iPad 13"',
     store: 'APPSTORE',
-    deviceType: 'iphone',
+    deviceType: 'ipad',
     width: 2064,
     height: 2752,
   },

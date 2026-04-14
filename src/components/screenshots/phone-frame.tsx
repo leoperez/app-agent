@@ -395,7 +395,194 @@ export function AndroidFrame({
 }
 
 /**
- * Unified phone frame — picks iPhone or Android based on `deviceType`.
+ * iPad Pro 13" SVG frame.
+ * Natural ratio: 2064 × 2752 px  → width : height ≈ 1 : 1.334
+ */
+export function IPadFrame({
+  width,
+  screenshotUrl,
+  screenFallbackColor,
+}: {
+  width: number;
+  screenshotUrl?: string;
+  screenFallbackColor: string;
+}) {
+  const h = Math.round(width * (2752 / 2064)); // ≈ 1.334
+  const id = `ipad-clip-${width}`;
+  const r = (x: number) => Math.round((x / 2064) * width);
+
+  // Frame geometry
+  const rx = r(80);
+  // Screen inset — iPad has thin bezels
+  const sx = r(28);
+  const sy = r(28);
+  const sw = width - r(56);
+  const sh = h - r(56);
+  const srx = r(52);
+  // Front camera — centre top
+  const camR = r(16);
+  const camX = width / 2;
+  const camY = r(14);
+  // Side button (right)
+  const btnW = r(6);
+  const pwX = width - r(2);
+  const pwY = r(400);
+  const pwH = r(120);
+  // Volume buttons (right, above power)
+  const vol1Y = r(220);
+  const vol2Y = r(350);
+  const volH = r(110);
+
+  return (
+    <svg
+      width={width}
+      height={h}
+      viewBox={`0 0 ${width} ${h}`}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ display: 'block', flexShrink: 0 }}
+    >
+      <defs>
+        <clipPath id={id}>
+          <rect x={sx} y={sy} width={sw} height={sh} rx={srx} />
+        </clipPath>
+        <filter
+          id={`ipad-shadow-${width}`}
+          x="-5%"
+          y="-5%"
+          width="110%"
+          height="110%"
+        >
+          <feDropShadow dx="0" dy="6" stdDeviation="16" floodOpacity="0.3" />
+        </filter>
+        <linearGradient id={`ipad-frame-${width}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#3a3a3a" />
+          <stop offset="40%" stopColor="#1c1c1e" />
+          <stop offset="100%" stopColor="#0a0a0a" />
+        </linearGradient>
+        <linearGradient
+          id={`ipad-glare-${width}`}
+          x1="0"
+          y1="0"
+          x2="0.3"
+          y2="0.6"
+        >
+          <stop offset="0%" stopColor="white" stopOpacity="0.07" />
+          <stop offset="100%" stopColor="white" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+
+      {/* Outer frame */}
+      <rect
+        x={1}
+        y={1}
+        width={width - 2}
+        height={h - 2}
+        rx={rx}
+        fill={`url(#ipad-frame-${width})`}
+        stroke="#1a1a1a"
+        strokeWidth={2}
+        filter={`url(#ipad-shadow-${width})`}
+      />
+
+      {/* Screen background */}
+      <rect
+        x={sx}
+        y={sy}
+        width={sw}
+        height={sh}
+        rx={srx}
+        fill={screenFallbackColor}
+        clipPath={`url(#${id})`}
+      />
+
+      {/* Screenshot */}
+      {screenshotUrl && (
+        <image
+          href={screenshotUrl}
+          x={sx}
+          y={sy}
+          width={sw}
+          height={sh}
+          clipPath={`url(#${id})`}
+          preserveAspectRatio="xMidYMid slice"
+        />
+      )}
+
+      {/* Glass glare */}
+      <rect
+        x={sx}
+        y={sy}
+        width={sw}
+        height={sh}
+        rx={srx}
+        fill={`url(#ipad-glare-${width})`}
+        clipPath={`url(#${id})`}
+      />
+
+      {/* Frame inner edge */}
+      <rect
+        x={sx - 1}
+        y={sy - 1}
+        width={sw + 2}
+        height={sh + 2}
+        rx={srx + 1}
+        fill="none"
+        stroke="white"
+        strokeOpacity={0.07}
+        strokeWidth={1.5}
+      />
+
+      {/* Front camera */}
+      <circle cx={camX} cy={camY} r={camR} fill="#0a0a0a" />
+      <circle cx={camX} cy={camY} r={camR * 0.4} fill="#111" />
+
+      {/* Power button (right) */}
+      <rect
+        x={pwX}
+        y={pwY}
+        width={btnW}
+        height={pwH}
+        rx={btnW / 2}
+        fill="#2a2a2a"
+      />
+
+      {/* Volume up (right) */}
+      <rect
+        x={pwX}
+        y={vol1Y}
+        width={btnW}
+        height={volH}
+        rx={btnW / 2}
+        fill="#2a2a2a"
+      />
+
+      {/* Volume down (right) */}
+      <rect
+        x={pwX}
+        y={vol2Y}
+        width={btnW}
+        height={volH}
+        rx={btnW / 2}
+        fill="#2a2a2a"
+      />
+
+      {/* Home indicator */}
+      <rect
+        x={(width - r(180)) / 2}
+        y={h - r(20)}
+        width={r(180)}
+        height={r(8)}
+        rx={r(4)}
+        fill="white"
+        fillOpacity={0.12}
+      />
+    </svg>
+  );
+}
+
+/**
+ * Unified phone frame — picks iPhone, Android or iPad based on `deviceType`.
  */
 export function PhoneFrame({
   width,
@@ -406,11 +593,20 @@ export function PhoneFrame({
   width: number;
   screenshotUrl?: string;
   screenFallbackColor: string;
-  deviceType?: 'iphone' | 'android';
+  deviceType?: 'iphone' | 'android' | 'ipad';
 }) {
   if (deviceType === 'android') {
     return (
       <AndroidFrame
+        width={width}
+        screenshotUrl={screenshotUrl}
+        screenFallbackColor={screenFallbackColor}
+      />
+    );
+  }
+  if (deviceType === 'ipad') {
+    return (
+      <IPadFrame
         width={width}
         screenshotUrl={screenshotUrl}
         screenFallbackColor={screenFallbackColor}
