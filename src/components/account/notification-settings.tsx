@@ -3,10 +3,44 @@
 import { useEffect, useState } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { motion } from 'framer-motion';
-import { MdNotifications } from 'react-icons/md';
+import { MdNotifications, MdNotificationsActive } from 'react-icons/md';
 import { useTranslations } from 'next-intl';
 import { getNotificationPrefs, setNotificationPrefs } from '@/lib/swr/account';
 import { toast } from 'react-hot-toast';
+
+async function subscribeToPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window))
+    return null;
+  const reg = await navigator.serviceWorker.register('/sw.js');
+  const { publicKey } = await fetch('/api/account/push-subscribe').then((r) =>
+    r.json()
+  );
+  if (!publicKey) return null;
+
+  const existing = await reg.pushManager.getSubscription();
+  if (existing) return existing;
+
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: publicKey,
+  });
+  return sub;
+}
+
+async function unsubscribeFromPush() {
+  if (!('serviceWorker' in navigator)) return;
+  const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+  if (!reg) return;
+  const sub = await reg.pushManager.getSubscription();
+  if (sub) {
+    await fetch('/api/account/push-subscribe', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: sub.endpoint }),
+    });
+    await sub.unsubscribe();
+  }
+}
 
 type BoolPref =
   | 'notifyKeywordDrop'
@@ -56,6 +90,18 @@ export function NotificationSettings() {
   const [loading, setLoading] = useState(true);
   const [savingPref, setSavingPref] = useState<BoolPref | null>(null);
   const [savingRating, setSavingRating] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+
+  // Check current push subscription status
+  useEffect(() => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    navigator.serviceWorker.getRegistration('/sw.js').then(async (reg) => {
+      if (!reg) return;
+      const sub = await reg.pushManager.getSubscription();
+      setPushEnabled(!!sub);
+    });
+  }, []);
 
   useEffect(() => {
     getNotificationPrefs()
@@ -160,6 +206,68 @@ export function NotificationSettings() {
                     </div>
                   </label>
                 ))}
+              </div>
+
+              {/* Browser push notifications */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium flex items-center gap-1.5">
+                      <MdNotificationsActive className="h-4 w-4 text-primary" />
+                      Browser push notifications
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Receive instant alerts in your browser, even when the tab
+                      is closed.
+                    </p>
+                  </div>
+                  <button
+                    disabled={pushLoading}
+                    onClick={async () => {
+                      setPushLoading(true);
+                      try {
+                        if (pushEnabled) {
+                          await unsubscribeFromPush();
+                          setPushEnabled(false);
+                          toast.success('Push notifications disabled');
+                        } else {
+                          const perm = await Notification.requestPermission();
+                          if (perm !== 'granted') {
+                            toast.error(
+                              'Permission denied — allow notifications in browser settings'
+                            );
+                            return;
+                          }
+                          const sub = await subscribeToPush();
+                          if (!sub) {
+                            toast.error('Failed to subscribe');
+                            return;
+                          }
+                          await fetch('/api/account/push-subscribe', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(sub),
+                          });
+                          setPushEnabled(true);
+                          toast.success('Push notifications enabled');
+                        }
+                      } catch {
+                        toast.error('Failed to update push settings');
+                      } finally {
+                        setPushLoading(false);
+                      }
+                    }}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
+                      pushEnabled ? 'bg-primary' : 'bg-input'
+                    } disabled:opacity-50`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        pushEnabled ? 'translate-x-4' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
 
               {/* Rating alert threshold */}

@@ -585,6 +585,26 @@ export default function Home() {
             <div>
               <Button
                 variant="outline"
+                onClick={() =>
+                  window.open(
+                    `/api/teams/${teamInfo?.currentTeam?.id}/apps/${currentApp?.id}/report`,
+                    '_blank'
+                  )
+                }
+                className="flex items-center"
+                data-tooltip-id="report-tooltip"
+              >
+                <MdOutlineFileDownload className="w-5 h-5" />
+                Report
+              </Button>
+              <Tooltip id="report-tooltip" place="top">
+                Download ASO report (print to PDF)
+              </Tooltip>
+            </div>
+
+            <div>
+              <Button
+                variant="outline"
                 onClick={() => setShowPullDialog(true)}
                 // disabled={isRefreshing || isPulling || pullUsed}
                 className="flex items-center"

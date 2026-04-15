@@ -64,6 +64,8 @@ model User {
   slackWebhookUrl         String? // Optional Slack incoming webhook URL for alerts
   ratingAlertThreshold    Float?  // Alert when app rating drops below this value (e.g. 4.0)
 
+  pushSubscriptions PushSubscription[]
+
   // Stripe subscription fields
   plan           String         @default("free")
   stripeId       String?        @unique // Stripe subscription / customer ID
@@ -103,6 +105,7 @@ model Team {
   publishApprovals PublishApproval[]
   notifications          Notification[]
   storeCredentials       StoreCredential[]
+  auditLogs              AuditLog[]
   descriptionTemplates   DescriptionTemplate[]
   reviewTemplates        ReviewTemplate[]
   autoReplyRules         ReviewAutoReplyRule[]
@@ -296,7 +299,8 @@ model AppVersion {
   contentRatingDescription String?
   update                 DateTime?
 
-  localizations   AppLocalization[]
+  localizations        AppLocalization[]
+  scheduledPublishAt   DateTime?  // schedule metadata push to store
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -557,6 +561,35 @@ model Notification {
 
   @@index([teamId, readAt])
   @@index([teamId, createdAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  teamId     String
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId     String?
+  userEmail  String?
+  action     String   // "create" | "update" | "delete" | "publish" | "import" | ...
+  entity     String   // "localization" | "keyword" | "app" | "credential" | ...
+  entityId   String?
+  appId      String?
+  meta       Json?    // diff or extra context
+  createdAt  DateTime @default(now())
+
+  @@index([teamId, createdAt])
+  @@index([teamId, entity])
 }
 
 model ReviewTemplate {

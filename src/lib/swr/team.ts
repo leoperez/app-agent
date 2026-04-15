@@ -84,6 +84,35 @@ export function useGetNotifications() {
   };
 }
 
+export interface AuditLogEntry {
+  id: string;
+  userId: string | null;
+  userEmail: string | null;
+  action: string;
+  entity: string;
+  entityId: string | null;
+  appId: string | null;
+  meta: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export function useGetAuditLog(entity?: string, appId?: string) {
+  const teamInfo = useTeam();
+  const params = new URLSearchParams();
+  if (entity) params.set('entity', entity);
+  if (appId) params.set('appId', appId);
+  const qs = params.toString();
+
+  const { data, error, isLoading, mutate } = useSWR<AuditLogEntry[]>(
+    teamInfo?.currentTeam?.id
+      ? `/api/teams/${teamInfo.currentTeam.id}/audit-log${qs ? `?${qs}` : ''}`
+      : null,
+    fetcher,
+    { dedupingInterval: 30000 }
+  );
+  return { logs: data ?? [], loading: isLoading, error, mutate };
+}
+
 export interface DescriptionTemplate {
   id: string;
   teamId: string;

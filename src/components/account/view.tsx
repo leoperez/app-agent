@@ -7,6 +7,7 @@ import { NotificationSettings } from '@/components/account/notification-settings
 import { StoreCredentials } from '@/components/account/store-credentials';
 import { PublishApprovalQueue } from '@/components/account/publish-approval-queue';
 import { AutoReplyRules } from '@/components/aso/auto-reply-rules';
+import { AuditLog } from '@/components/account/audit-log';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { DeleteAccount } from '@/components/account/delete-account';
@@ -46,6 +47,7 @@ export default function AccountSettingsView() {
             </CardContent>
           </Card>
         </motion.div>
+        <AuditLog />
         <DeleteAccount />
       </div>
     </div>
