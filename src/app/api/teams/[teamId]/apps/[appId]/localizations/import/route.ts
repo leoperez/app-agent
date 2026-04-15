@@ -6,6 +6,7 @@ import {
   InvalidParamsError,
 } from '@/types/errors';
 import prisma from '@/lib/prisma';
+import { logAudit } from '@/lib/audit';
 
 const IMPORTABLE_FIELDS = [
   'title',
@@ -77,7 +78,8 @@ export async function POST(
   { params }: { params: { teamId: string; appId: string } }
 ) {
   try {
-    const { teamId } = await validateTeamAccess(request);
+    const { teamId, userId, session } = await validateTeamAccess(request);
+    const userEmail = session.user?.email ?? undefined;
     const { appId } = params;
 
     const app = await prisma.app.findFirst({ where: { id: appId, teamId } });
@@ -179,6 +181,16 @@ export async function POST(
         errors.push(`${locale}: ${(err as Error).message}`);
       }
     }
+
+    logAudit({
+      teamId,
+      userId,
+      userEmail,
+      action: 'import',
+      entity: 'localization',
+      appId,
+      meta: { updated, skipped },
+    }).catch(() => {});
 
     return NextResponse.json({ updated, skipped, errors });
   } catch (error) {

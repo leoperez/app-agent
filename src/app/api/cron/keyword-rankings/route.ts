@@ -13,6 +13,7 @@ import { KeywordRiseEntry } from '@/components/emails/keyword-rise';
 import { sendSlackMessage } from '@/lib/slack';
 import { createNotification } from '@/lib/notifications';
 import { logCron } from '@/lib/utils/log-cron';
+import { sendPushToTeam } from '@/lib/push';
 
 export const maxDuration = 300;
 
@@ -246,40 +247,52 @@ export async function GET(request: NextRequest) {
       if (!firstKw?.app.teamId) continue;
 
       if (drops.length > 0) {
-        const summary = drops
+        const dropTitle = `${drops.length} keyword drop${drops.length === 1 ? '' : 's'} in ${firstKw.app.title ?? appKey}`;
+        const dropSummary = drops
           .slice(0, 3)
           .map(
             (d) =>
               `"${d.keyword}" ${d.previousPosition != null ? `#${d.previousPosition}` : '?'} → ${d.newPosition != null ? `#${d.newPosition}` : 'out of top 100'}`
           )
           .join(', ');
+        const dropBody =
+          dropSummary +
+          (drops.length > 3 ? ` and ${drops.length - 3} more.` : '.');
         createNotification({
           teamId: firstKw.app.teamId,
           appId: appKey,
           type: 'keyword_drop',
-          title: `${drops.length} keyword drop${drops.length === 1 ? '' : 's'} in ${firstKw.app.title ?? appKey}`,
-          body:
-            summary +
-            (drops.length > 3 ? ` and ${drops.length - 3} more.` : '.'),
+          title: dropTitle,
+          body: dropBody,
+        }).catch(console.error);
+        sendPushToTeam(firstKw.app.teamId, {
+          title: dropTitle,
+          body: dropBody,
         }).catch(console.error);
       }
 
       if (rises.length > 0) {
-        const summary = rises
+        const riseTitle = `${rises.length} keyword rise${rises.length === 1 ? '' : 's'} in ${firstKw.app.title ?? appKey}`;
+        const riseSummary = rises
           .slice(0, 3)
           .map(
             (r) =>
               `"${r.keyword}" ${r.previousPosition != null ? `#${r.previousPosition}` : 'unranked'} → #${r.newPosition}`
           )
           .join(', ');
+        const riseBody =
+          riseSummary +
+          (rises.length > 3 ? ` and ${rises.length - 3} more.` : '.');
         createNotification({
           teamId: firstKw.app.teamId,
           appId: appKey,
           type: 'keyword_rise',
-          title: `${rises.length} keyword rise${rises.length === 1 ? '' : 's'} in ${firstKw.app.title ?? appKey}`,
-          body:
-            summary +
-            (rises.length > 3 ? ` and ${rises.length - 3} more.` : '.'),
+          title: riseTitle,
+          body: riseBody,
+        }).catch(console.error);
+        sendPushToTeam(firstKw.app.teamId, {
+          title: riseTitle,
+          body: riseBody,
         }).catch(console.error);
       }
     }
