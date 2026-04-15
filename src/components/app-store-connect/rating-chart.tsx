@@ -5,9 +5,15 @@ import { AppRatingRow } from '@/lib/swr/app';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
+interface VersionMark {
+  version: string;
+  releasedAt: string;
+}
+
 interface RatingChartProps {
   data: AppRatingRow[];
   loading?: boolean;
+  versions?: VersionMark[];
 }
 
 function useDarkMode() {
@@ -25,9 +31,11 @@ function useDarkMode() {
 function RatingLine({
   data,
   isDark,
+  versions,
 }: {
   data: AppRatingRow[];
   isDark: boolean;
+  versions?: VersionMark[];
 }) {
   const W = 600;
   const H = 120;
@@ -50,6 +58,23 @@ function RatingLine({
 
   // Y-axis ticks at 1, 2, 3, 4, 5
   const yTicks = [1, 2, 3, 4, 5];
+
+  // Map a version releasedAt to the nearest data point x position
+  const versionMarks = (versions ?? [])
+    .map(({ version, releasedAt }) => {
+      const releaseMs = new Date(releasedAt).getTime();
+      let closestIdx = 0;
+      let minDiff = Infinity;
+      data.forEach((d, i) => {
+        const diff = Math.abs(new Date(d.date).getTime() - releaseMs);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestIdx = i;
+        }
+      });
+      return { version, x: toX(closestIdx) };
+    })
+    .filter(({ x }) => x >= PAD.left && x <= W - PAD.right);
 
   // X-axis: show first + last date
   const xLabels =
@@ -99,6 +124,29 @@ function RatingLine({
         </text>
       ))}
 
+      {/* Version markers */}
+      {versionMarks.map(({ version, x }) => (
+        <g key={version}>
+          <line
+            x1={x}
+            y1={PAD.top}
+            x2={x}
+            y2={H - PAD.bottom}
+            stroke={isDark ? '#6b7280' : '#d1d5db'}
+            strokeWidth={1}
+            strokeDasharray="3 3"
+          />
+          <text
+            x={x + 3}
+            y={PAD.top + 9}
+            fontSize={8}
+            fill={isDark ? '#9ca3af' : '#6b7280'}
+          >
+            v{version}
+          </text>
+        </g>
+      ))}
+
       {/* Line */}
       {data.length > 1 && (
         <polyline
@@ -119,7 +167,7 @@ function RatingLine({
   );
 }
 
-export function RatingChart({ data, loading }: RatingChartProps) {
+export function RatingChart({ data, loading, versions }: RatingChartProps) {
   const isDark = useDarkMode();
 
   if (loading) {
@@ -164,7 +212,7 @@ export function RatingChart({ data, loading }: RatingChartProps) {
       </div>
 
       {data.length > 1 ? (
-        <RatingLine data={data} isDark={isDark} />
+        <RatingLine data={data} isDark={isDark} versions={versions} />
       ) : (
         <p className="text-xs text-muted-foreground">
           Rating history will appear once daily snapshots are collected.

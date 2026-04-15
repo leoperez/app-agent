@@ -19,19 +19,87 @@ const FIELDS = {
   fullDescription: 'Full description',
 } as const;
 
+type DiffToken = { type: 'same' | 'removed' | 'added'; word: string };
+
+function computeWordDiff(a: string, b: string): DiffToken[] {
+  const wa = a.split(/\s+/).filter(Boolean);
+  const wb = b.split(/\s+/).filter(Boolean);
+  const m = wa.length;
+  const n = wb.length;
+
+  // LCS on words (limit to prevent O(n²) on large descriptions)
+  const MAX = 120;
+  if (m > MAX || n > MAX) {
+    // Fall back to block diff for long texts
+    return [
+      ...wa.map((w) => ({ type: 'removed' as const, word: w })),
+      ...wb.map((w) => ({ type: 'added' as const, word: w })),
+    ];
+  }
+
+  const dp: number[][] = Array.from({ length: m + 1 }, () =>
+    new Array(n + 1).fill(0)
+  );
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] =
+        wa[i - 1].toLowerCase() === wb[j - 1].toLowerCase()
+          ? dp[i - 1][j - 1] + 1
+          : Math.max(dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+
+  const result: DiffToken[] = [];
+  let i = m,
+    j = n;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && wa[i - 1].toLowerCase() === wb[j - 1].toLowerCase()) {
+      result.unshift({ type: 'same', word: wb[j - 1] });
+      i--;
+      j--;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      result.unshift({ type: 'added', word: wb[j - 1] });
+      j--;
+    } else {
+      result.unshift({ type: 'removed', word: wa[i - 1] });
+      i--;
+    }
+  }
+  return result;
+}
+
 function diffWords(a: string, b: string): React.ReactNode {
   if (a === b)
     return <span className="text-muted-foreground text-xs">{b}</span>;
+
+  const tokens = computeWordDiff(a, b);
   return (
-    <span className="text-xs">
-      <span className="line-through text-red-400 mr-1">
-        {a.slice(0, 80)}
-        {a.length > 80 ? '…' : ''}
-      </span>
-      <span className="text-green-600">
-        {b.slice(0, 80)}
-        {b.length > 80 ? '…' : ''}
-      </span>
+    <span className="text-xs leading-relaxed">
+      {tokens.map((tok, i) => {
+        if (tok.type === 'removed')
+          return (
+            <span
+              key={i}
+              className="line-through text-red-500 bg-red-50 dark:bg-red-950/30 px-0.5 rounded mr-0.5"
+            >
+              {tok.word}
+            </span>
+          );
+        if (tok.type === 'added')
+          return (
+            <span
+              key={i}
+              className="text-green-700 bg-green-50 dark:bg-green-950/30 dark:text-green-400 px-0.5 rounded mr-0.5"
+            >
+              {tok.word}
+            </span>
+          );
+        return (
+          <span key={i} className="mr-0.5">
+            {tok.word}
+          </span>
+        );
+      })}
     </span>
   );
 }
@@ -128,9 +196,9 @@ export function MetadataHistory({ locale }: MetadataHistoryProps) {
                             {prev && old !== curr ? (
                               diffWords(old ?? '', curr)
                             ) : (
-                              <span className="text-xs">
-                                {curr.slice(0, 80)}
-                                {curr.length > 80 ? '…' : ''}
+                              <span className="text-xs text-muted-foreground">
+                                {curr.slice(0, 120)}
+                                {curr.length > 120 ? '…' : ''}
                               </span>
                             )}
                           </div>

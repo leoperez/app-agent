@@ -24,6 +24,7 @@ import { MetadataHistory } from '@/components/aso/metadata-history';
 import { DescriptionTemplates } from '@/components/aso/description-templates';
 import { useTeam } from '@/context/team';
 import { toast } from 'react-hot-toast';
+import { KeywordFieldOptimizer } from '@/components/aso/keyword-field-optimizer';
 
 interface AppLocalizationProps {
   // Current localization data in draft
@@ -295,6 +296,14 @@ export default function AppLocalizationView({
             characterLimit={FIELD_LIMITS.keywords}
             hasChanged={hasFieldChanged('keywords')}
             originalValue={originalData?.keywords}
+          />
+
+          <KeywordFieldOptimizer
+            appId={localization.appId}
+            locale={localization.locale ?? ''}
+            title={localization.title}
+            subtitle={localization.subtitle}
+            keywordsField={localization.keywords}
           />
 
           <LocalizationField

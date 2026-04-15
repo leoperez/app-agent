@@ -32,8 +32,10 @@ import {
   useGetAppLocalizations,
   useGetAppAnalytics,
   useGetAppRatings,
+  useGetRatingsByVersion,
   useGetReviewSentiment,
   useGetScheduledPublish,
+  useGetStoreReviews,
 } from '@/lib/swr/app';
 import AnalyticsChart from '@/components/app-store-connect/analytics-chart';
 import { RatingChart } from '@/components/app-store-connect/rating-chart';
@@ -41,6 +43,7 @@ import { RatingsByVersion } from '@/components/app-store-connect/ratings-by-vers
 import { ReleaseTimeline } from '@/components/app-store-connect/release-timeline';
 import { HealthScoreChart } from '@/components/app-store-connect/health-score-chart';
 import { ReviewSentiment } from '@/components/app-store-connect/review-sentiment';
+import { ReviewTopicClusters } from '@/components/app-store-connect/review-topic-clusters';
 import { ReviewsPanel } from '@/components/app-store-connect/reviews-panel';
 import { ReviewReplyStats } from '@/components/app-store-connect/review-reply-stats';
 import { SchedulePublish } from '@/components/app-store-connect/schedule-publish';
@@ -116,11 +119,19 @@ export default function Home() {
     teamInfo?.currentTeam?.id || '',
     currentApp?.id || ''
   );
+  const { data: ratingsByVersion } = useGetRatingsByVersion(
+    teamInfo?.currentTeam?.id || '',
+    currentApp?.id || ''
+  );
   const { data: sentimentData, loading: sentimentLoading } =
     useGetReviewSentiment(
       teamInfo?.currentTeam?.id || '',
       currentApp?.id || ''
     );
+  const { reviews } = useGetStoreReviews(
+    teamInfo?.currentTeam?.id || '',
+    currentApp?.id || ''
+  );
   const { scheduled, mutate: mutateScheduled } = useGetScheduledPublish(
     teamInfo?.currentTeam?.id || '',
     currentApp?.id || ''
@@ -715,7 +726,13 @@ export default function Home() {
 
           {/* Rating chart — all stores */}
           <div className="mb-6">
-            <RatingChart data={ratingsData} loading={ratingsLoading} />
+            <RatingChart
+              data={ratingsData}
+              loading={ratingsLoading}
+              versions={ratingsByVersion
+                .filter((v) => v.releasedAt)
+                .map((v) => ({ version: v.version, releasedAt: v.releasedAt }))}
+            />
           </div>
 
           {/* Rating breakdown by version */}
@@ -737,6 +754,19 @@ export default function Home() {
           <div className="mb-6">
             <ReviewSentiment data={sentimentData} loading={sentimentLoading} />
           </div>
+
+          {/* Review topic clusters (AI) */}
+          {teamInfo?.currentTeam?.id &&
+            currentApp?.id &&
+            reviews.length > 0 && (
+              <div className="mb-6">
+                <ReviewTopicClusters
+                  reviews={reviews}
+                  teamId={teamInfo.currentTeam.id}
+                  appId={currentApp.id}
+                />
+              </div>
+            )}
 
           {/* Review reply rate */}
           <div className="mb-6">
