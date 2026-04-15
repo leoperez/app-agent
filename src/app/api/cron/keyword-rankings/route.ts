@@ -104,6 +104,7 @@ export async function GET(request: NextRequest) {
           email: string;
           locale: string;
           slackWebhookUrl: string | null;
+          notifyKeywordRise: boolean;
         }[];
       }
     > = {};
