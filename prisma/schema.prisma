@@ -56,7 +56,10 @@ model User {
   teams          UserTeam[]
 
   // Notification preferences
-  notifyCompetitorChanges Boolean @default(true)
+  notifyKeywordDrop       Boolean @default(true)  // Email when a tracked keyword drops ≥5 positions
+  notifyKeywordRise       Boolean @default(true)  // Email when a tracked keyword rises ≥10 positions
+  notifyCompetitorChanges Boolean @default(true)  // Email on competitor metadata/rating changes
+  notifyRatingDrop        Boolean @default(true)  // Email when app rating drops below threshold
   weeklyDigestEnabled     Boolean @default(true)  // Receive weekly ASO digest email
   slackWebhookUrl         String? // Optional Slack incoming webhook URL for alerts
   ratingAlertThreshold    Float?  // Alert when app rating drops below this value (e.g. 4.0)
@@ -99,6 +102,7 @@ model Team {
   requiresApproval Boolean @default(false) // Gate publishes behind an approval workflow
   publishApprovals PublishApproval[]
   notifications          Notification[]
+  storeCredentials       StoreCredential[]
   descriptionTemplates   DescriptionTemplate[]
   reviewTemplates        ReviewTemplate[]
   autoReplyRules         ReviewAutoReplyRule[]
@@ -173,12 +177,41 @@ enum Platform {
   TVOS
 }
 
+model StoreCredential {
+  id           String   @id @default(cuid())
+  teamId       String
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name         String   // user-defined label, e.g. "Acme Corp – App Store"
+  store        Store
+
+  // App Store Connect
+  privateKey   String?  @db.Text
+  keyId        String?
+  issuerId     String?
+  jwt          String?  @db.Text
+  jwtExpiresAt DateTime?
+
+  // Google Play
+  serviceAccountKey Json?
+
+  apps         App[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([teamId])
+}
+
 model App {
   id             String    @id @default(cuid())
   teamId         String
   team           Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   store          Store
   platform       Platform
+
+  // Optional per-app credentials (overrides team-level keys)
+  credentialId   String?
+  credential     StoreCredential? @relation(fields: [credentialId], references: [id])
   storeAppId     String    // App ID in the respective store (e.g., bundle ID or package name)
   primaryLocale  String?
 

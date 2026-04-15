@@ -63,7 +63,8 @@ export async function GET(request: NextRequest) {
                       select: {
                         email: true,
                         locale: true,
-                        notifyCompetitorChanges: true,
+                        notifyKeywordDrop: true,
+                        notifyKeywordRise: true,
                         slackWebhookUrl: true,
                       },
                     },
@@ -181,13 +182,13 @@ export async function GET(request: NextRequest) {
             const buildUsers = () =>
               (kw.app.team?.users ?? [])
                 .filter(
-                  (u) =>
-                    u.user.email && u.user.notifyCompetitorChanges !== false
+                  (u) => u.user.email && u.user.notifyKeywordDrop !== false
                 )
                 .map((u) => ({
                   email: u.user.email as string,
                   locale: u.user.locale ?? 'en',
                   slackWebhookUrl: u.user.slackWebhookUrl ?? null,
+                  notifyKeywordRise: u.user.notifyKeywordRise !== false,
                 }));
 
             if (isSignificantDrop) {
@@ -288,7 +289,12 @@ export async function GET(request: NextRequest) {
     for (const { drops, rises, users } of Object.values(dropsByTeam)) {
       totalDrops += drops.length;
       totalRises += rises.length;
-      for (const { email, locale, slackWebhookUrl } of users) {
+      for (const {
+        email,
+        locale,
+        slackWebhookUrl,
+        notifyKeywordRise,
+      } of users) {
         if (drops.length > 0) {
           sendKeywordDropEmail(email, drops, locale).catch((err) =>
             console.error(
@@ -298,7 +304,7 @@ export async function GET(request: NextRequest) {
           );
         }
 
-        if (rises.length > 0) {
+        if (rises.length > 0 && notifyKeywordRise !== false) {
           sendKeywordRiseEmail(email, rises, locale).catch((err) =>
             console.error(
               `keyword-rankings: failed to send rise alert to ${email}:`,

@@ -15,7 +15,10 @@ export async function GET() {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
+        notifyKeywordDrop: true,
+        notifyKeywordRise: true,
         notifyCompetitorChanges: true,
+        notifyRatingDrop: true,
         weeklyDigestEnabled: true,
         slackWebhookUrl: true,
         ratingAlertThreshold: true,
@@ -24,7 +27,10 @@ export async function GET() {
 
     return NextResponse.json(
       user ?? {
+        notifyKeywordDrop: true,
+        notifyKeywordRise: true,
         notifyCompetitorChanges: true,
+        notifyRatingDrop: true,
         weeklyDigestEnabled: true,
         slackWebhookUrl: null,
         ratingAlertThreshold: null,
@@ -45,17 +51,24 @@ export async function PATCH(request: Request) {
     const body = await request.json();
 
     const data: {
+      notifyKeywordDrop?: boolean;
+      notifyKeywordRise?: boolean;
       notifyCompetitorChanges?: boolean;
+      notifyRatingDrop?: boolean;
       weeklyDigestEnabled?: boolean;
       slackWebhookUrl?: string | null;
       ratingAlertThreshold?: number | null;
     } = {};
 
-    if ('notifyCompetitorChanges' in body) {
-      data.notifyCompetitorChanges = Boolean(body.notifyCompetitorChanges);
-    }
-    if ('weeklyDigestEnabled' in body) {
-      data.weeklyDigestEnabled = Boolean(body.weeklyDigestEnabled);
+    for (const key of [
+      'notifyKeywordDrop',
+      'notifyKeywordRise',
+      'notifyCompetitorChanges',
+      'notifyRatingDrop',
+      'weeklyDigestEnabled',
+    ] as const) {
+      if (key in body)
+        (data as Record<string, unknown>)[key] = Boolean(body[key]);
     }
     if ('slackWebhookUrl' in body) {
       data.slackWebhookUrl = body.slackWebhookUrl?.trim() || null;
@@ -71,7 +84,10 @@ export async function PATCH(request: Request) {
       where: { id: userId },
       data,
       select: {
+        notifyKeywordDrop: true,
+        notifyKeywordRise: true,
         notifyCompetitorChanges: true,
+        notifyRatingDrop: true,
         weeklyDigestEnabled: true,
         slackWebhookUrl: true,
         ratingAlertThreshold: true,

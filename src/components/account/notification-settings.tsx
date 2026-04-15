@@ -8,64 +8,80 @@ import { useTranslations } from 'next-intl';
 import { getNotificationPrefs, setNotificationPrefs } from '@/lib/swr/account';
 import { toast } from 'react-hot-toast';
 
+type BoolPref =
+  | 'notifyKeywordDrop'
+  | 'notifyKeywordRise'
+  | 'notifyCompetitorChanges'
+  | 'notifyRatingDrop'
+  | 'weeklyDigestEnabled';
+
+const PREF_LABELS: Record<BoolPref, { title: string; description: string }> = {
+  notifyKeywordDrop: {
+    title: 'Keyword rank drops',
+    description:
+      'Email when a tracked keyword drops 5+ positions or exits top 100.',
+  },
+  notifyKeywordRise: {
+    title: 'Keyword rank improvements',
+    description:
+      'Email when a tracked keyword rises 10+ positions or enters top 10.',
+  },
+  notifyCompetitorChanges: {
+    title: 'Competitor changes',
+    description:
+      'Email when a tracked competitor updates their metadata or rating.',
+  },
+  notifyRatingDrop: {
+    title: 'Rating drops',
+    description:
+      'Email when your app rating falls below the threshold set below.',
+  },
+  weeklyDigestEnabled: {
+    title: 'Weekly ASO digest',
+    description:
+      'A weekly summary of keyword rankings, ratings, and review activity.',
+  },
+};
+
 export function NotificationSettings() {
   const t = useTranslations('account');
-  const [notifyCompetitorChanges, setNotifyCompetitorChanges] = useState(true);
-  const [weeklyDigestEnabled, setWeeklyDigestEnabled] = useState(true);
-  const [slackWebhookUrl, setSlackWebhookUrl] = useState('');
+  const [prefs, setPrefs] = useState<Record<BoolPref, boolean>>({
+    notifyKeywordDrop: true,
+    notifyKeywordRise: true,
+    notifyCompetitorChanges: true,
+    notifyRatingDrop: true,
+    weeklyDigestEnabled: true,
+  });
   const [ratingThreshold, setRatingThreshold] = useState('');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [savingDigest, setSavingDigest] = useState(false);
-  const [savingSlack, setSavingSlack] = useState(false);
+  const [savingPref, setSavingPref] = useState<BoolPref | null>(null);
   const [savingRating, setSavingRating] = useState(false);
 
   useEffect(() => {
     getNotificationPrefs()
-      .then((prefs) => {
-        setNotifyCompetitorChanges(prefs.notifyCompetitorChanges);
-        setWeeklyDigestEnabled(prefs.weeklyDigestEnabled);
-        setSlackWebhookUrl(prefs.slackWebhookUrl ?? '');
-        setRatingThreshold(prefs.ratingAlertThreshold?.toString() ?? '');
+      .then((p) => {
+        setPrefs({
+          notifyKeywordDrop: p.notifyKeywordDrop ?? true,
+          notifyKeywordRise: p.notifyKeywordRise ?? true,
+          notifyCompetitorChanges: p.notifyCompetitorChanges ?? true,
+          notifyRatingDrop: p.notifyRatingDrop ?? true,
+          weeklyDigestEnabled: p.weeklyDigestEnabled ?? true,
+        });
+        setRatingThreshold(p.ratingAlertThreshold?.toString() ?? '');
       })
       .finally(() => setLoading(false));
   }, []);
 
-  const handleToggle = async (value: boolean) => {
-    setNotifyCompetitorChanges(value);
-    setSaving(true);
+  const handleToggle = async (key: BoolPref, value: boolean) => {
+    setPrefs((prev) => ({ ...prev, [key]: value }));
+    setSavingPref(key);
     try {
-      await setNotificationPrefs({ notifyCompetitorChanges: value });
+      await setNotificationPrefs({ [key]: value });
       toast.success(t('notifications-saved'));
     } catch {
-      setNotifyCompetitorChanges(!value); // revert on error
+      setPrefs((prev) => ({ ...prev, [key]: !value }));
     } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDigestToggle = async (value: boolean) => {
-    setWeeklyDigestEnabled(value);
-    setSavingDigest(true);
-    try {
-      await setNotificationPrefs({ weeklyDigestEnabled: value });
-      toast.success(t('notifications-saved'));
-    } catch {
-      setWeeklyDigestEnabled(!value);
-    } finally {
-      setSavingDigest(false);
-    }
-  };
-
-  const handleSlackSave = async () => {
-    setSavingSlack(true);
-    try {
-      await setNotificationPrefs({ slackWebhookUrl: slackWebhookUrl || null });
-      toast.success(t('notifications-saved'));
-    } catch {
-      toast.error(t('notifications-save-error'));
-    } finally {
-      setSavingSlack(false);
+      setSavingPref(null);
     }
   };
 
@@ -101,99 +117,53 @@ export function NotificationSettings() {
         <CardContent className="space-y-6">
           {loading ? (
             <div className="space-y-3">
-              <div className="h-12 animate-pulse bg-gray-100 dark:bg-gray-800 rounded-lg" />
-              <div className="h-16 animate-pulse bg-gray-100 dark:bg-gray-800 rounded-lg" />
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="h-12 animate-pulse bg-gray-100 dark:bg-gray-800 rounded-lg"
+                />
+              ))}
             </div>
           ) : (
             <>
-              {/* Email toggle */}
-              <label className="flex items-start gap-4 cursor-pointer group">
-                <div className="mt-0.5">
-                  <button
-                    role="switch"
-                    aria-checked={notifyCompetitorChanges}
-                    disabled={saving}
-                    onClick={() => handleToggle(!notifyCompetitorChanges)}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-                      notifyCompetitorChanges ? 'bg-primary' : 'bg-input'
-                    } disabled:opacity-50`}
+              {/* Granular email toggles */}
+              <div className="space-y-4">
+                {(Object.keys(PREF_LABELS) as BoolPref[]).map((key) => (
+                  <label
+                    key={key}
+                    className="flex items-start gap-4 cursor-pointer"
                   >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                        notifyCompetitorChanges
-                          ? 'translate-x-4'
-                          : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
-                </div>
-                <div>
-                  <p className="text-sm font-medium leading-none">
-                    {t('notify-competitor-changes')}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {t('notify-competitor-changes-description')}
-                  </p>
-                </div>
-              </label>
-
-              {/* Weekly digest toggle */}
-              <label className="flex items-start gap-4 cursor-pointer group">
-                <div className="mt-0.5">
-                  <button
-                    role="switch"
-                    aria-checked={weeklyDigestEnabled}
-                    disabled={savingDigest}
-                    onClick={() => handleDigestToggle(!weeklyDigestEnabled)}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-                      weeklyDigestEnabled ? 'bg-primary' : 'bg-input'
-                    } disabled:opacity-50`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                        weeklyDigestEnabled
-                          ? 'translate-x-4'
-                          : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
-                </div>
-                <div>
-                  <p className="text-sm font-medium leading-none">
-                    {t('weekly-digest')}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {t('weekly-digest-description')}
-                  </p>
-                </div>
-              </label>
-
-              {/* Slack webhook */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium">{t('slack-webhook')}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t('slack-webhook-description')}
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    placeholder="https://hooks.slack.com/services/..."
-                    value={slackWebhookUrl}
-                    onChange={(e) => setSlackWebhookUrl(e.target.value)}
-                    className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900"
-                  />
-                  <button
-                    onClick={handleSlackSave}
-                    disabled={savingSlack}
-                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                  >
-                    {savingSlack ? t('saving') : t('save')}
-                  </button>
-                </div>
+                    <div className="mt-0.5 shrink-0">
+                      <button
+                        role="switch"
+                        aria-checked={prefs[key]}
+                        disabled={savingPref === key}
+                        onClick={() => handleToggle(key, !prefs[key])}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
+                          prefs[key] ? 'bg-primary' : 'bg-input'
+                        } disabled:opacity-50`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                            prefs[key] ? 'translate-x-4' : 'translate-x-0.5'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium leading-none">
+                        {PREF_LABELS[key].title}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {PREF_LABELS[key].description}
+                      </p>
+                    </div>
+                  </label>
+                ))}
               </div>
 
               {/* Rating alert threshold */}
-              <div className="space-y-2">
+              <div className="space-y-2 pt-2 border-t border-border">
                 <p className="text-sm font-medium">
                   {t('rating-alert-threshold')}
                 </p>
@@ -210,7 +180,7 @@ export function NotificationSettings() {
                     placeholder="e.g. 4.0"
                     value={ratingThreshold}
                     onChange={(e) => setRatingThreshold(e.target.value)}
-                    className="w-28 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900"
+                    className="w-28 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                   <button
                     onClick={handleRatingThresholdSave}

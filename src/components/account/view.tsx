@@ -4,6 +4,7 @@ import { AccountInfo } from '@/components/account/account-info';
 import { TeamSettings } from '@/components/account/team-settings';
 import { BillingSettings } from '@/components/account/bill-settings';
 import { NotificationSettings } from '@/components/account/notification-settings';
+import { StoreCredentials } from '@/components/account/store-credentials';
 import { PublishApprovalQueue } from '@/components/account/publish-approval-queue';
 import { AutoReplyRules } from '@/components/aso/auto-reply-rules';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -31,6 +32,7 @@ export default function AccountSettingsView() {
         <TeamSettings />
         <PublishApprovalQueue />
         <BillingSettings />
+        <StoreCredentials />
         <NotificationSettings />
         <motion.div
           initial={{ opacity: 0, y: 20 }}

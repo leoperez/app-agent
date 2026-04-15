@@ -12,6 +12,8 @@ import {
   MdAdd,
   MdAutoFixHigh,
   MdInfoOutline,
+  MdFileDownload,
+  MdFileUpload,
 } from 'react-icons/md';
 import { addNewLocale, localizeWhatsNew } from '@/lib/swr/version';
 import { useApp } from '@/context/app';
@@ -200,6 +202,39 @@ export default function AppLocalizations({
   }, [localizations]);
 
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleExport = (format: 'csv' | 'json') => {
+    const url = `/api/teams/${teamInfo?.currentTeam?.id}/apps/${appInfo?.currentApp?.id}/localizations/export?format=${format}`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.click();
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(
+        `/api/teams/${teamInfo?.currentTeam?.id}/apps/${appInfo?.currentApp?.id}/localizations/import`,
+        { method: 'POST', body: formData }
+      );
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error ?? 'Import failed');
+      toast.success(
+        `Imported ${result.updated} locale(s)${result.errors?.length ? `, ${result.errors.length} error(s)` : ''}`
+      );
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Import failed');
+    } finally {
+      setIsImporting(false);
+      e.target.value = '';
+    }
+  };
 
   const handleAutoTranslate = async () => {
     const localeKeys = Object.keys(localizations);
@@ -282,6 +317,7 @@ export default function AppLocalizations({
       {isLocalizing && <LoadingOverlay />}
       {addingLocale && <LoadingOverlay />}
       {isTranslating && <LoadingOverlay />}
+      {isImporting && <LoadingOverlay />}
 
       <StepIndicator
         steps={steps}
@@ -301,19 +337,64 @@ export default function AppLocalizations({
             </Badge>
           )}
         </h2>
-        {Object.keys(localizations).length > 1 &&
-          currentStep.mode === LocalizationEditMode.IMPROVE_ASO && (
+        <div className="flex items-center gap-2">
+          {/* Export buttons */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1.5 text-xs"
+            onClick={() => handleExport('csv')}
+            title="Export localizations as CSV"
+          >
+            <MdFileDownload className="h-3.5 w-3.5" />
+            CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1.5 text-xs"
+            onClick={() => handleExport('json')}
+            title="Export localizations as JSON"
+          >
+            <MdFileDownload className="h-3.5 w-3.5" />
+            JSON
+          </Button>
+          {/* Import button */}
+          <label className="cursor-pointer">
             <Button
               variant="outline"
               size="sm"
-              className="flex items-center gap-1.5 text-xs"
-              onClick={handleAutoTranslate}
-              disabled={isTranslating}
+              className="flex items-center gap-1.5 text-xs pointer-events-none"
+              disabled={isImporting}
+              asChild
             >
-              <MdAutoFixHigh className="h-3.5 w-3.5" />
-              {isTranslating ? t('auto-translating') : t('auto-translate')}
+              <span>
+                <MdFileUpload className="h-3.5 w-3.5" />
+                {isImporting ? 'Importing…' : 'Import'}
+              </span>
             </Button>
-          )}
+            <input
+              type="file"
+              accept=".csv,.json"
+              className="hidden"
+              onChange={handleImport}
+              disabled={isImporting}
+            />
+          </label>
+          {Object.keys(localizations).length > 1 &&
+            currentStep.mode === LocalizationEditMode.IMPROVE_ASO && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1.5 text-xs"
+                onClick={handleAutoTranslate}
+                disabled={isTranslating}
+              >
+                <MdAutoFixHigh className="h-3.5 w-3.5" />
+                {isTranslating ? t('auto-translating') : t('auto-translate')}
+              </Button>
+            )}
+        </div>
       </div>
 
       {currentStep.mode === LocalizationEditMode.QUICK_RELEASE && (
