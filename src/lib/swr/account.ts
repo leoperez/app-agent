@@ -14,7 +14,10 @@ export async function setLocale(locale: string) {
 }
 
 export async function getNotificationPrefs(): Promise<{
+  notifyKeywordDrop: boolean;
+  notifyKeywordRise: boolean;
   notifyCompetitorChanges: boolean;
+  notifyRatingDrop: boolean;
   weeklyDigestEnabled: boolean;
   slackWebhookUrl: string | null;
   ratingAlertThreshold: number | null;
@@ -24,7 +27,10 @@ export async function getNotificationPrefs(): Promise<{
 }
 
 export async function setNotificationPrefs(prefs: {
+  notifyKeywordDrop?: boolean;
+  notifyKeywordRise?: boolean;
   notifyCompetitorChanges?: boolean;
+  notifyRatingDrop?: boolean;
   weeklyDigestEnabled?: boolean;
   slackWebhookUrl?: string | null;
   ratingAlertThreshold?: number | null;
