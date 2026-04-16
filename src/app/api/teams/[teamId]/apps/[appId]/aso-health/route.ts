@@ -69,7 +69,7 @@ export async function GET(
     }
 
     // --- Rating score (20 pts) ---
-    const ratingRecord = await prisma.appRatingHistory.findFirst({
+    const ratingRecord = await prisma.appRatingSnapshot.findFirst({
       where: { appId },
       orderBy: { recordedAt: 'desc' },
       select: { rating: true },

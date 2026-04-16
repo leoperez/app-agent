@@ -40,7 +40,7 @@ export async function GET(
             lastCheckedAt: true,
           },
         }),
-        prisma.appRatingHistory.findFirst({
+        prisma.appRatingSnapshot.findFirst({
           where: { appId },
           orderBy: { recordedAt: 'desc' },
           select: { rating: true, ratingCount: true, recordedAt: true },
