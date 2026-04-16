@@ -118,10 +118,10 @@ Example: ["photo editor", "remove background", "portrait mode", "selfie camera f
         if (r.status === 'fulfilled') {
           suggestions.push({
             keyword: batch[j],
-            trafficScore: r.value.trafficScore,
-            difficultyScore: r.value.difficultyScore,
+            trafficScore: r.value.trafficScore ?? 0,
+            difficultyScore: r.value.difficultyScore ?? 0,
             position: r.value.position === -1 ? null : r.value.position,
-            overall: r.value.overall,
+            overall: r.value.overall ?? 0,
           });
         }
       }
