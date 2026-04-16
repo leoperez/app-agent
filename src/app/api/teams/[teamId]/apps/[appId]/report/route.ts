@@ -47,14 +47,14 @@ export async function GET(
         }),
         prisma.appReview.findMany({
           where: { appId },
-          orderBy: { date: 'desc' },
+          orderBy: { reviewedAt: 'desc' },
           take: 5,
           select: {
-            rating: true,
+            score: true,
             body: true,
-            author: true,
-            date: true,
-            replyBody: true,
+            title: true,
+            reviewedAt: true,
+            autoRepliedAt: true,
           },
         }),
         prisma.asoKeywordRanking.findMany({
@@ -80,7 +80,7 @@ export async function GET(
     // Review stats
     const totalReviews = await prisma.appReview.count({ where: { appId } });
     const repliedReviews = await prisma.appReview.count({
-      where: { appId, replyBody: { not: null } },
+      where: { appId, autoRepliedAt: { not: null } },
     });
     const replyRate =
       totalReviews > 0 ? Math.round((repliedReviews / totalReviews) * 100) : 0;
@@ -222,11 +222,11 @@ ${
           (r) => `
 <div class="review-card">
   <div class="review-header">
-    <span class="stars">${stars(r.rating)}</span>
-    <span class="meta">${r.author ?? 'Anonymous'} · ${r.date ? new Date(r.date).toLocaleDateString() : ''}</span>
+    <span class="stars">${stars(r.score)}</span>
+    <span class="meta">${r.title ?? ''} · ${r.reviewedAt ? new Date(r.reviewedAt).toLocaleDateString() : ''}</span>
   </div>
   <p>${r.body?.slice(0, 300) ?? ''}${(r.body?.length ?? 0) > 300 ? '…' : ''}</p>
-  ${r.replyBody ? `<div class="review-replied"><strong>Reply:</strong> ${r.replyBody.slice(0, 200)}</div>` : ''}
+  ${r.autoRepliedAt ? `<div class="review-replied"><strong>Auto-replied</strong> on ${new Date(r.autoRepliedAt).toLocaleDateString()}</div>` : ''}
 </div>`
         )
         .join('')

@@ -83,7 +83,9 @@ export async function GET(
     // --- Review response rate (10 pts) ---
     const [totalReviews, repliedReviews] = await Promise.all([
       prisma.appReview.count({ where: { appId } }),
-      prisma.appReview.count({ where: { appId, replyBody: { not: null } } }),
+      prisma.appReview.count({
+        where: { appId, autoRepliedAt: { not: null } },
+      }),
     ]);
     let reviewScore = 0;
     if (totalReviews > 0) {
